@@ -35,9 +35,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# opencode agent config & skills
-.opencode/
-
 # graphify knowledge graph (regenerable)
 graphify-out/
 

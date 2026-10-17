@@ -5,7 +5,7 @@
 - Package manager is **npm** (package-lock.json) — do not introduce yarn/pnpm/bun.
 - Scripts: `npm run dev|build|start|lint|typecheck`. `lint` = ESLint, `typecheck` = `tsc --noEmit`.
 - Full verification before finishing work: `npm run lint && npm run typecheck && npm run build`.
-- No test suite exists; verify manually per the plan checklists in `docs/plans/`.
+- No test runner is configured; verify manually per the plan checklists in `docs/plans/`. For new non-trivial logic, add the smallest dependency-free check (see `## Skills`).
 - Path alias `@/*` → repo root (see tsconfig `paths`). Add UI components with `npx shadcn-ui@latest add <name>`.
 
 ## Git Hooks
@@ -16,6 +16,22 @@
 - The pending plan (`docs/plans/2026-10-15-control-ordeño-venta.md`) is the active task list; mark tasks done there as you implement.
 - Domain: offline-first dairy (leche) tracking — milking sheet (capataz, offline, Dexie), dispatch, reconciliation dashboard (owner), Supabase + RLS, roles `owner`/`capataz`.
 - Supabase credentials live in `.env.local` (URL, anon key, service role key) — needed for any auth/sync/dashboard work.
+
+## Skills
+Use the installed (and committed) project skills in `.opencode/skills/`. They are not optional:
+- `ponytail` — active for all coding work: make the smallest change that fully solves the task, and finish every caller it touches. Levels: `/ponytail lite|full|ultra`; "stop ponytail" disables it.
+- `subagent-driven-development` — execute a plan task by task (fresh implementer per task → task review → final whole-branch review), keeping the ledger under `.superpowers/sdd/`.
+- `test-driven-development` — before implementing any non-trivial logic (a branch, loop, parser, validation, money/security rule, or a new script/app). No test runner is configured, so use the smallest dependency-free check available (prefer Node's built-in `node:test`) or an assert-based self-check; never ship non-trivial logic unchecked.
+- `verification-before-completion` — run the full verification and read the output before claiming work is done, fixed, or passing.
+- `requesting-code-review` / `receiving-code-review` — review the diff before merging; treat review findings as claims to verify, not orders to obey.
+- `using-git-worktrees` + `finishing-a-development-branch` — isolate work and integrate deliberately.
+- `brainstorming` — before building anything new or underspecified.
+
+## Branching
+- Do NOT commit feature work directly to `main`. Create a branch per feature/plan task (`feat/<slug>`, `fix/<slug>`, `chore/<slug>`), or an isolated worktree (`using-git-worktrees`).
+- Commit on the branch. Bring work into `main` only through `finishing-a-development-branch` (local merge or PR) once verification passes. Do not push directly to a shared `main`.
+- Keep `main` green: `npm run lint && npm run typecheck && npm run build` must pass on the merged result.
+- Note: tasks #1–#6 of the active plan landed directly on `main` before this rule — do not rewrite that history.
 
 ## Notes
 - The repo is currently a create-next-app scaffold; the plan above describes what gets built.
@@ -32,4 +48,4 @@ Rules:
 - Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+- After modifying code, always run `graphify update .` before finishing a task to keep the graph current (AST-only, no API cost).
