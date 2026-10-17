@@ -28,6 +28,14 @@ function enqueueSync(
   db.syncQueue.add({ tableName, recordId, operation, createdAt: new Date() });
 }
 
+function markDirty(mods: { syncedAt?: Date | null }) {
+  if (mods.syncedAt) {
+    return;
+  }
+
+  return { ...mods, updatedAt: new Date(), syncedAt: null };
+}
+
 db.cows.hook("creating", (primKey, obj) => {
   const now = new Date();
   obj.createdAt = now;
@@ -35,9 +43,7 @@ db.cows.hook("creating", (primKey, obj) => {
   obj.syncedAt = null;
 });
 
-db.cows.hook("updating", (mods) => {
-  return { ...mods, updatedAt: new Date(), syncedAt: null };
-});
+db.cows.hook("updating", markDirty);
 
 db.cows.hook("deleting", (primKey) => {
   enqueueSync("cows", primKey as string, "delete");
@@ -50,9 +56,7 @@ db.milkings.hook("creating", (primKey, obj) => {
   obj.syncedAt = null;
 });
 
-db.milkings.hook("updating", (mods) => {
-  return { ...mods, updatedAt: new Date(), syncedAt: null };
-});
+db.milkings.hook("updating", markDirty);
 
 db.milkings.hook("deleting", (primKey) => {
   enqueueSync("milkings", primKey as string, "delete");
@@ -65,9 +69,7 @@ db.dispatches.hook("creating", (primKey, obj) => {
   obj.syncedAt = null;
 });
 
-db.dispatches.hook("updating", (mods) => {
-  return { ...mods, updatedAt: new Date(), syncedAt: null };
-});
+db.dispatches.hook("updating", markDirty);
 
 db.dispatches.hook("deleting", (primKey) => {
   enqueueSync("dispatches", primKey as string, "delete");

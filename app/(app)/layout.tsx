@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { LogoutButton } from "@/components/auth/LogoutButton";
+import { SyncProvider } from "@/components/SyncProvider";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
+      <SyncProvider />
       <header className="border-b">
         <nav className="mx-auto flex max-w-3xl items-center gap-4 px-4 py-3">
           <Link href="/cows" className="text-sm font-medium">

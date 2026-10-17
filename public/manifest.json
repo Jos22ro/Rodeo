@@ -1,0 +1,16 @@
+{
+  "name": "Sistema Ganadería",
+  "short_name": "Ganadería",
+  "description": "Registro offline de ordeños y despachos de leche",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#0f172a",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}
