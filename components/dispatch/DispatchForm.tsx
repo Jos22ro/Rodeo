@@ -14,6 +14,7 @@ import {
 import { toast } from "@/components/ui/toast";
 import { createDispatch } from "@/lib/db/dispatches";
 import type { Dispatch } from "@/lib/db/schema";
+import { isValidLiters, parseLiters } from "@/lib/format/parse-liters";
 
 type Shift = NonNullable<Dispatch["shift"]>;
 type ShiftValue = Shift | "none";
@@ -23,15 +24,6 @@ const SHIFT_LABELS: Record<ShiftValue, string> = {
   morning: "Mañana",
   afternoon: "Tarde",
 };
-
-function parseLiters(raw: string) {
-  if (raw.trim() === "") {
-    return null;
-  }
-
-  const parsed = Number(raw.replace(",", "."));
-  return Number.isFinite(parsed) ? parsed : null;
-}
 
 export function DispatchForm({
   date,
@@ -54,10 +46,12 @@ export function DispatchForm({
       ? null
       : parsed === null
         ? "Ingresá solo números."
-        : parsed <= 0
+        : !isValidLiters(parsed)
           ? "Los litros deben ser mayores a 0."
           : null;
-  const canSave = Boolean(userId && date && parsed !== null && parsed > 0);
+  const canSave = Boolean(
+    userId && date && parsed !== null && isValidLiters(parsed),
+  );
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

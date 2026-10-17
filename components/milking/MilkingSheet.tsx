@@ -6,14 +6,14 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { listMilkings, saveMilkings } from "@/lib/db/milkings";
 import type { Cow, Milking } from "@/lib/db/schema";
+import { parseLiters } from "@/lib/format/parse-liters";
 
-function parseLiters(raw: string | undefined) {
+function parseMilkingLiters(raw: string | undefined) {
   if (raw === undefined || raw.trim() === "") {
     return 0;
   }
 
-  const parsed = Number(raw.replace(",", "."));
-  return Number.isFinite(parsed) ? parsed : null;
+  return parseLiters(raw);
 }
 
 export function MilkingSheet({
@@ -49,7 +49,7 @@ export function MilkingSheet({
   }, [loadSaved]);
 
   function errorFor(cowId: string) {
-    const parsed = parseLiters(values[cowId]);
+    const parsed = parseMilkingLiters(values[cowId]);
 
     if (parsed === null) {
       return "Ingresá solo números.";
@@ -67,7 +67,7 @@ export function MilkingSheet({
   }
 
   const pending = cows
-    .map((cow) => ({ cow, liters: parseLiters(values[cow.id]) ?? 0 }))
+    .map((cow) => ({ cow, liters: parseMilkingLiters(values[cow.id]) ?? 0 }))
     .filter((entry) => entry.liters > 0);
   const hasErrors = cows.some((cow) => errorFor(cow.id) !== null);
 

@@ -1,5 +1,6 @@
 import { db } from "./index";
 import type { Dispatch } from "./schema";
+import { isValidLiters } from "@/lib/format/parse-liters";
 
 export function listDispatches(date: string) {
   return db.dispatches
@@ -17,7 +18,7 @@ export async function createDispatch(input: {
   liters: number;
   createdBy: string;
 }) {
-  if (!Number.isFinite(input.liters) || input.liters <= 0) {
+  if (!isValidLiters(input.liters)) {
     throw new Error("LitrosInvalidos");
   }
 
