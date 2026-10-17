@@ -25,14 +25,7 @@ import { supabase } from "@/lib/supabase/client";
 async function getCurrentUserId() {
   try {
     const { data } = await supabase.auth.getUser();
-    if (data.user) return data.user.id;
-  } catch {
-    return null;
-  }
-
-  try {
-    const { data } = await supabase.auth.getSession();
-    return data.session?.user.id ?? null;
+    return data.user?.id ?? null;
   } catch {
     return null;
   }
