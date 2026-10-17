@@ -39,11 +39,10 @@ export function CowRow({
       </div>
       <Input
         id={inputId}
-        type="number"
+        type="text"
         inputMode="decimal"
-        min={0}
-        max={100}
-        step="0.1"
+        autoComplete="off"
+        pattern="[0-9]*[.,]?[0-9]*"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         aria-invalid={Boolean(error)}
