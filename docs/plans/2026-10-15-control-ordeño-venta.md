@@ -38,7 +38,7 @@ Ver `spec.md` en la raíz del proyecto. Resumen del alcance V1:
 | **Panel Dueño** | Server Components + Recharts (SSR) | Carga rápida, SEO irrelevante, datos frescos sin hydration pesada. |
 
 ## Tareas
-> Progreso: ✅ #1 (Tailwind migrado a v4), ✅ #2, ✅ #3, ✅ #4, ✅ #5, ✅ #6. Pendientes: #7–#10.
+> Progreso: ✅ #1 (Tailwind migrado a v4), ✅ #2, ✅ #3, ✅ #4, ✅ #5, ✅ #6, ✅ #7. Pendientes: #8–#10.
 | # | Tarea | Archivos | Depende de | Verificación |
 |---|-------|----------|------------|--------------|
 | 1 | Inicializar proyecto Next.js 14 + Tailwind + TypeScript + ESLint/Prettier; instalar y configurar **shadcn/ui** (`npx shadcn-ui@latest init` + componentes base: button, input, table, dialog, toast, select, card, badge); configurar **Husky + lint-staged** (pre-commit: `npm run lint && npm run typecheck`); configurar `next-pwa` (Workbox) para Service Worker offline. | `package.json`, `next.config.js`, `tailwind.config.ts`, `public/manifest.json`, `public/sw.js`, `.husky/pre-commit`, `components.json` | — | `npm run lint` ✅; `npm run typecheck` ✅; `npm run build` ✅; PWA instalable; `git commit` falla si hay errores de lint/typecheck; shadcn/ui components renderizan en Storybook o página de prueba. |
