@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { CowForm, type CowFormValues } from "@/components/cows/CowForm";
 import { CowTable } from "@/components/cows/CowTable";
+import { getCurrentUserId } from "@/lib/auth/current-user";
 import {
   createCow,
   isCodeTaken,
@@ -20,16 +21,6 @@ import {
   updateCow,
 } from "@/lib/db/cows";
 import type { Cow } from "@/lib/db/schema";
-import { supabase } from "@/lib/supabase/client";
-
-async function getCurrentUserId() {
-  try {
-    const { data } = await supabase.auth.getSession();
-    return data.session?.user.id ?? null;
-  } catch {
-    return null;
-  }
-}
 
 export default function CowsPage() {
   const [cows, setCows] = useState<Cow[]>([]);
