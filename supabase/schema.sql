@@ -127,6 +127,8 @@ create policy "Authenticated users can update dispatches"
   on public.dispatches for update
   using (auth.role() = 'authenticated');
 
+-- V1 intentionally defines no DELETE policies: cows are deactivated, not deleted, so remote deletes silently no-op.
+
 -- Trigger to auto-create profile on user signup
 create or replace function public.handle_new_user()
 returns trigger

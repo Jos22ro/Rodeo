@@ -20,7 +20,19 @@ function emptySummary(): SyncSummary {
   return { synced: 0, failed: 0, skipped: true };
 }
 
-export async function syncNow(): Promise<SyncSummary> {
+let inFlight: Promise<SyncSummary> | null = null;
+
+export function syncNow(): Promise<SyncSummary> {
+  if (!inFlight) {
+    inFlight = runSync().finally(() => {
+      inFlight = null;
+    });
+  }
+
+  return inFlight;
+}
+
+async function runSync(): Promise<SyncSummary> {
   if (typeof navigator !== "undefined" && !navigator.onLine) {
     return emptySummary();
   }
