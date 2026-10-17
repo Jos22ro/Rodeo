@@ -40,3 +40,6 @@ next-env.d.ts
 
 # graphify knowledge graph (regenerable)
 graphify-out/
+
+# superpowers SDD scratch workspace
+.superpowers/
