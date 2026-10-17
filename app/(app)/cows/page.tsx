@@ -26,6 +26,7 @@ export default function CowsPage() {
   const [cows, setCows] = useState<Cow[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Cow | null>(null);
 
@@ -37,12 +38,17 @@ export default function CowsPage() {
     let cancelled = false;
 
     async function load() {
-      const currentUserId = await getCurrentUserId();
-      if (cancelled) return;
+      try {
+        const currentUserId = await getCurrentUserId();
+        if (cancelled) return;
 
-      setUserId(currentUserId);
-      await refresh();
-      if (!cancelled) setLoading(false);
+        setUserId(currentUserId);
+        await refresh();
+      } catch {
+        if (!cancelled) setError("No se pudieron cargar las vacas.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }
 
     load();
@@ -53,18 +59,26 @@ export default function CowsPage() {
   }, [refresh]);
 
   function openCreate() {
+    setError(null);
     setEditing(null);
     setFormOpen(true);
   }
 
   function openEdit(cow: Cow) {
+    setError(null);
     setEditing(cow);
     setFormOpen(true);
   }
 
   async function handleToggle(cow: Cow) {
-    await toggleCowActive(cow.id, !cow.active);
-    await refresh();
+    setError(null);
+
+    try {
+      await toggleCowActive(cow.id, !cow.active);
+      await refresh();
+    } catch {
+      setError("No se pudo actualizar la vaca. Intentá de nuevo.");
+    }
   }
 
   async function handleSubmit(values: CowFormValues) {
@@ -99,6 +113,8 @@ export default function CowsPage() {
           Nueva vaca
         </Button>
       </div>
+
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       <Card>
         <CardHeader>

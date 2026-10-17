@@ -25,3 +25,11 @@ export async function getCurrentUserId(): Promise<string | null> {
 
   return readCachedUserId();
 }
+
+export function clearCurrentUserId() {
+  try {
+    window.localStorage.removeItem(USER_ID_KEY);
+  } catch {
+    return;
+  }
+}

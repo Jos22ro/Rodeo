@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { logout } from "@/lib/auth/actions";
+import { LogoutButton } from "@/components/auth/LogoutButton";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -16,11 +15,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <Link href="/dispatch" className="text-sm font-medium">
             Despacho
           </Link>
-          <form action={logout} className="ml-auto">
-            <Button type="submit" variant="outline" size="sm">
-              Salir
-            </Button>
-          </form>
+          <div className="ml-auto">
+            <LogoutButton />
+          </div>
         </nav>
       </header>
       <main className="mx-auto max-w-3xl px-4 py-6">{children}</main>

@@ -42,15 +42,21 @@ export function CowForm({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
-    const message = await onSubmit({ name: name.trim(), code: code.trim() });
-    setSaving(false);
 
-    if (message) {
-      setError(message);
-      return;
+    try {
+      const message = await onSubmit({ name: name.trim(), code: code.trim() });
+
+      if (message) {
+        setError(message);
+        return;
+      }
+
+      onOpenChange(false);
+    } catch {
+      setError("No se pudo guardar la vaca. Intentá de nuevo.");
+    } finally {
+      setSaving(false);
     }
-
-    onOpenChange(false);
   }
 
   return (
