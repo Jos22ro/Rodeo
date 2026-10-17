@@ -82,6 +82,14 @@ export default function CowsPage() {
   }
 
   async function handleSubmit(values: CowFormValues) {
+    if (!values.code) {
+      return "Ingresá un código.";
+    }
+
+    if (!values.name) {
+      return "Ingresá un nombre.";
+    }
+
     if (await isCodeTaken(values.code, editing?.id)) {
       return "Ya existe una vaca con ese código.";
     }

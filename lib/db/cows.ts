@@ -1,8 +1,11 @@
 import { db } from "./index";
 import type { Cow } from "./schema";
 
-export function listCows() {
-  return db.cows.orderBy("code").toArray();
+export async function listCows() {
+  const cows = await db.cows.orderBy("code").toArray();
+  return cows.sort((a, b) =>
+    a.code.localeCompare(b.code, undefined, { numeric: true }),
+  );
 }
 
 export async function isCodeTaken(code: string, excludeId?: string) {

@@ -44,7 +44,8 @@ export function MilkingSheet({
 
   useEffect(() => {
     setValues({});
-    loadSaved();
+    setSaved({});
+    void loadSaved().catch(() => {});
   }, [loadSaved]);
 
   function errorFor(cowId: string) {
