@@ -3,12 +3,16 @@ import { supabase } from "@/lib/supabase/client";
 import { getCurrentUserId } from "@/lib/auth/current-user";
 import {
   dedupeQueue,
+  fromCowRow,
   toCowRow,
   toDispatchRow,
   toMilkingUpsert,
+  type CowRow,
   type SyncTask,
   type SyncTable,
 } from "./sync-mapping";
+
+export const SYNCED_EVENT = "ganaderia:synced";
 
 export interface SyncSummary {
   synced: number;
@@ -44,6 +48,11 @@ async function runSync(): Promise<SyncSummary> {
   }
 
   const tasks = dedupeQueue(await db.syncQueue.toArray());
+  const dirtyCowIds = new Set(
+    tasks
+      .filter((task) => task.tableName === "cows")
+      .map((task) => task.recordId),
+  );
   let synced = 0;
   let failed = 0;
 
@@ -57,13 +66,43 @@ async function runSync(): Promise<SyncSummary> {
     }
   }
 
+  try {
+    await pullCows(dirtyCowIds);
+  } catch (error) {
+    console.warn("No se pudieron descargar las vacas remotas", error);
+  }
+
   const summary = { synced, failed, skipped: false };
 
   if (failed > 0) {
     console.warn("Sync con tareas fallidas", summary);
   }
 
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(SYNCED_EVENT));
+  }
+
   return summary;
+}
+
+async function pullCows(dirtyIds: Set<string>) {
+  const { data, error } = await supabase
+    .from("cows")
+    .select(
+      "id, name, code, active, created_by, created_at, updated_at, synced_at",
+    );
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const cows = ((data ?? []) as CowRow[])
+    .filter((row) => !dirtyIds.has(row.id))
+    .map(fromCowRow);
+
+  if (cows.length > 0) {
+    await db.cows.bulkPut(cows);
+  }
 }
 
 async function pushTask(task: SyncTask) {

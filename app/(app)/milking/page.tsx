@@ -15,6 +15,7 @@ import {
 import { Toaster } from "@/components/ui/toast";
 import { getCurrentUserId } from "@/lib/auth/current-user";
 import { listCows } from "@/lib/db/cows";
+import { SYNCED_EVENT } from "@/lib/db/sync";
 import type { Cow, Milking } from "@/lib/db/schema";
 import { todayKey } from "@/lib/format/dates";
 
@@ -52,8 +53,14 @@ export default function MilkingPage() {
 
     load();
 
+    const handleSynced = () => {
+      void load();
+    };
+    window.addEventListener(SYNCED_EVENT, handleSynced);
+
     return () => {
       cancelled = true;
+      window.removeEventListener(SYNCED_EVENT, handleSynced);
     };
   }, []);
 

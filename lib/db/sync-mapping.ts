@@ -15,6 +15,17 @@ function toIso(date: Date) {
   return date.toISOString();
 }
 
+export interface CowRow {
+  id: string;
+  name: string;
+  code: string;
+  active: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  synced_at: string | null;
+}
+
 export function toCowRow(cow: Cow, syncedAt: string) {
   return {
     id: cow.id,
@@ -25,6 +36,19 @@ export function toCowRow(cow: Cow, syncedAt: string) {
     created_at: toIso(cow.createdAt),
     updated_at: toIso(cow.updatedAt),
     synced_at: syncedAt,
+  };
+}
+
+export function fromCowRow(row: CowRow): Cow {
+  return {
+    id: row.id,
+    name: row.name,
+    code: row.code,
+    active: row.active,
+    createdBy: row.created_by,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+    syncedAt: row.synced_at ? new Date(row.synced_at) : null,
   };
 }
 

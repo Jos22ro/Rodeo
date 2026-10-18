@@ -20,6 +20,7 @@ import {
   toggleCowActive,
   updateCow,
 } from "@/lib/db/cows";
+import { SYNCED_EVENT } from "@/lib/db/sync";
 import type { Cow } from "@/lib/db/schema";
 
 export default function CowsPage() {
@@ -53,8 +54,14 @@ export default function CowsPage() {
 
     load();
 
+    const handleSynced = () => {
+      void refresh().catch(() => {});
+    };
+    window.addEventListener(SYNCED_EVENT, handleSynced);
+
     return () => {
       cancelled = true;
+      window.removeEventListener(SYNCED_EVENT, handleSynced);
     };
   }, [refresh]);
 

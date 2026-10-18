@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   dedupeQueue,
+  fromCowRow,
   toCowRow,
   toDispatchRow,
   toMilkingUpsert,
@@ -66,6 +67,22 @@ test("toCowRow maps camelCase to snake_case and stamps synced_at", () => {
     updated_at: "2026-10-17T10:05:00.000Z",
     synced_at: syncedAt,
   });
+});
+
+test("fromCowRow maps snake_case to camelCase and parses dates", () => {
+  assert.deepEqual(
+    fromCowRow({
+      id: "cow-1",
+      name: "Lola",
+      code: "A01",
+      active: true,
+      created_by: "user-1",
+      created_at: "2026-10-17T10:00:00.000Z",
+      updated_at: "2026-10-17T10:05:00.000Z",
+      synced_at: syncedAt,
+    }),
+    { ...cow, syncedAt: new Date(syncedAt) },
+  );
 });
 
 test("toMilkingUpsert sets liters on conflict (cow_id,date,shift)", () => {

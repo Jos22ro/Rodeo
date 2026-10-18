@@ -38,9 +38,9 @@ function markDirty(mods: { syncedAt?: Date | null }) {
 
 db.cows.hook("creating", (primKey, obj) => {
   const now = new Date();
-  obj.createdAt = now;
-  obj.updatedAt = now;
-  obj.syncedAt = null;
+  obj.createdAt ??= now;
+  obj.updatedAt ??= now;
+  obj.syncedAt ??= null;
 });
 
 db.cows.hook("updating", markDirty);
