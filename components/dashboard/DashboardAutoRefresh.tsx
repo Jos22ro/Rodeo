@@ -9,7 +9,13 @@ export function DashboardAutoRefresh() {
   const router = useRouter();
 
   useEffect(() => {
-    const refresh = () => router.refresh();
+    const refresh = () => {
+      if (!navigator.onLine) {
+        return;
+      }
+
+      router.refresh();
+    };
 
     const interval = window.setInterval(refresh, REFRESH_INTERVAL_MS);
     const handleVisibility = () => {
