@@ -6,6 +6,7 @@ const withPWA = withPWAInit({
   disable: process.env.NODE_ENV === "development",
   reloadOnOnline: false,
   fallbacks: { document: "/offline" },
+  buildExcludes: [/app-build-manifest\.json$/],
 });
 
 /** @type {import('next').NextConfig} */
