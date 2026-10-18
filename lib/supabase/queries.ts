@@ -3,7 +3,6 @@ import {
   buildShiftTotals,
   computeMerma,
   lastNDays,
-  parseDateKey,
   sumByDate,
   type DailyMerma,
   type Shift,
@@ -17,6 +16,7 @@ export interface TodaySummary {
   dispatched: number;
   mermaLiters: number;
   mermaPercent: number;
+  mermaOver: boolean;
 }
 
 interface MilkingRow {
@@ -88,6 +88,7 @@ export async function getTodaySummary(date: string): Promise<TodaySummary> {
     dispatched,
     mermaLiters: merma.liters,
     mermaPercent: merma.percent,
+    mermaOver: merma.over,
   };
 }
 
@@ -95,7 +96,7 @@ export async function getMermaSeries(
   today: string,
   days = 30,
 ): Promise<DailyMerma[]> {
-  const range = lastNDays(days, parseDateKey(today));
+  const range = lastNDays(days, today);
   const from = range[0];
   const [milkings, dispatches] = await Promise.all([
     fetchMilkings(from, today),

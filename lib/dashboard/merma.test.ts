@@ -7,58 +7,74 @@ import {
   formatRelativeTime,
   isStale,
   lastNDays,
-  parseDateKey,
   sumByDate,
-  toLocalDateKey,
+  toFarmDateKey,
 } from "./merma.ts";
 
-test("toLocalDateKey uses local date parts, not UTC", () => {
-  assert.equal(toLocalDateKey(new Date(2026, 0, 5)), "2026-01-05");
-  assert.equal(toLocalDateKey(new Date(2026, 11, 31, 23, 30)), "2026-12-31");
+test("toFarmDateKey maps a UTC instant to the farm-local date", () => {
+  assert.equal(toFarmDateKey(new Date("2026-10-17T12:00:00Z")), "2026-10-17");
+  assert.equal(toFarmDateKey(new Date("2026-10-18T01:00:00Z")), "2026-10-17");
+  assert.equal(toFarmDateKey(new Date("2026-10-18T02:59:59Z")), "2026-10-17");
+  assert.equal(toFarmDateKey(new Date("2026-10-18T03:00:00Z")), "2026-10-18");
 });
 
-test("parseDateKey builds a local date and round-trips with toLocalDateKey", () => {
-  const parsed = parseDateKey("2026-10-17");
-  assert.equal(parsed.getFullYear(), 2026);
-  assert.equal(parsed.getMonth(), 9);
-  assert.equal(parsed.getDate(), 17);
-  assert.equal(toLocalDateKey(parsed), "2026-10-17");
-});
 test("lastNDays returns the range oldest-first and handles month boundaries", () => {
-  assert.deepEqual(lastNDays(3, new Date(2026, 0, 15)), [
+  assert.deepEqual(lastNDays(3, "2026-01-15"), [
     "2026-01-13",
     "2026-01-14",
     "2026-01-15",
   ]);
-  assert.deepEqual(lastNDays(3, new Date(2026, 2, 1)), [
+  assert.deepEqual(lastNDays(3, "2026-03-01"), [
     "2026-02-27",
     "2026-02-28",
     "2026-03-01",
   ]);
-  assert.equal(lastNDays(30, new Date(2026, 9, 17)).length, 30);
+  assert.equal(lastNDays(30, "2026-10-17").length, 30);
+  assert.deepEqual(lastNDays(1, "2026-01-01"), ["2026-01-01"]);
 });
 
-test("computeMerma subtracts dispatched from milked", () => {
-  assert.deepEqual(computeMerma(100, 90), { liters: 10, percent: 10 });
-  assert.deepEqual(computeMerma(120, 120), { liters: 0, percent: 0 });
+test("computeMerma reports the normal loss when more was milked than dispatched", () => {
+  assert.deepEqual(computeMerma(100, 90), {
+    liters: 10,
+    percent: 10,
+    over: false,
+  });
+  assert.deepEqual(computeMerma(120, 120), {
+    liters: 0,
+    percent: 0,
+    over: false,
+  });
 });
 
-test("computeMerma reports 100% when nothing was milked but milk left", () => {
-  assert.deepEqual(computeMerma(0, 50), { liters: 50, percent: 100 });
+test("computeMerma treats a day without dispatch as 100% merma but not a leak", () => {
+  assert.deepEqual(computeMerma(80, 0), {
+    liters: 80,
+    percent: 100,
+    over: false,
+  });
 });
 
-test("computeMerma treats a day without dispatch as 100% merma", () => {
-  assert.deepEqual(computeMerma(80, 0), { liters: 80, percent: 100 });
+test("computeMerma flags a dispatch-only day with 100% and over", () => {
+  assert.deepEqual(computeMerma(0, 50), {
+    liters: 50,
+    percent: 100,
+    over: true,
+  });
 });
 
 test("computeMerma returns zero for a day with no records", () => {
-  assert.deepEqual(computeMerma(0, 0), { liters: 0, percent: 0 });
+  assert.deepEqual(computeMerma(0, 0), {
+    liters: 0,
+    percent: 0,
+    over: false,
+  });
 });
 
-test("computeMerma keeps negative merma when more milk left than was milked", () => {
+test("computeMerma flags a leak when more milk left than was milked", () => {
   assert.deepEqual(computeMerma(90, 100), {
-    liters: -10,
-    percent: -11.11111111111111,
+    liters: 10,
+    percent: 11.11111111111111,
+    over: true,
   });
 });
 
@@ -93,6 +109,7 @@ test("buildMermaSeries fills missing days with zeros", () => {
       dispatched: 90,
       mermaLiters: 10,
       mermaPercent: 10,
+      over: false,
     },
     {
       date: "2026-10-16",
@@ -100,6 +117,7 @@ test("buildMermaSeries fills missing days with zeros", () => {
       dispatched: 20,
       mermaLiters: 20,
       mermaPercent: 100,
+      over: true,
     },
     {
       date: "2026-10-17",
@@ -107,6 +125,7 @@ test("buildMermaSeries fills missing days with zeros", () => {
       dispatched: 0,
       mermaLiters: 40,
       mermaPercent: 100,
+      over: false,
     },
   ]);
 });

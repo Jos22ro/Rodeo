@@ -14,7 +14,7 @@ function formatLiters(liters: number): string {
 }
 
 export function SummaryCards({ summary }: { summary: TodaySummary }) {
-  const mermaCritical = summary.mermaPercent >= 100;
+  const mermaCritical = summary.mermaOver;
 
   return (
     <div className="grid gap-4 sm:grid-cols-3">
@@ -56,7 +56,9 @@ export function SummaryCards({ summary }: { summary: TodaySummary }) {
             {formatLiters(summary.mermaLiters)} L ·{" "}
             {summary.mermaPercent.toFixed(1)}%
           </p>
-          <p className="text-sm text-muted-foreground">Ordeñado − despachado</p>
+          <p className="text-sm text-muted-foreground">
+            Diferencia ordeñado − despachado
+          </p>
         </CardContent>
       </Card>
     </div>

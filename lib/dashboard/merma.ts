@@ -10,6 +10,7 @@ export const SHIFT_LABELS: Record<Shift, string> = {
 export interface MermaResult {
   liters: number;
   percent: number;
+  over: boolean;
 }
 
 export interface DailyMerma {
@@ -18,6 +19,7 @@ export interface DailyMerma {
   dispatched: number;
   mermaLiters: number;
   mermaPercent: number;
+  over: boolean;
 }
 
 export interface ShiftTotals {
@@ -45,30 +47,28 @@ const MS_PER_MINUTE = 60_000;
 const MS_PER_HOUR = 3_600_000;
 const STALE_HOURS = 24;
 
-export function toLocalDateKey(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+export const FARM_TIMEZONE = "America/Argentina/Buenos_Aires";
+
+const FARM_DATE_FORMATTER = new Intl.DateTimeFormat("en-CA", {
+  timeZone: FARM_TIMEZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+export function toFarmDateKey(date: Date): string {
+  return FARM_DATE_FORMATTER.format(date);
 }
 
-export function parseDateKey(key: string): Date {
-  const [year, month, day] = key.split("-").map(Number);
-  return new Date(year, month - 1, day);
-}
-
-export function lastNDays(count: number, today: Date = new Date()): string[] {
+export function lastNDays(count: number, todayKey: string): string[] {
+  const [year, month, day] = todayKey.split("-").map(Number);
   const days: string[] = [];
 
   for (let offset = count - 1; offset >= 0; offset -= 1) {
     days.push(
-      toLocalDateKey(
-        new Date(
-          today.getFullYear(),
-          today.getMonth(),
-          today.getDate() - offset,
-        ),
-      ),
+      new Date(Date.UTC(year, month - 1, day - offset))
+        .toISOString()
+        .slice(0, 10),
     );
   }
 
@@ -76,15 +76,17 @@ export function lastNDays(count: number, today: Date = new Date()): string[] {
 }
 
 export function computeMerma(milked: number, dispatched: number): MermaResult {
+  const liters = Math.abs(milked - dispatched);
+
   if (milked <= 0) {
-    return {
-      liters: dispatched > 0 ? dispatched : 0,
-      percent: dispatched > 0 ? 100 : 0,
-    };
+    return { liters, percent: dispatched > 0 ? 100 : 0, over: dispatched > 0 };
   }
 
-  const liters = milked - dispatched;
-  return { liters, percent: (liters / milked) * 100 };
+  return {
+    liters,
+    percent: (liters / milked) * 100,
+    over: dispatched > milked,
+  };
 }
 
 export function sumByDate(rows: LitersRow[]): Map<string, number> {
@@ -114,6 +116,7 @@ export function buildMermaSeries(
       dispatched,
       mermaLiters: merma.liters,
       mermaPercent: merma.percent,
+      over: merma.over,
     };
   });
 }

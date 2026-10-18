@@ -1,7 +1,7 @@
 import { LastSyncBadge } from "@/components/dashboard/LastSyncBadge";
 import { MermaChart } from "@/components/dashboard/MermaChart";
 import { SummaryCards } from "@/components/dashboard/SummaryCards";
-import { toLocalDateKey } from "@/lib/dashboard/merma";
+import { toFarmDateKey } from "@/lib/dashboard/merma";
 import {
   getLastSyncedAt,
   getMermaSeries,
@@ -12,7 +12,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const today = toLocalDateKey(new Date());
+  const today = toFarmDateKey(new Date());
 
   try {
     const [summary, series, shifts, lastSyncedAt] = await Promise.all([
