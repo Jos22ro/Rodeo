@@ -57,7 +57,7 @@ export function SummaryCards({ summary }: { summary: TodaySummary }) {
             {summary.mermaPercent.toFixed(1)}%
           </p>
           <p className="text-sm text-muted-foreground">
-            Diferencia ordeñado − despachado
+            Merma (L) y % sobre lo ordeñado
           </p>
         </CardContent>
       </Card>

@@ -12,6 +12,7 @@ Es E2E manual: necesita navegador/dispositivo y un usuario admin creado. No se p
 
 ## A. Admin crea usuario (spec: roles dueño/capataz)
 
+- [ ] Al iniciar sesión, la app abre en `/cows`; llegar a `/milking` desde la barra de navegación, sin escribir la URL.
 - [ ] Login como admin → ir a `/register`.
 - [ ] Crear un usuario capataz (email + password + rol). Verificar que aparece en `public.profiles` con el rol correcto.
 - [ ] Cerrar sesión, entrar con el usuario capataz. No debe poder crear usuarios.
@@ -40,11 +41,13 @@ Es E2E manual: necesita navegador/dispositivo y un usuario admin creado. No se p
 - [ ] `/dispatch`: fecha, turno (probar **Sin turno**), litros totales. Guardar offline → toast.
 - [ ] Litros `0` / negativos / no numéricos → bloqueado.
 - [ ] IndexedDB → tabla `dispatches`: el registro está.
+- [ ] Cerrar del todo la PWA instalada, reabrirla **offline** y navegar a `/dispatch`: la pantalla carga y permite guardar un despacho.
 
 ## E. Sync automática (spec: al volver la señal)
 
 - [ ] Seguir en Offline con datos cargados (B/C/D).
 - [ ] Volver a **Online** → en **<5 s** los registros suben solos a Supabase (revisar tablas `cows`/`milkings`/`dispatches` en el Dashboard).
+- [ ] Con la planilla de ordeño a medio cargar, pasar a Offline y volver a Online: la página **no** se recarga y no se pierde lo tipeado (la sync corre en segundo plano).
 - [ ] `synced_at` queda seteado en las filas; la cola `syncQueue` en IndexedDB queda vacía.
 - [ ] Editar una vaca offline y volver online: el cambio se refleja en Supabase (no se duplica).
 - [ ] Dejar la pestaña abierta 30 s sin tocar nada: el polling no rompe nada (no hay errores en consola).
@@ -56,8 +59,8 @@ Es E2E manual: necesita navegador/dispositivo y un usuario admin creado. No se p
 - [ ] Verificar la merma a mano: si ordeñó 100 y despachó 90 → 10 L · 10 %.
 - [ ] Día con despacho y **sin** ordeño → merma 100 % en **rojo**.
 - [ ] Día con despacho **>** ordeñado → se marca en **rojo** (fuga).
-- [ ] Gráfico de línea: merma de los últimos 30 días (los días sin datos aparecen en 0).
-- [ ] Gráfico de barras por turno (Mañana/Tarde).
+- [ ] Gráfico de línea: **diferencia** (ordeñado − despachado) de los últimos 30 días, con línea de referencia en 0 (los días sin datos aparecen en 0).
+- [ ] Gráfico de barras por turno (Mañana/Tarde/**Sin turno**).
 - [ ] Badge "Última sync": muestra "hace X" y se pone en alerta si pasó **>24 h**.
 - [ ] **Zona horaria:** pasadas las **21:00** hora Argentina, el panel debe seguir mostrando el día de HOY (no mañana/vacío).
 
@@ -74,8 +77,6 @@ Es E2E manual: necesita navegador/dispositivo y un usuario admin creado. No se p
 
 ## Pendientes conocidos al cerrar el loop (revisar en esta pasada)
 
-- [ ] Caption del gráfico de línea: dice "Litros ordeñados menos despachados" pero grafica la magnitud absoluta — alinear el texto.
-- [ ] Barras por turno excluyen despachos **sin turno**; la card "Despachado hoy" sí los incluye — reconciliar (barra "Sin turno" o nota al pie).
 - [ ] Bootstrap del admin (prerrequisito 1–2): hoy `/register` requiere un admin existente.
 
 ## Criterios de éxito (spec)

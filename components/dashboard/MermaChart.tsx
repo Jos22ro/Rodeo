@@ -7,6 +7,7 @@ import {
   Legend,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -20,7 +21,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  SHIFT_LABELS,
+  shiftLabel,
   type DailyMerma,
   type ShiftTotals,
 } from "@/lib/dashboard/merma";
@@ -42,7 +43,7 @@ export function MermaChart({
   shifts: ShiftTotals[];
 }) {
   const shiftData = shifts.map((shift) => ({
-    label: SHIFT_LABELS[shift.shift],
+    label: shiftLabel(shift.shift),
     milked: round(shift.milked),
     dispatched: round(shift.dispatched),
   }));
@@ -51,9 +52,9 @@ export function MermaChart({
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Merma últimos 30 días</CardTitle>
+          <CardTitle>Diferencia últimos 30 días</CardTitle>
           <CardDescription>
-            Litros ordeñados menos despachados, por día.
+            Diferencia ordeñado − despachado (L), por día.
           </CardDescription>
         </CardHeader>
         <CardContent className="h-72">
@@ -71,10 +72,11 @@ export function MermaChart({
               />
               <YAxis tick={{ fontSize: 12 }} width={40} />
               <Tooltip labelFormatter={(value) => shortDate(String(value))} />
+              <ReferenceLine y={0} stroke="var(--border)" />
               <Line
                 type="monotone"
-                dataKey="mermaLiters"
-                name="Merma (L)"
+                dataKey="difference"
+                name="Diferencia (L)"
                 stroke="#dc2626"
                 strokeWidth={2}
                 dot={false}

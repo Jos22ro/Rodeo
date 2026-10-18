@@ -7,6 +7,12 @@ export const SHIFT_LABELS: Record<Shift, string> = {
   afternoon: "Tarde",
 };
 
+export const NO_SHIFT_LABEL = "Sin turno";
+
+export function shiftLabel(shift: Shift | null): string {
+  return shift === null ? NO_SHIFT_LABEL : SHIFT_LABELS[shift];
+}
+
 export interface MermaResult {
   liters: number;
   percent: number;
@@ -17,13 +23,14 @@ export interface DailyMerma {
   date: string;
   milked: number;
   dispatched: number;
+  difference: number;
   mermaLiters: number;
   mermaPercent: number;
   over: boolean;
 }
 
 export interface ShiftTotals {
-  shift: Shift;
+  shift: Shift | null;
   milked: number;
   dispatched: number;
 }
@@ -46,19 +53,6 @@ export interface DispatchShiftLitersRow {
 const MS_PER_MINUTE = 60_000;
 const MS_PER_HOUR = 3_600_000;
 const STALE_HOURS = 24;
-
-export const FARM_TIMEZONE = "America/Argentina/Buenos_Aires";
-
-const FARM_DATE_FORMATTER = new Intl.DateTimeFormat("en-CA", {
-  timeZone: FARM_TIMEZONE,
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-});
-
-export function toFarmDateKey(date: Date): string {
-  return FARM_DATE_FORMATTER.format(date);
-}
 
 export function lastNDays(count: number, todayKey: string): string[] {
   const [year, month, day] = todayKey.split("-").map(Number);
@@ -114,6 +108,7 @@ export function buildMermaSeries(
       date,
       milked,
       dispatched,
+      difference: milked - dispatched,
       mermaLiters: merma.liters,
       mermaPercent: merma.percent,
       over: merma.over,
@@ -125,7 +120,9 @@ export function buildShiftTotals(
   milkings: ShiftLitersRow[],
   dispatches: DispatchShiftLitersRow[],
 ): ShiftTotals[] {
-  return SHIFT_ORDER.map((shift) => ({
+  const shifts: (Shift | null)[] = [...SHIFT_ORDER, null];
+
+  return shifts.map((shift) => ({
     shift,
     milked: milkings
       .filter((milking) => milking.shift === shift)

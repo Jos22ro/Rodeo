@@ -8,15 +8,7 @@ import {
   isStale,
   lastNDays,
   sumByDate,
-  toFarmDateKey,
 } from "./merma.ts";
-
-test("toFarmDateKey maps a UTC instant to the farm-local date", () => {
-  assert.equal(toFarmDateKey(new Date("2026-10-17T12:00:00Z")), "2026-10-17");
-  assert.equal(toFarmDateKey(new Date("2026-10-18T01:00:00Z")), "2026-10-17");
-  assert.equal(toFarmDateKey(new Date("2026-10-18T02:59:59Z")), "2026-10-17");
-  assert.equal(toFarmDateKey(new Date("2026-10-18T03:00:00Z")), "2026-10-18");
-});
 
 test("lastNDays returns the range oldest-first and handles month boundaries", () => {
   assert.deepEqual(lastNDays(3, "2026-01-15"), [
@@ -107,6 +99,7 @@ test("buildMermaSeries fills missing days with zeros", () => {
       date: "2026-10-15",
       milked: 100,
       dispatched: 90,
+      difference: 10,
       mermaLiters: 10,
       mermaPercent: 10,
       over: false,
@@ -115,6 +108,7 @@ test("buildMermaSeries fills missing days with zeros", () => {
       date: "2026-10-16",
       milked: 0,
       dispatched: 20,
+      difference: -20,
       mermaLiters: 20,
       mermaPercent: 100,
       over: true,
@@ -123,6 +117,7 @@ test("buildMermaSeries fills missing days with zeros", () => {
       date: "2026-10-17",
       milked: 40,
       dispatched: 0,
+      difference: 40,
       mermaLiters: 40,
       mermaPercent: 100,
       over: false,
@@ -146,6 +141,7 @@ test("buildShiftTotals groups milkings and dispatches by shift", () => {
   assert.deepEqual(totals, [
     { shift: "morning", milked: 40, dispatched: 35 },
     { shift: "afternoon", milked: 30.5, dispatched: 28 },
+    { shift: null, milked: 0, dispatched: 99 },
   ]);
 });
 

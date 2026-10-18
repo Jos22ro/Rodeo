@@ -1,7 +1,8 @@
+import { DashboardAutoRefresh } from "@/components/dashboard/DashboardAutoRefresh";
 import { LastSyncBadge } from "@/components/dashboard/LastSyncBadge";
 import { MermaChart } from "@/components/dashboard/MermaChart";
 import { SummaryCards } from "@/components/dashboard/SummaryCards";
-import { toFarmDateKey } from "@/lib/dashboard/merma";
+import { todayKey } from "@/lib/format/dates";
 import {
   getLastSyncedAt,
   getMermaSeries,
@@ -12,7 +13,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const today = toFarmDateKey(new Date());
+  const today = todayKey();
 
   try {
     const [summary, series, shifts, lastSyncedAt] = await Promise.all([
@@ -24,6 +25,7 @@ export default async function DashboardPage() {
 
     return (
       <div className="space-y-6">
+        <DashboardAutoRefresh />
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="font-heading text-xl font-semibold">Panel</h1>
@@ -38,7 +40,9 @@ export default async function DashboardPage() {
         <MermaChart series={series} shifts={shifts} />
       </div>
     );
-  } catch {
+  } catch (error) {
+    console.error(error);
+
     return (
       <div className="space-y-4">
         <h1 className="font-heading text-xl font-semibold">Panel</h1>

@@ -57,7 +57,13 @@ async function runSync(): Promise<SyncSummary> {
     }
   }
 
-  return { synced, failed, skipped: false };
+  const summary = { synced, failed, skipped: false };
+
+  if (failed > 0) {
+    console.warn("Sync con tareas fallidas", summary);
+  }
+
+  return summary;
 }
 
 async function pushTask(task: SyncTask) {

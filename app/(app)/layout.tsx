@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LogoutButton } from "@/components/auth/LogoutButton";
+import { SyncIndicator } from "@/components/SyncIndicator";
 import { SyncProvider } from "@/components/SyncProvider";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -20,7 +21,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <Link href="/dashboard" className="text-sm font-medium">
             Panel
           </Link>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
+            <SyncIndicator />
             <LogoutButton />
           </div>
         </nav>

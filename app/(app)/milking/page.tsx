@@ -16,15 +16,9 @@ import { Toaster } from "@/components/ui/toast";
 import { getCurrentUserId } from "@/lib/auth/current-user";
 import { listCows } from "@/lib/db/cows";
 import type { Cow, Milking } from "@/lib/db/schema";
+import { todayKey } from "@/lib/format/dates";
 
 type Shift = Milking["shift"];
-
-function today() {
-  const now = new Date();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${now.getFullYear()}-${month}-${day}`;
-}
 
 export default function MilkingPage() {
   const [cows, setCows] = useState<Cow[]>([]);
@@ -35,7 +29,7 @@ export default function MilkingPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setDate(today());
+    setDate(todayKey());
   }, []);
 
   useEffect(() => {

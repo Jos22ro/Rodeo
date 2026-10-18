@@ -76,7 +76,7 @@ export function DispatchForm({
       toast.add({
         type: "success",
         title: "Despacho guardado",
-        description: `${parsed} L`,
+        description: `${parsed.toLocaleString("es-AR", { maximumFractionDigits: 2 })} L`,
       });
     } catch {
       toast.add({
@@ -135,7 +135,6 @@ export function DispatchForm({
             type="text"
             inputMode="decimal"
             autoComplete="off"
-            pattern="[0-9]*[.,]?[0-9]*"
             value={liters}
             onChange={(event) => setLiters(event.target.value)}
             aria-invalid={Boolean(litersError)}

@@ -13,17 +13,15 @@ import { Toaster } from "@/components/ui/toast";
 import { getCurrentUserId } from "@/lib/auth/current-user";
 import { listDispatches } from "@/lib/db/dispatches";
 import type { Dispatch } from "@/lib/db/schema";
+import { todayKey } from "@/lib/format/dates";
 
 const SHIFT_LABELS: Record<NonNullable<Dispatch["shift"]>, string> = {
   morning: "Mañana",
   afternoon: "Tarde",
 };
 
-function today() {
-  const now = new Date();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${now.getFullYear()}-${month}-${day}`;
+function formatLiters(liters: number) {
+  return liters.toLocaleString("es-AR", { maximumFractionDigits: 2 });
 }
 
 function formatTime(value: Date) {
@@ -40,7 +38,7 @@ export default function DispatchPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setDate(today());
+    setDate(todayKey());
   }, []);
 
   const refresh = useCallback(async (forDate: string) => {
@@ -124,7 +122,8 @@ export default function DispatchPage() {
           <CardTitle>Despachos del día</CardTitle>
           <CardDescription>
             {dispatches.length}{" "}
-            {dispatches.length === 1 ? "registro" : "registros"} · {total} L
+            {dispatches.length === 1 ? "registro" : "registros"} ·{" "}
+            {formatLiters(total)} L
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -149,7 +148,9 @@ export default function DispatchPage() {
                       {formatTime(dispatch.createdAt)}
                     </p>
                   </div>
-                  <p className="text-base font-semibold">{dispatch.liters} L</p>
+                  <p className="text-base font-semibold">
+                    {formatLiters(dispatch.liters)} L
+                  </p>
                 </li>
               ))}
             </ul>
