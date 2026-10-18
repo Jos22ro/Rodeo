@@ -8,7 +8,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background">
       <SyncProvider />
       <header className="border-b">
-        <nav className="mx-auto flex max-w-3xl items-center gap-4 px-4 py-3">
+        <nav className="mx-auto flex max-w-3xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
           <Link href="/cows" className="text-sm font-medium">
             Vacas
           </Link>

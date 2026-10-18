@@ -16,7 +16,7 @@ export default function LoginPage({
   searchParams: { error?: string };
 }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>Sistema Ganadería</CardTitle>

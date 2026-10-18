@@ -92,18 +92,18 @@ export function DispatchForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex flex-wrap items-end gap-4">
-        <div className="space-y-2">
+        <div className="w-full space-y-2 sm:w-auto">
           <Label htmlFor="dispatch-date">Fecha</Label>
           <Input
             id="dispatch-date"
             type="date"
             value={date}
             onChange={(event) => onDateChange(event.target.value)}
-            className="h-10 w-44"
+            className="h-10 w-full sm:w-44"
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="w-full space-y-2 sm:w-auto">
           <Label htmlFor="dispatch-shift">Turno</Label>
           <Select
             value={shift}
@@ -114,7 +114,7 @@ export function DispatchForm({
             <SelectTrigger
               id="dispatch-shift"
               aria-label="Turno"
-              className="h-10 w-36"
+              className="h-10 w-full sm:w-36"
             >
               <SelectValue>
                 {(value) => SHIFT_LABELS[value as ShiftValue] ?? "Sin turno"}
@@ -128,7 +128,7 @@ export function DispatchForm({
           </Select>
         </div>
 
-        <div className="space-y-2">
+        <div className="w-full space-y-2 sm:w-auto">
           <Label htmlFor="dispatch-liters">Litros totales</Label>
           <Input
             id="dispatch-liters"
@@ -139,7 +139,7 @@ export function DispatchForm({
             onChange={(event) => setLiters(event.target.value)}
             aria-invalid={Boolean(litersError)}
             aria-describedby={litersError ? "dispatch-liters-error" : undefined}
-            className="h-10 w-32"
+            className="h-10 w-full sm:w-32"
           />
         </div>
       </div>

@@ -84,7 +84,7 @@ export default function MilkingPage() {
         <CardHeader>
           <CardTitle>Turno y fecha</CardTitle>
           <div className="flex flex-wrap items-end gap-4 pt-2">
-            <div className="space-y-2">
+            <div className="w-full space-y-2 sm:w-auto">
               <Label htmlFor="milking-shift">Turno</Label>
               <Select
                 value={shift}
@@ -95,7 +95,7 @@ export default function MilkingPage() {
                 <SelectTrigger
                   id="milking-shift"
                   aria-label="Turno"
-                  className="h-10 w-36"
+                  className="h-10 w-full sm:w-36"
                 >
                   <SelectValue>
                     {(value) => (value === "afternoon" ? "Tarde" : "Mañana")}
@@ -108,14 +108,14 @@ export default function MilkingPage() {
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="w-full space-y-2 sm:w-auto">
               <Label htmlFor="milking-date">Fecha</Label>
               <Input
                 id="milking-date"
                 type="date"
                 value={date}
                 onChange={(event) => setDate(event.target.value)}
-                className="h-10 w-44"
+                className="h-10 w-full sm:w-44"
               />
             </div>
           </div>

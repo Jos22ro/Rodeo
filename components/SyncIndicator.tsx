@@ -48,7 +48,7 @@ export function SyncIndicator() {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-sm text-muted-foreground">
+      <span className="hidden text-sm text-muted-foreground sm:inline">
         {pending === 0 ? "Sin pendientes" : `${pending} pendientes`}
       </span>
       <Button
@@ -58,7 +58,14 @@ export function SyncIndicator() {
         disabled={syncing}
         onClick={handleSync}
       >
-        {syncing ? "Sincronizando..." : "Sincronizar ahora"}
+        {syncing ? (
+          "Sincronizando..."
+        ) : (
+          <>
+            <span className="sm:hidden">Sincronizar</span>
+            <span className="hidden sm:inline">Sincronizar ahora</span>
+          </>
+        )}
       </Button>
     </div>
   );

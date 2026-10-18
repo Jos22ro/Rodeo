@@ -24,7 +24,7 @@ export default function RegisterPage({
   searchParams: { error?: string; ok?: string };
 }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>Crear usuario</CardTitle>
