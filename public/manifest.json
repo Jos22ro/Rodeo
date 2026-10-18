@@ -3,7 +3,7 @@
   "name": "Sistema Ganadería",
   "short_name": "Ganadería",
   "description": "Registro offline de ordeños y despachos de leche",
-  "start_url": "/",
+  "start_url": "/cows",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
