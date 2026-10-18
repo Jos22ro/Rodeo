@@ -3,6 +3,8 @@ import { test } from "node:test";
 import {
   dedupeQueue,
   fromCowRow,
+  fromDispatchRow,
+  fromMilkingRow,
   toCowRow,
   toDispatchRow,
   toMilkingUpsert,
@@ -82,6 +84,39 @@ test("fromCowRow maps snake_case to camelCase and parses dates", () => {
       synced_at: syncedAt,
     }),
     { ...cow, syncedAt: new Date(syncedAt) },
+  );
+});
+
+test("fromMilkingRow maps snake_case and coerces numeric liters", () => {
+  assert.deepEqual(
+    fromMilkingRow({
+      id: "milking-1",
+      cow_id: "cow-1",
+      date: "2026-10-17",
+      shift: "morning",
+      liters: "12.5",
+      created_by: "user-1",
+      created_at: "2026-10-17T10:00:00.000Z",
+      updated_at: "2026-10-17T10:05:00.000Z",
+      synced_at: syncedAt,
+    }),
+    { ...milking, syncedAt: new Date(syncedAt) },
+  );
+});
+
+test("fromDispatchRow maps snake_case and coerces numeric liters", () => {
+  assert.deepEqual(
+    fromDispatchRow({
+      id: "dispatch-1",
+      date: "2026-10-17",
+      shift: null,
+      liters: "300",
+      created_by: "user-1",
+      created_at: "2026-10-17T10:00:00.000Z",
+      updated_at: "2026-10-17T10:05:00.000Z",
+      synced_at: syncedAt,
+    }),
+    { ...dispatch, syncedAt: new Date(syncedAt) },
   );
 });
 

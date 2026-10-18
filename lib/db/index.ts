@@ -51,9 +51,9 @@ db.cows.hook("deleting", (primKey) => {
 
 db.milkings.hook("creating", (primKey, obj) => {
   const now = new Date();
-  obj.createdAt = now;
-  obj.updatedAt = now;
-  obj.syncedAt = null;
+  obj.createdAt ??= now;
+  obj.updatedAt ??= now;
+  obj.syncedAt ??= null;
 });
 
 db.milkings.hook("updating", markDirty);
@@ -64,9 +64,9 @@ db.milkings.hook("deleting", (primKey) => {
 
 db.dispatches.hook("creating", (primKey, obj) => {
   const now = new Date();
-  obj.createdAt = now;
-  obj.updatedAt = now;
-  obj.syncedAt = null;
+  obj.createdAt ??= now;
+  obj.updatedAt ??= now;
+  obj.syncedAt ??= null;
 });
 
 db.dispatches.hook("updating", markDirty);

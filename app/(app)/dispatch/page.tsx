@@ -12,6 +12,7 @@ import {
 import { Toaster } from "@/components/ui/toast";
 import { getCurrentUserId } from "@/lib/auth/current-user";
 import { listDispatches } from "@/lib/db/dispatches";
+import { SYNCED_EVENT } from "@/lib/db/sync";
 import type { Dispatch } from "@/lib/db/schema";
 import { todayKey } from "@/lib/format/dates";
 
@@ -66,8 +67,14 @@ export default function DispatchPage() {
 
     load();
 
+    const handleSynced = () => {
+      void refresh(date).catch(() => {});
+    };
+    window.addEventListener(SYNCED_EVENT, handleSynced);
+
     return () => {
       cancelled = true;
+      window.removeEventListener(SYNCED_EVENT, handleSynced);
     };
   }, [date, refresh]);
 

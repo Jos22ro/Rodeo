@@ -52,6 +52,56 @@ export function fromCowRow(row: CowRow): Cow {
   };
 }
 
+export interface MilkingRow {
+  id: string;
+  cow_id: string;
+  date: string;
+  shift: Milking["shift"];
+  liters: number | string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  synced_at: string | null;
+}
+
+export function fromMilkingRow(row: MilkingRow): Milking {
+  return {
+    id: row.id,
+    cowId: row.cow_id,
+    date: row.date,
+    shift: row.shift,
+    liters: Number(row.liters),
+    createdBy: row.created_by,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+    syncedAt: row.synced_at ? new Date(row.synced_at) : null,
+  };
+}
+
+export interface DispatchRow {
+  id: string;
+  date: string;
+  shift: Dispatch["shift"];
+  liters: number | string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  synced_at: string | null;
+}
+
+export function fromDispatchRow(row: DispatchRow): Dispatch {
+  return {
+    id: row.id,
+    date: row.date,
+    shift: row.shift,
+    liters: Number(row.liters),
+    createdBy: row.created_by,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+    syncedAt: row.synced_at ? new Date(row.synced_at) : null,
+  };
+}
+
 export function toMilkingUpsert(milking: Milking, syncedAt: string) {
   return {
     row: {

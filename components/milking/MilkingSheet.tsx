@@ -5,6 +5,7 @@ import { CowRow } from "@/components/milking/CowRow";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { listMilkings, saveMilkings } from "@/lib/db/milkings";
+import { SYNCED_EVENT } from "@/lib/db/sync";
 import type { Cow, Milking } from "@/lib/db/schema";
 import { parseLiters } from "@/lib/format/parse-liters";
 
@@ -46,6 +47,16 @@ export function MilkingSheet({
     setValues({});
     setSaved({});
     void loadSaved().catch(() => {});
+  }, [loadSaved]);
+
+  useEffect(() => {
+    const handleSynced = () => {
+      void loadSaved().catch(() => {});
+    };
+
+    window.addEventListener(SYNCED_EVENT, handleSynced);
+
+    return () => window.removeEventListener(SYNCED_EVENT, handleSynced);
   }, [loadSaved]);
 
   function errorFor(cowId: string) {
@@ -134,7 +145,7 @@ export function MilkingSheet({
         ))}
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
           <p className="text-sm text-muted-foreground">
             {pending.length} {pending.length === 1 ? "vaca" : "vacas"}
