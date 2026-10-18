@@ -17,6 +17,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <Link href="/dispatch" className="text-sm font-medium">
             Despacho
           </Link>
+          <Link href="/dashboard" className="text-sm font-medium">
+            Panel
+          </Link>
           <div className="ml-auto">
             <LogoutButton />
           </div>
