@@ -6,7 +6,7 @@ export function LastSyncBadge({ lastSyncedAt }: { lastSyncedAt: Date | null }) {
   const stale = isStale(lastSyncedAt, now);
 
   return (
-    <Badge variant={stale ? "destructive" : "secondary"}>
+    <Badge variant={stale ? "clay" : "secondary"}>
       Última sync: {formatRelativeTime(lastSyncedAt, now)}
     </Badge>
   );

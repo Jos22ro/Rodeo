@@ -23,7 +23,7 @@ export function SummaryCards({ summary }: { summary: TodaySummary }) {
           <CardDescription>Ordeñado hoy</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-2xl font-semibold">
+          <p className="font-heading text-2xl font-semibold tabular-nums">
             {formatLiters(summary.milked)} L
           </p>
           <p className="text-sm text-muted-foreground">Mañana + Tarde</p>
@@ -35,7 +35,7 @@ export function SummaryCards({ summary }: { summary: TodaySummary }) {
           <CardDescription>Despachado hoy</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-2xl font-semibold">
+          <p className="font-heading text-2xl font-semibold tabular-nums">
             {formatLiters(summary.dispatched)} L
           </p>
           <p className="text-sm text-muted-foreground">Salidas registradas</p>
@@ -49,7 +49,7 @@ export function SummaryCards({ summary }: { summary: TodaySummary }) {
         <CardContent>
           <p
             className={cn(
-              "text-2xl font-semibold",
+              "font-heading text-2xl font-semibold tabular-nums",
               mermaCritical && "text-destructive",
             )}
           >

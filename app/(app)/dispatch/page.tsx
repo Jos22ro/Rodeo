@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { DispatchForm } from "@/components/dispatch/DispatchForm";
+import { EmptyState } from "@/components/EmptyState";
 import {
   Card,
   CardContent,
@@ -135,9 +136,10 @@ export default function DispatchPage() {
         </CardHeader>
         <CardContent>
           {dispatches.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No hay despachos para esta fecha.
-            </p>
+            <EmptyState
+              title="Sin despachos"
+              description="No hay despachos registrados para esta fecha."
+            />
           ) : (
             <ul className="divide-y">
               {dispatches.map((dispatch) => (
@@ -145,17 +147,17 @@ export default function DispatchPage() {
                   key={dispatch.id}
                   className="flex items-center justify-between gap-4 py-3"
                 >
-                  <div>
-                    <p className="text-base font-semibold">
+                  <div className="min-w-0">
+                    <p className="text-base font-medium">
                       {dispatch.shift
                         ? SHIFT_LABELS[dispatch.shift]
                         : "Sin turno"}
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground tabular-nums">
                       {formatTime(dispatch.createdAt)}
                     </p>
                   </div>
-                  <p className="text-base font-semibold">
+                  <p className="font-heading text-lg font-semibold tabular-nums">
                     {formatLiters(dispatch.liters)} L
                   </p>
                 </li>

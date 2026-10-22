@@ -35,6 +35,16 @@ function shortDate(value: string): string {
   return `${day}/${month}`;
 }
 
+const tooltipStyle = {
+  background: "var(--popover)",
+  border: "1px solid var(--border)",
+  borderRadius: 12,
+  color: "var(--popover-foreground)",
+  fontSize: 12,
+};
+
+const tickStyle = { fontSize: 12, fill: "var(--muted-foreground)" };
+
 export function MermaChart({
   series,
   shifts,
@@ -68,16 +78,20 @@ export function MermaChart({
                 dataKey="date"
                 tickFormatter={shortDate}
                 minTickGap={24}
-                tick={{ fontSize: 12 }}
+                tick={tickStyle}
               />
-              <YAxis tick={{ fontSize: 12 }} width={40} />
-              <Tooltip labelFormatter={(value) => shortDate(String(value))} />
+              <YAxis tick={tickStyle} width={40} />
+              <Tooltip
+                contentStyle={tooltipStyle}
+                labelStyle={{ color: "var(--muted-foreground)" }}
+                labelFormatter={(value) => shortDate(String(value))}
+              />
               <ReferenceLine y={0} stroke="var(--border)" />
               <Line
                 type="monotone"
                 dataKey="difference"
                 name="Diferencia (L)"
-                stroke="#dc2626"
+                stroke="var(--chart-2)"
                 strokeWidth={2}
                 dot={false}
               />
@@ -102,20 +116,23 @@ export function MermaChart({
                 vertical={false}
                 stroke="var(--border)"
               />
-              <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} width={40} />
-              <Tooltip />
-              <Legend />
+              <XAxis dataKey="label" tick={tickStyle} />
+              <YAxis tick={tickStyle} width={40} />
+              <Tooltip
+                contentStyle={tooltipStyle}
+                labelStyle={{ color: "var(--muted-foreground)" }}
+              />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
               <Bar
                 dataKey="milked"
                 name="Ordeñado (L)"
-                fill="#2563eb"
+                fill="var(--chart-1)"
                 radius={[4, 4, 0, 0]}
               />
               <Bar
                 dataKey="dispatched"
                 name="Despachado (L)"
-                fill="#16a34a"
+                fill="var(--chart-2)"
                 radius={[4, 4, 0, 0]}
               />
             </BarChart>

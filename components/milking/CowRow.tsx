@@ -28,7 +28,7 @@ export function CowRow({
           <Label htmlFor={inputId} className="text-base font-semibold">
             {cow.code}
           </Label>
-          {saved > 0 && <Badge variant="secondary">Ya: {saved} L</Badge>}
+          {saved > 0 && <Badge variant="clay">Ya: {saved} L</Badge>}
         </div>
         <p className="truncate text-sm text-muted-foreground">{cow.name}</p>
         {error && (

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { CowRow } from "@/components/milking/CowRow";
+import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { listMilkings, saveMilkings } from "@/lib/db/milkings";
@@ -80,6 +81,7 @@ export function MilkingSheet({
   const pending = cows
     .map((cow) => ({ cow, liters: parseMilkingLiters(values[cow.id]) ?? 0 }))
     .filter((entry) => entry.liters > 0);
+  const pendingLiters = pending.reduce((sum, entry) => sum + entry.liters, 0);
   const hasErrors = cows.some((cow) => errorFor(cow.id) !== null);
 
   async function handleSave() {
@@ -121,9 +123,10 @@ export function MilkingSheet({
 
   if (cows.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        No hay vacas activas. Cargalas en la sección Vacas.
-      </p>
+      <EmptyState
+        title="No hay vacas activas"
+        description="Cargá o activá vacas en la sección Vacas para registrar el ordeño."
+      />
     );
   }
 
@@ -146,9 +149,11 @@ export function MilkingSheet({
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
-        <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
-          <p className="text-sm text-muted-foreground">
+        <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
+          <p className="text-sm text-muted-foreground tabular-nums">
             {pending.length} {pending.length === 1 ? "vaca" : "vacas"}
+            {pending.length > 0 &&
+              ` · ${pendingLiters.toLocaleString("es-AR", { maximumFractionDigits: 2 })} L`}
           </p>
           <Button
             size="lg"
@@ -156,7 +161,7 @@ export function MilkingSheet({
             onClick={handleSave}
             disabled={saving || hasErrors || !userId || pending.length === 0}
           >
-            {saving ? "Guardando..." : "Guardar Ordeño"}
+            {saving ? "Guardando..." : "Guardar ordeño"}
           </Button>
         </div>
       </div>

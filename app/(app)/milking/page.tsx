@@ -95,7 +95,7 @@ export default function MilkingPage() {
                 <SelectTrigger
                   id="milking-shift"
                   aria-label="Turno"
-                  className="h-10 w-full sm:w-36"
+                  className="w-full sm:w-36"
                 >
                   <SelectValue>
                     {(value) => (value === "afternoon" ? "Tarde" : "Mañana")}
@@ -115,7 +115,7 @@ export default function MilkingPage() {
                 type="date"
                 value={date}
                 onChange={(event) => setDate(event.target.value)}
-                className="h-10 w-full sm:w-44"
+                className="w-full sm:w-44"
               />
             </div>
           </div>

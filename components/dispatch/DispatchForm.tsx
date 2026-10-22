@@ -99,7 +99,7 @@ export function DispatchForm({
             type="date"
             value={date}
             onChange={(event) => onDateChange(event.target.value)}
-            className="h-10 w-full sm:w-44"
+            className="w-full sm:w-44"
           />
         </div>
 
@@ -114,7 +114,7 @@ export function DispatchForm({
             <SelectTrigger
               id="dispatch-shift"
               aria-label="Turno"
-              className="h-10 w-full sm:w-36"
+              className="w-full sm:w-36"
             >
               <SelectValue>
                 {(value) => SHIFT_LABELS[value as ShiftValue] ?? "Sin turno"}
@@ -139,7 +139,7 @@ export function DispatchForm({
             onChange={(event) => setLiters(event.target.value)}
             aria-invalid={Boolean(litersError)}
             aria-describedby={litersError ? "dispatch-liters-error" : undefined}
-            className="h-10 w-full sm:w-32"
+            className="w-full sm:w-32"
           />
         </div>
       </div>
@@ -153,10 +153,10 @@ export function DispatchForm({
       <Button
         type="submit"
         size="lg"
-        className="h-12"
+        className="w-full sm:w-auto"
         disabled={saving || !canSave}
       >
-        {saving ? "Guardando..." : "Guardar Despacho"}
+        {saving ? "Guardando..." : "Guardar despacho"}
       </Button>
     </form>
   );
