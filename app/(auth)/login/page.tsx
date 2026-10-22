@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { login } from "@/lib/auth/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,37 +11,56 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+export const metadata: Metadata = {
+  title: "Iniciá sesión",
+};
+
 export default function LoginPage({
   searchParams,
 }: {
   searchParams: { error?: string };
 }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>Sistema Ganadería</CardTitle>
-          <CardDescription>Iniciá sesión</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form action={login} className="space-y-4">
-            {searchParams.error && (
-              <p className="text-sm text-red-500">{searchParams.error}</p>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
-              <Input id="password" name="password" type="password" required />
-            </div>
-            <Button type="submit" className="w-full">
-              Entrar
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+    <Card className="w-full max-w-sm">
+      <CardHeader>
+        <CardTitle className="text-lg">Iniciá sesión</CardTitle>
+        <CardDescription>Entrá con tu email y contraseña.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form action={login} className="space-y-5">
+          {searchParams.error && (
+            <p
+              role="alert"
+              className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            >
+              {searchParams.error}
+            </p>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Contraseña</Label>
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+            />
+          </div>
+          <Button type="submit" size="lg" className="w-full">
+            Entrar
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
