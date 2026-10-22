@@ -26,20 +26,19 @@ Supabase (Postgres + Auth + RLS) como base cloud · next-pwa (Workbox).
 
 1. Requisitos: Node 20+ y npm.
 2. `npm install`
-3. `cp .env.local.template .env.local` y completar las tres claves
-   (Supabase → *Project Settings → API*): `NEXT_PUBLIC_SUPABASE_URL`,
-   `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
+3. `cp .env.local.template .env.local` y completar las claves: las tres de Supabase
+   (→ *Project Settings → API*): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+   `SUPABASE_SERVICE_ROLE_KEY`; y `SETUP_TOKEN`, un secreto propio (por ejemplo
+   `openssl rand -hex 32`) que habilita el alta del primer admin.
 4. Aplicar `supabase/schema.sql` en el SQL Editor del proyecto: crea las tablas, las políticas RLS,
    los índices y el trigger que llena `public.profiles`.
-5. Crear el **primer admin**: Supabase → *Authentication → Add user* (email + password) y después en
-   el SQL Editor:
-   ```sql
-   update public.profiles set role = 'admin' where email = '<tu-email>';
-   ```
-   Desde ahí ya se pueden crear los demás usuarios desde `/register` (solo admin).
+5. Crear el **primer admin** desde `/setup?token=<SETUP_TOKEN>` con la app corriendo. El link se
+   deshabilita solo cuando ya existe un admin. Desde ahí se crean los demás usuarios en `/register`
+   (solo admin).
 6. `npm run dev` → <http://localhost:3000>
 
-Roles: `admin` (crea usuarios), `owner` (dueño, ve el panel), `capataz` (carga ordeño y despacho).
+Roles: `admin` (crea usuarios y ve el panel), `owner` (dueño, ve el panel), `capataz` (carga ordeño
+y despacho).
 
 Para probar el **Service Worker / PWA** hay que usar el build: `npm run build && npm run start`
 (el SW se genera solo en build; en `dev` no existe).

@@ -30,6 +30,11 @@ export default function CowsPage() {
   const [error, setError] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Cow | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    setNotice(new URLSearchParams(window.location.search).get("notice"));
+  }, []);
 
   const refresh = useCallback(async () => {
     setCows(await listCows());
@@ -128,6 +133,15 @@ export default function CowsPage() {
           Nueva vaca
         </Button>
       </div>
+
+      {notice === "panel" && (
+        <p
+          role="status"
+          className="rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground"
+        >
+          El panel es solo para el dueño.
+        </p>
+      )}
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 

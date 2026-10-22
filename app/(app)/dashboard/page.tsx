@@ -1,7 +1,10 @@
+import { redirect } from "next/navigation";
 import { DashboardAutoRefresh } from "@/components/dashboard/DashboardAutoRefresh";
 import { LastSyncBadge } from "@/components/dashboard/LastSyncBadge";
 import { MermaChart } from "@/components/dashboard/MermaChart";
 import { SummaryCards } from "@/components/dashboard/SummaryCards";
+import { getCurrentProfile } from "@/lib/auth/profile";
+import { canViewDashboard } from "@/lib/auth/roles";
 import { todayKey } from "@/lib/format/dates";
 import {
   getLastSyncedAt,
@@ -13,6 +16,12 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  const profile = await getCurrentProfile();
+
+  if (!canViewDashboard(profile?.role)) {
+    redirect("/cows?notice=panel");
+  }
+
   const today = todayKey();
 
   try {

@@ -4,9 +4,18 @@ import { LogoutButton } from "@/components/auth/LogoutButton";
 import { NavLink } from "@/components/nav/NavLink";
 import { SyncIndicator } from "@/components/SyncIndicator";
 import { SyncProvider } from "@/components/SyncProvider";
+import { getCurrentProfile } from "@/lib/auth/profile";
+import { canViewDashboard } from "@/lib/auth/roles";
 import { brand } from "@/lib/brand/brand";
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default async function AppLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const profile = await getCurrentProfile();
+  const showDashboard = canViewDashboard(profile?.role);
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <SyncProvider />
@@ -36,7 +45,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <NavLink href="/cows">Vacas</NavLink>
             <NavLink href="/milking">Ordeño</NavLink>
             <NavLink href="/dispatch">Despacho</NavLink>
-            <NavLink href="/dashboard">Panel</NavLink>
+            {showDashboard && <NavLink href="/dashboard">Panel</NavLink>}
           </nav>
 
           <div className="ml-auto flex items-center gap-1">

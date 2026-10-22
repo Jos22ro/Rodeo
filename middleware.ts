@@ -33,6 +33,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isPublicPage =
     pathname.startsWith("/login") ||
+    pathname.startsWith("/setup") ||
     pathname.startsWith("/callback") ||
     pathname.startsWith("/offline");
 
