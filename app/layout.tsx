@@ -1,10 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Fraunces, Inter } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
+import { brand } from "@/lib/brand/brand";
 import { cn } from "@/lib/utils";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-heading",
+  axes: ["SOFT", "WONK", "opsz"],
+});
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -18,25 +25,22 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Control de Ordeño y Venta",
-  description: "Registro offline de ordeños y despachos de leche.",
-  manifest: "/manifest.json",
-  icons: {
-    icon: [
-      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
-    ],
-    apple: "/icons/apple-touch-icon.png",
+  applicationName: brand.name,
+  title: {
+    default: brand.name,
+    template: `%s · ${brand.name}`,
   },
+  description: brand.description,
+  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Ganadería",
+    title: brand.name,
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f172a",
+  themeColor: brand.colors.primary,
 };
 
 export default function RootLayout({
@@ -45,7 +49,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("font-sans", inter.variable)}>
+    <html
+      lang="es-AR"
+      className={cn("font-sans", inter.variable, fraunces.variable)}
+    >
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
