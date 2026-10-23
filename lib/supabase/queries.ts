@@ -1,23 +1,15 @@
 import {
+  buildDaySummary,
   buildMermaSeries,
   buildShiftTotals,
-  computeMerma,
   lastNDays,
   sumByDate,
   type DailyMerma,
+  type DaySummary,
   type Shift,
   type ShiftTotals,
 } from "@/lib/dashboard/merma";
 import { createClient } from "./server";
-
-export interface TodaySummary {
-  date: string;
-  milked: number;
-  dispatched: number;
-  mermaLiters: number;
-  mermaPercent: number;
-  mermaOver: boolean;
-}
 
 interface MilkingRow {
   date: string;
@@ -29,6 +21,12 @@ interface DispatchRow {
   date: string;
   shift: Shift | null;
   liters: number;
+}
+
+export interface DashboardData {
+  summary: DaySummary;
+  series: DailyMerma[];
+  shifts: ShiftTotals[];
 }
 
 function queryError(message: string, error: { message: string } | null): never {
@@ -68,51 +66,23 @@ async function fetchDispatches(
   return (data ?? []) as DispatchRow[];
 }
 
-function sumLiters(rows: { liters: number }[]): number {
-  return rows.reduce((total, row) => total + Number(row.liters), 0);
-}
-
-export async function getTodaySummary(date: string): Promise<TodaySummary> {
-  const [milkings, dispatches] = await Promise.all([
-    fetchMilkings(date, date),
-    fetchDispatches(date, date),
-  ]);
-
-  const milked = sumLiters(milkings);
-  const dispatched = sumLiters(dispatches);
-  const merma = computeMerma(milked, dispatched);
-
-  return {
-    date,
-    milked,
-    dispatched,
-    mermaLiters: merma.liters,
-    mermaPercent: merma.percent,
-    mermaOver: merma.over,
-  };
-}
-
-export async function getMermaSeries(
+export async function getDashboardData(
   today: string,
   days = 30,
-): Promise<DailyMerma[]> {
+): Promise<DashboardData> {
   const range = lastNDays(days, today);
-  const from = range[0];
   const [milkings, dispatches] = await Promise.all([
-    fetchMilkings(from, today),
-    fetchDispatches(from, today),
+    fetchMilkings(range[0], today),
+    fetchDispatches(range[0], today),
   ]);
+  const todayMilkings = milkings.filter((row) => row.date === today);
+  const todayDispatches = dispatches.filter((row) => row.date === today);
 
-  return buildMermaSeries(range, sumByDate(milkings), sumByDate(dispatches));
-}
-
-export async function getShiftTotals(date: string): Promise<ShiftTotals[]> {
-  const [milkings, dispatches] = await Promise.all([
-    fetchMilkings(date, date),
-    fetchDispatches(date, date),
-  ]);
-
-  return buildShiftTotals(milkings, dispatches);
+  return {
+    summary: buildDaySummary(today, todayMilkings, todayDispatches),
+    series: buildMermaSeries(range, sumByDate(milkings), sumByDate(dispatches)),
+    shifts: buildShiftTotals(todayMilkings, todayDispatches),
+  };
 }
 
 export async function getLastSyncedAt(): Promise<Date | null> {

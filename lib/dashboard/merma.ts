@@ -40,6 +40,15 @@ export interface LitersRow {
   liters: number;
 }
 
+export interface DaySummary {
+  date: string;
+  milked: number;
+  dispatched: number;
+  mermaLiters: number;
+  mermaPercent: number;
+  over: boolean;
+}
+
 export interface ShiftLitersRow {
   shift: Shift;
   liters: number;
@@ -80,6 +89,28 @@ export function computeMerma(milked: number, dispatched: number): MermaResult {
     liters,
     percent: (liters / milked) * 100,
     over: dispatched > milked,
+  };
+}
+
+export function buildDaySummary(
+  date: string,
+  milkings: LitersRow[],
+  dispatches: LitersRow[],
+): DaySummary {
+  const milked = milkings.reduce((sum, row) => sum + Number(row.liters), 0);
+  const dispatched = dispatches.reduce(
+    (sum, row) => sum + Number(row.liters),
+    0,
+  );
+  const merma = computeMerma(milked, dispatched);
+
+  return {
+    date,
+    milked,
+    dispatched,
+    mermaLiters: merma.liters,
+    mermaPercent: merma.percent,
+    over: merma.over,
   };
 }
 

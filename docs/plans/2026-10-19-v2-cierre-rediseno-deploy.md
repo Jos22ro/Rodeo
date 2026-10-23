@@ -35,7 +35,7 @@ Estado real del código revisado:
 | **PWA** | Mantener `start_url: /cows`, fallback `/offline`, iconos nuevos y `theme_color` de Rodeo. | No romper lo que ya funciona offline. |
 
 ## Tareas
-> Progreso: ✅ #1 (fundación de marca Rodeo), ✅ #2 (shell, auth y componentes), ✅ #3 (permisos por rol), ✅ #4 (onboarding /setup), ✅ #5 (rediseño de pantallas de dominio), ✅ #6 (sync robusto). Pendiente: #7–#9.
+> Progreso: ✅ #1 (fundación de marca Rodeo), ✅ #2 (shell, auth y componentes), ✅ #3 (permisos por rol), ✅ #4 (onboarding /setup), ✅ #5 (rediseño de pantallas de dominio), ✅ #6 (sync robusto), ✅ #7 (Panel: consultas y pulido). Pendiente: #8–#9.
 
 | # | Tarea | Archivos | Depende de | Verificación |
 |---|-------|----------|------------|--------------|

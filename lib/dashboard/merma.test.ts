@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  buildDaySummary,
   buildMermaSeries,
   buildShiftTotals,
   computeMerma,
@@ -79,6 +80,37 @@ test("sumByDate adds rows sharing a date and coerces numeric strings", () => {
   assert.equal(totals.get("2026-10-17"), 15.5);
   assert.equal(totals.get("2026-10-16"), 3);
   assert.equal(totals.get("2026-10-15"), undefined);
+});
+
+test("buildDaySummary sums the day and flags a dispatch over the milking", () => {
+  const summary = buildDaySummary(
+    "2026-10-17",
+    [
+      { date: "2026-10-17", liters: 10 },
+      { date: "2026-10-17", liters: 5.5 },
+    ],
+    [{ date: "2026-10-17", liters: 20 }],
+  );
+
+  assert.deepEqual(summary, {
+    date: "2026-10-17",
+    milked: 15.5,
+    dispatched: 20,
+    mermaLiters: 4.5,
+    mermaPercent: (4.5 / 15.5) * 100,
+    over: true,
+  });
+});
+
+test("buildDaySummary returns zeros for a day without records", () => {
+  assert.deepEqual(buildDaySummary("2026-10-17", [], []), {
+    date: "2026-10-17",
+    milked: 0,
+    dispatched: 0,
+    mermaLiters: 0,
+    mermaPercent: 0,
+    over: false,
+  });
 });
 
 test("buildMermaSeries fills missing days with zeros", () => {

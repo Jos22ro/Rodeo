@@ -6,12 +6,7 @@ import { SummaryCards } from "@/components/dashboard/SummaryCards";
 import { getCurrentProfile } from "@/lib/auth/profile";
 import { canViewDashboard } from "@/lib/auth/roles";
 import { todayKey } from "@/lib/format/dates";
-import {
-  getLastSyncedAt,
-  getMermaSeries,
-  getShiftTotals,
-  getTodaySummary,
-} from "@/lib/supabase/queries";
+import { getDashboardData, getLastSyncedAt } from "@/lib/supabase/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -25,10 +20,8 @@ export default async function DashboardPage() {
   const today = todayKey();
 
   try {
-    const [summary, series, shifts, lastSyncedAt] = await Promise.all([
-      getTodaySummary(today),
-      getMermaSeries(today),
-      getShiftTotals(today),
+    const [data, lastSyncedAt] = await Promise.all([
+      getDashboardData(today),
       getLastSyncedAt(),
     ]);
 
@@ -45,8 +38,8 @@ export default async function DashboardPage() {
           <LastSyncBadge lastSyncedAt={lastSyncedAt} />
         </div>
 
-        <SummaryCards summary={summary} />
-        <MermaChart series={series} shifts={shifts} />
+        <SummaryCards summary={data.summary} />
+        <MermaChart series={data.series} shifts={data.shifts} />
       </div>
     );
   } catch (error) {

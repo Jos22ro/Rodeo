@@ -64,7 +64,8 @@ export function MermaChart({
         <CardHeader>
           <CardTitle>Diferencia últimos 30 días</CardTitle>
           <CardDescription>
-            Diferencia ordeñado − despachado (L), por día.
+            Ordeñado menos despachado, por día. Debajo de cero, se despachó más
+            de lo ordeñado.
           </CardDescription>
         </CardHeader>
         <CardContent className="h-72">

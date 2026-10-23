@@ -5,7 +5,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { cn } from "cn";
-import type { TodaySummary } from "@/lib/supabase/queries";
+import type { DaySummary } from "@/lib/dashboard/merma";
 
 function formatLiters(liters: number): string {
   return (Math.round(liters * 100) / 100).toLocaleString("es-AR", {
@@ -13,8 +13,16 @@ function formatLiters(liters: number): string {
   });
 }
 
-export function SummaryCards({ summary }: { summary: TodaySummary }) {
-  const mermaCritical = summary.mermaOver;
+function formatPercent(percent: number): string {
+  return percent.toLocaleString("es-AR", { maximumFractionDigits: 1 });
+}
+
+export function SummaryCards({ summary }: { summary: DaySummary }) {
+  const mermaCaption = summary.over
+    ? "Salida mayor al ordeñe"
+    : summary.dispatched === 0
+      ? "Sin despachos cargados"
+      : "Leche sin despachar";
 
   return (
     <div className="grid gap-4 sm:grid-cols-3">
@@ -50,15 +58,13 @@ export function SummaryCards({ summary }: { summary: TodaySummary }) {
           <p
             className={cn(
               "font-heading text-2xl font-semibold tabular-nums",
-              mermaCritical && "text-destructive",
+              summary.over && "text-destructive",
             )}
           >
             {formatLiters(summary.mermaLiters)} L ·{" "}
-            {summary.mermaPercent.toFixed(1)}%
+            {formatPercent(summary.mermaPercent)}%
           </p>
-          <p className="text-sm text-muted-foreground">
-            Merma (L) y % sobre lo ordeñado
-          </p>
+          <p className="text-sm text-muted-foreground">{mermaCaption}</p>
         </CardContent>
       </Card>
     </div>
