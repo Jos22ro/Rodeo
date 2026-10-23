@@ -1,4 +1,4 @@
-# Control de Ordeño y Venta
+# Rodeo
 
 App PWA **offline-first** para tambos. El capataz carga la planilla de ordeño y los despachos
 desde el celular, sin señal; al volver la conexión todo se sincroniza solo a Supabase, y el dueño
@@ -43,6 +43,28 @@ y despacho).
 Para probar el **Service Worker / PWA** hay que usar el build: `npm run build && npm run start`
 (el SW se genera solo en build; en `dev` no existe).
 
+## Deploy en Vercel
+
+URL de producción: _pendiente de crear el proyecto en Vercel_.
+
+1. Importar el repo en Vercel. Framework: **Next.js** (build y output por defecto).
+2. Cargar estas variables en **Production** (y Preview si se usan previews):
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY` (server-side: nunca con prefijo `NEXT_PUBLIC_`)
+   - `SETUP_TOKEN` (el mismo secreto local; `/setup` se autodeshabilita si ya existe un admin)
+3. Deploy. La URL queda fija como `https://<proyecto>.vercel.app`.
+4. Smoke test: abrir la URL por HTTPS, verificar `/manifest.json` e iconos 200, instalar la PWA
+   desde el celular y navegar las 4 pestañas sin señal.
+5. Alta de usuarios: con un admin ya existente, crear al capataz desde `/register`. En una base
+   nueva, el primer admin se crea en `/setup?token=<SETUP_TOKEN>`.
+
+Notas:
+- El plan Hobby de Vercel no permite uso comercial; si el tambo es comercial, pasar a Pro o usar
+  un VPS.
+- Tras un deploy nuevo, la PWA puede necesitar una recarga online para tomar el `sw.js` actualizado.
+- Checklist manual completo: `docs/verificacion-manual-v1.md`.
+
 ## Verificación
 
 ```bash
@@ -56,9 +78,11 @@ Pruebas end-to-end manuales (offline, sync, merma, PWA): `docs/verificacion-manu
 
 ## Estado
 
-V1 completa (tareas #1–#9 del plan). La tarea #10 es la verificación E2E manual, que necesita
-navegador/dispositivo y el admin creado.
+V1 completa y V2 en curso (tareas #1–#7 del plan V2 cerradas): marca, roles, `/setup`, rediseño,
+sync con backoff y Panel unificado. Pendiente el deploy a Vercel (#8) y la verificación E2E contra
+producción (#9).
 
 - Spec del producto: `spec.md`
-- Plan de implementación: `docs/plans/2026-10-15-control-ordeño-venta.md`
+- Plan de implementación V1: `docs/plans/2026-10-15-control-ordeño-venta.md`
+- Plan V2: `docs/plans/2026-10-19-v2-cierre-rediseno-deploy.md`
 - Checklist manual: `docs/verificacion-manual-v1.md`
