@@ -38,4 +38,7 @@ export interface SyncQueueItem {
   recordId: string;
   operation: "insert" | "update" | "delete";
   createdAt: Date;
+  attempts: number;
+  lastError: string | null;
+  nextAttemptAt: Date | null;
 }

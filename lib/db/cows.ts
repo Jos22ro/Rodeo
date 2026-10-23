@@ -1,4 +1,4 @@
-import { db } from "./index";
+import { db, enqueueSync } from "./index";
 import type { Cow } from "./schema";
 
 export async function listCows() {
@@ -32,12 +32,7 @@ export async function createCow(input: {
 
   await db.transaction("rw", db.cows, db.syncQueue, async () => {
     await db.cows.add(cow);
-    await db.syncQueue.add({
-      tableName: "cows",
-      recordId: cow.id,
-      operation: "insert",
-      createdAt: new Date(),
-    });
+    await enqueueSync("cows", cow.id, "insert");
   });
 }
 
@@ -47,23 +42,13 @@ export async function updateCow(
 ) {
   await db.transaction("rw", db.cows, db.syncQueue, async () => {
     await db.cows.update(id, { name: input.name, code: input.code });
-    await db.syncQueue.add({
-      tableName: "cows",
-      recordId: id,
-      operation: "update",
-      createdAt: new Date(),
-    });
+    await enqueueSync("cows", id, "update");
   });
 }
 
 export async function toggleCowActive(id: string, active: boolean) {
   await db.transaction("rw", db.cows, db.syncQueue, async () => {
     await db.cows.update(id, { active });
-    await db.syncQueue.add({
-      tableName: "cows",
-      recordId: id,
-      operation: "update",
-      createdAt: new Date(),
-    });
+    await enqueueSync("cows", id, "update");
   });
 }

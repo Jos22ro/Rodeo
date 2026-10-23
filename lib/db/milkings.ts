@@ -1,4 +1,4 @@
-import { db } from "./index";
+import { db, enqueueSync } from "./index";
 import type { Milking } from "./schema";
 
 export const MAX_LITERS_PER_COW = 100;
@@ -46,12 +46,7 @@ export async function saveMilkings(input: {
 
       if (current) {
         await db.milkings.update(current.id, { liters: total });
-        await db.syncQueue.add({
-          tableName: "milkings",
-          recordId: current.id,
-          operation: "update",
-          createdAt: new Date(),
-        });
+        await enqueueSync("milkings", current.id, "update");
       } else {
         const milking: Milking = {
           id: crypto.randomUUID(),
@@ -66,12 +61,7 @@ export async function saveMilkings(input: {
         };
 
         await db.milkings.add(milking);
-        await db.syncQueue.add({
-          tableName: "milkings",
-          recordId: milking.id,
-          operation: "insert",
-          createdAt: new Date(),
-        });
+        await enqueueSync("milkings", milking.id, "insert");
       }
 
       count += 1;

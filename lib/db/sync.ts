@@ -1,6 +1,7 @@
 import { db } from "./index";
 import { supabase } from "@/lib/supabase/client";
 import { getCurrentUserId } from "@/lib/auth/current-user";
+import { isFailed, isTaskDue, retryDelayMs } from "@/lib/format/backoff";
 import {
   dedupeQueue,
   fromCowRow,
@@ -58,16 +59,20 @@ async function runSync(): Promise<SyncSummary> {
     milkings: dirtyIdsFor(tasks, "milkings"),
     dispatches: dirtyIdsFor(tasks, "dispatches"),
   };
+  const due = tasks.filter(
+    (task) => !isFailed(task.attempts) && isTaskDue(task.nextAttemptAt),
+  );
   let synced = 0;
   let failed = 0;
 
-  for (const task of tasks) {
+  for (const task of due) {
     try {
       await pushTask(task);
       synced += 1;
       await db.syncQueue.bulkDelete(task.queueIds);
-    } catch {
+    } catch (error) {
       failed += 1;
+      await scheduleRetry(task, error);
     }
   }
 
@@ -88,6 +93,45 @@ async function runSync(): Promise<SyncSummary> {
   return summary;
 }
 
+async function scheduleRetry(task: SyncTask, error: unknown) {
+  const attempts = task.attempts + 1;
+  const nextAttemptAt = new Date(Date.now() + retryDelayMs(attempts));
+  const lastError = error instanceof Error ? error.message : String(error);
+
+  console.warn("No se pudo sincronizar", task.key, lastError);
+
+  await db.syncQueue
+    .where("id")
+    .anyOf(task.queueIds)
+    .modify((item) => {
+      item.attempts = attempts;
+      item.lastError = lastError;
+      item.nextAttemptAt = nextAttemptAt;
+    });
+}
+
+export interface SyncStatus {
+  pending: number;
+  failed: number;
+}
+
+export async function getSyncStatus(): Promise<SyncStatus> {
+  const tasks = dedupeQueue(await db.syncQueue.toArray());
+
+  return {
+    pending: tasks.length,
+    failed: tasks.filter((task) => isFailed(task.attempts)).length,
+  };
+}
+
+export async function resetBackoff(): Promise<void> {
+  await db.syncQueue.toCollection().modify((item) => {
+    item.attempts = 0;
+    item.lastError = null;
+    item.nextAttemptAt = null;
+  });
+}
+
 async function pullCows(dirtyIds: Set<string>) {
   const { data, error } = await supabase
     .from("cows")
@@ -99,8 +143,13 @@ async function pullCows(dirtyIds: Set<string>) {
     throw new Error(error.message);
   }
 
+  const unsynced = new Set(
+    (await db.cows.toArray())
+      .filter((cow) => cow.syncedAt === null)
+      .map((cow) => cow.id),
+  );
   const cows = ((data ?? []) as CowRow[])
-    .filter((row) => !dirtyIds.has(row.id))
+    .filter((row) => !dirtyIds.has(row.id) && !unsynced.has(row.id))
     .map(fromCowRow);
 
   if (cows.length > 0) {
@@ -169,7 +218,7 @@ async function pullMilkings(dirtyIds: Set<string>) {
     );
 
     if (current) {
-      if (dirtyIds.has(current.id)) {
+      if (dirtyIds.has(current.id) || current.syncedAt === null) {
         continue;
       }
 
@@ -215,8 +264,13 @@ async function pullDispatches(dirtyIds: Set<string>) {
     throw new Error(error.message);
   }
 
+  const unsynced = new Set(
+    (await db.dispatches.toArray())
+      .filter((dispatch) => dispatch.syncedAt === null)
+      .map((dispatch) => dispatch.id),
+  );
   const dispatches = ((data ?? []) as DispatchRow[])
-    .filter((row) => !dirtyIds.has(row.id))
+    .filter((row) => !dirtyIds.has(row.id) && !unsynced.has(row.id))
     .map(fromDispatchRow);
 
   if (dispatches.length > 0) {

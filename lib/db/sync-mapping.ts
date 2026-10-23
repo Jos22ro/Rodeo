@@ -9,6 +9,9 @@ export interface SyncTask {
   recordId: string;
   operation: SyncOperation;
   queueIds: number[];
+  attempts: number;
+  lastError: string | null;
+  nextAttemptAt: Date | null;
 }
 
 function toIso(date: Date) {
@@ -139,9 +142,18 @@ export function dedupeQueue(items: SyncQueueItem[]): SyncTask[] {
     const key = `${item.tableName}:${item.recordId}`;
     const queueId = typeof item.id === "number" ? item.id : null;
     const existing = tasks.get(key);
+    const attempts = item.attempts ?? 0;
+    const lastError = item.lastError ?? null;
+    const nextAttemptAt = item.nextAttemptAt ?? null;
 
     if (existing) {
       existing.operation = item.operation;
+      existing.attempts = Math.max(existing.attempts, attempts);
+      existing.lastError = lastError ?? existing.lastError;
+      existing.nextAttemptAt = latestDate(
+        existing.nextAttemptAt,
+        nextAttemptAt,
+      );
       if (queueId !== null) {
         existing.queueIds.push(queueId);
       }
@@ -154,8 +166,23 @@ export function dedupeQueue(items: SyncQueueItem[]): SyncTask[] {
       recordId: item.recordId,
       operation: item.operation,
       queueIds: queueId === null ? [] : [queueId],
+      attempts,
+      lastError,
+      nextAttemptAt,
     });
   }
 
   return Array.from(tasks.values());
+}
+
+function latestDate(a: Date | null, b: Date | null): Date | null {
+  if (!a) {
+    return b;
+  }
+
+  if (!b) {
+    return a;
+  }
+
+  return a.getTime() >= b.getTime() ? a : b;
 }

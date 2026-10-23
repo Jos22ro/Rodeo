@@ -15,17 +15,42 @@ class GanaderiaDB extends Dexie {
       dispatches: "id, date, syncedAt",
       syncQueue: "++id, tableName, recordId",
     });
+    this.version(2)
+      .stores({
+        cows: "id, code, active",
+        milkings: "id, cowId, date, shift, syncedAt",
+        dispatches: "id, date, syncedAt",
+        syncQueue: "++id, tableName, recordId, nextAttemptAt",
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table("syncQueue")
+          .toCollection()
+          .modify((item) => {
+            item.attempts ??= 0;
+            item.lastError ??= null;
+            item.nextAttemptAt ??= null;
+          });
+      });
   }
 }
 
 export const db = new GanaderiaDB();
 
-function enqueueSync(
+export function enqueueSync(
   tableName: SyncQueueItem["tableName"],
   recordId: string,
   operation: SyncQueueItem["operation"],
 ) {
-  db.syncQueue.add({ tableName, recordId, operation, createdAt: new Date() });
+  return db.syncQueue.add({
+    tableName,
+    recordId,
+    operation,
+    createdAt: new Date(),
+    attempts: 0,
+    lastError: null,
+    nextAttemptAt: null,
+  });
 }
 
 function markDirty(mods: { syncedAt?: Date | null }) {

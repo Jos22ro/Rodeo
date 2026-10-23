@@ -1,4 +1,4 @@
-import { db } from "./index";
+import { db, enqueueSync } from "./index";
 import type { Dispatch } from "./schema";
 import { isValidLiters } from "@/lib/format/parse-liters";
 
@@ -36,12 +36,7 @@ export async function createDispatch(input: {
 
   await db.transaction("rw", db.dispatches, db.syncQueue, async () => {
     await db.dispatches.add(dispatch);
-    await db.syncQueue.add({
-      tableName: "dispatches",
-      recordId: dispatch.id,
-      operation: "insert",
-      createdAt: new Date(),
-    });
+    await enqueueSync("dispatches", dispatch.id, "insert");
   });
 
   return dispatch;

@@ -50,12 +50,25 @@ const dispatch: Dispatch = {
 };
 
 function queueItem(
-  id: number,
+  id: number | undefined,
   tableName: SyncQueueItem["tableName"],
   recordId: string,
   operation: SyncQueueItem["operation"],
+  extra: Partial<
+    Pick<SyncQueueItem, "attempts" | "lastError" | "nextAttemptAt">
+  > = {},
 ): SyncQueueItem {
-  return { id, tableName, recordId, operation, createdAt };
+  return {
+    id,
+    tableName,
+    recordId,
+    operation,
+    createdAt,
+    attempts: 0,
+    lastError: null,
+    nextAttemptAt: null,
+    ...extra,
+  };
 }
 
 test("toCowRow maps camelCase to snake_case and stamps synced_at", () => {
@@ -168,7 +181,26 @@ test("dedupeQueue keeps the last operation per record and collects queue ids", (
     recordId: "milking-1",
     operation: "update",
     queueIds: [1, 2],
+    attempts: 0,
+    lastError: null,
+    nextAttemptAt: null,
   });
+});
+
+test("dedupeQueue keeps the highest attempts and the latest retry", () => {
+  const nextAttemptAt = new Date("2026-10-17T10:30:00.000Z");
+  const tasks = dedupeQueue([
+    queueItem(1, "cows", "cow-1", "update"),
+    queueItem(2, "cows", "cow-1", "update", {
+      attempts: 3,
+      lastError: "network",
+      nextAttemptAt,
+    }),
+  ]);
+
+  assert.equal(tasks[0].attempts, 3);
+  assert.equal(tasks[0].lastError, "network");
+  assert.equal(tasks[0].nextAttemptAt, nextAttemptAt);
 });
 
 test("dedupeQueue keeps a delete as the final operation", () => {
@@ -187,12 +219,7 @@ test("dedupeQueue keeps tasks in first-seen order and skips items without an id"
   const tasks = dedupeQueue([
     queueItem(1, "cows", "cow-1", "update"),
     queueItem(2, "dispatches", "dispatch-1", "insert"),
-    {
-      tableName: "cows",
-      recordId: "cow-2",
-      operation: "insert",
-      createdAt,
-    },
+    queueItem(undefined, "cows", "cow-2", "insert"),
   ]);
 
   assert.deepEqual(
