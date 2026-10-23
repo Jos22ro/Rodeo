@@ -46,6 +46,9 @@ export default async function AppLayout({
             <NavLink href="/milking">Ordeño</NavLink>
             <NavLink href="/dispatch">Despacho</NavLink>
             {showDashboard && <NavLink href="/dashboard">Panel</NavLink>}
+            {profile?.role === "admin" && (
+              <NavLink href="/register">Usuarios</NavLink>
+            )}
           </nav>
 
           <div className="ml-auto flex items-center gap-1">

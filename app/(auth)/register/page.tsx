@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createUser } from "@/lib/auth/actions";
+import { getCurrentProfile } from "@/lib/auth/profile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,11 +24,40 @@ export const metadata: Metadata = {
   title: "Crear usuario",
 };
 
-export default function RegisterPage({
+export default async function RegisterPage({
   searchParams,
 }: {
   searchParams: { error?: string; ok?: string };
 }) {
+  const profile = await getCurrentProfile();
+
+  if (profile?.role !== "admin") {
+    return (
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle className="text-lg">Crear usuario</CardTitle>
+          <CardDescription>Solo un admin puede crear usuarios.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p
+            role="alert"
+            className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          >
+            Solo admin puede crear usuarios
+          </p>
+          <p className="mt-5 text-center text-sm">
+            <Link
+              href="/"
+              className="font-medium text-primary underline-offset-4 hover:underline"
+            >
+              Volver
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
