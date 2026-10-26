@@ -45,7 +45,7 @@ Meta: `main` mergeada, verde y con detalle.
 - [ ] Actualizar progreso: planes V1 (#10) y V2 (#8/#9, línea "Progreso"), README "Estado" con URL final.
 - [ ] `graphify update .` (grafo al día).
 - [ ] Merge de la rama a `main` vía `finishing-a-development-branch`: verificación completa sobre `main` (`npm run lint && npm run typecheck && npm test && npm run build`). Sin push directo.
-- [ ] (Recomendado) Subir el repo a GitHub como backup: hoy todo el código vive solo en esta máquina y el deploy del día 1 no la requiere pero tampoco la respalda.
+- [ ] (Recomendado) Subir el repo a GitHub como backup — hoy no tiene remote y todo vive en esta máquina. Pasa al **jueves del plan de la semana integrada** (`2026-10-26-plan-semana-integrada.md`).
 
 Tiempo estimado: 1–3 h.
 
