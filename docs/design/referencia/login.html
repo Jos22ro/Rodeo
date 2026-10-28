@@ -1,0 +1,842 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#FAF7F0" />
+<title>Inicia sesión · Rodeo</title>
+<meta name="description" content="Acceso a Rodeo: control de ordeño y despacho offline para tambos." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================
+   Rodeo · acceso
+   Tokens espejo de DESIGN.md (app/globals.css + lib/brand/brand.ts)
+   ============================================================ */
+:root{
+  color-scheme: light;
+  --background:#FAF7F0;
+  --card:#FFFFFF;
+  --secondary:#EFE9DA;
+  --foreground:#23211C;
+  --muted:#6B675C;
+  --border:#E3DCCC;
+  --primary:#1F4D3A;
+  --primary-deep:#17392B;
+  --primary-foreground:#F7F3E9;
+  --clay:#B5622F;
+  --clay-soft:#F3E2D5;
+  --clay-ink:#8F4A20;
+  --danger:#B4341F;
+  --ring:#2E6B4E;
+
+  --font-display:'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-body:'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono:ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  --r-sm:8px;
+  --r-md:12px;
+  --r-lg:16px;
+  --shadow-card:0 1px 2px rgba(35,33,28,.06);
+  --shadow-sheet:0 18px 40px -24px rgba(23,57,43,.35);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  min-height:100dvh;
+  background:var(--background);
+  color:var(--foreground);
+  font:400 16px/1.55 var(--font-body);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+h1,h2,h3,p,ul,ol,figure{margin:0}
+ul,ol{padding:0;list-style:none}
+button{font:inherit}
+img,svg{display:block}
+a{color:var(--primary);text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{color:var(--primary-deep)}
+:focus-visible{outline:3px solid color-mix(in srgb, var(--ring) 55%, transparent);outline-offset:2px}
+h1[tabindex="-1"]:focus,h2[tabindex="-1"]:focus{outline:none}
+.tnum{font-variant-numeric:tabular-nums}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+[hidden]{display:none !important}
+
+.shell{display:flex;flex-direction:column;min-height:100dvh}
+
+/* Aviso de conexión: estado normal, no una pantalla rota. */
+.offline{
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  padding:9px 20px;
+  background:var(--secondary);
+  border-bottom:1px solid var(--border);
+  font-size:14px;line-height:1.4;color:var(--foreground);
+}
+.offline svg{width:16px;height:16px;flex:none;color:var(--clay-ink)}
+.offline b{font-weight:600}
+@media (max-width:519px){
+  .offline{justify-content:flex-start;padding:9px 16px;font-size:14px}
+}
+
+/* ---------- marca ---------- */
+.brand-row{display:flex;align-items:center;gap:11px;min-width:0}
+.mark{width:38px;height:38px;flex:none;border-radius:8px}
+.wordmark{font:500 20px/1 var(--font-display);letter-spacing:-.015em;color:var(--foreground)}
+.brand-kicker{
+  font:600 12px/1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);padding-left:12px;border-left:1px solid var(--border);white-space:nowrap;
+}
+.brand-row:hover .wordmark{color:var(--primary-deep)}
+
+/* ---------- barra móvil ---------- */
+.mobile-bar{
+  display:flex;align-items:center;gap:10px;
+  padding:14px 20px;border-bottom:1px solid var(--border);
+}
+.mobile-bar .mark{width:30px;height:30px}
+.mobile-bar .wordmark{font-size:20px}
+.mobile-bar .back{
+  margin-left:auto;display:inline-flex;align-items:center;gap:5px;min-height:44px;
+  font-size:14px;font-weight:500;text-decoration:none;color:var(--primary);
+}
+.mobile-bar .back svg{width:15px;height:15px}
+@media (min-width:1024px){.mobile-bar{display:none}}
+
+/* ---------- split ---------- */
+.split{flex:1;display:grid;grid-template-columns:1fr;min-height:0}
+.brand-col{display:none}
+@media (min-width:1024px){
+  .split{grid-template-columns:minmax(0,1.06fr) minmax(430px,.94fr)}
+  .brand-col{
+    display:flex;flex-direction:column;justify-content:space-between;gap:40px;
+    padding:36px clamp(32px,4.4vw,64px) 30px;
+    border-right:1px solid var(--border);
+  }
+}
+.brand-main{display:flex;flex-direction:column;gap:30px;max-width:460px}
+
+.brand-statement{
+  font:500 40px/1.06 var(--font-display);
+  letter-spacing:-.03em;color:var(--foreground);
+}
+.brand-statement span{display:block;color:var(--primary)}
+.brand-sub{margin-top:16px;font-size:16px;line-height:1.6;color:var(--muted);max-width:35ch}
+.brand-foot{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted)}
+.brand-foot::before{content:"";width:24px;height:1px;background:var(--border);flex:none}
+
+/* ---------- planilla de muestra ---------- */
+.ledger{
+  width:100%;max-width:380px;overflow:hidden;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);
+  box-shadow:var(--shadow-card);
+}
+.ledger-head{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:13px 16px;border-bottom:1px solid var(--border);
+}
+.ledger-head .k{
+  font:600 12px/1 var(--font-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+}
+.pill-local{
+  display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
+  padding:6px 9px;border-radius:999px;
+  background:color-mix(in srgb, var(--primary) 7%, var(--card));
+  color:var(--primary);
+  font:500 12px/1 var(--font-body);letter-spacing:.005em;
+}
+.pill-local::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+.ledger-row{
+  display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:12px;
+  padding:11px 16px;border-bottom:1px dashed var(--border);
+}
+.ledger-row:last-of-type{border-bottom:0}
+.ledger-row .cow{font-size:14px;font-weight:500;line-height:1.3}
+.ledger-row .cow small{
+  display:block;margin-top:2px;
+  font:400 12px/1.3 var(--font-mono);letter-spacing:.02em;color:var(--muted);
+}
+.ledger-row .l{font-size:20px;font-weight:600;letter-spacing:-.01em}
+.ledger-row .l small{margin-left:3px;font-size:12px;font-weight:400;color:var(--muted)}
+.ledger-foot{
+  display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+  padding:12px 16px;background:var(--secondary);border-top:1px solid var(--border);
+}
+.ledger-foot .k{
+  font:600 12px/1 var(--font-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+}
+.ledger-foot .v{font-size:28px;font-weight:600;letter-spacing:-.015em}
+.ledger-foot .v small{margin-left:2px;font-size:12px;font-weight:400;color:var(--muted)}
+.pending{display:flex;align-items:center;gap:8px;margin-top:11px;font-size:12px;line-height:1.4;color:var(--clay-ink)}
+.pending svg{width:15px;height:15px;flex:none}
+code{font-family:var(--font-mono);font-size:.94em}
+
+/* ---------- tarjeta de acceso ---------- */
+.form-col{display:flex;align-items:flex-start;justify-content:center;padding:26px 20px 48px}
+@media (min-width:1024px){.form-col{padding:40px 32px}}
+.card{
+  width:100%;max-width:420px;margin-block:auto;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);
+  box-shadow:var(--shadow-card);
+  padding:clamp(24px,4vw,32px);
+  animation:rise .24s cubic-bezier(.2,.7,.3,1) both;
+}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+.eyebrow{
+  display:flex;align-items:center;gap:9px;
+  font:600 12px/1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+}
+.eyebrow::before{content:"";width:16px;height:1px;background:var(--border);flex:none}
+.card h1{
+  margin-top:12px;
+  font:500 36px/1.1 var(--font-display);
+  letter-spacing:-.025em;
+}
+.card .sub{margin-top:8px;font-size:16px;line-height:1.55;color:var(--muted);max-width:37ch}
+
+form{margin-top:22px}
+.field + .field{margin-top:15px}
+.alert + .field{margin-top:16px}
+.label{
+  display:block;margin-bottom:6px;
+  font:600 12px/1 var(--font-body);letter-spacing:.08em;text-transform:uppercase;color:var(--foreground);
+}
+.input-shell{position:relative}
+.input{
+  width:100%;height:52px;padding:0 14px;
+  background:var(--card);color:var(--foreground);
+  border:1px solid var(--border);border-radius:var(--r-sm);
+  font-size:16px;
+  transition:border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+  appearance:none;
+}
+.input::placeholder{color:color-mix(in srgb, var(--muted) 72%, transparent)}
+.input:hover{border-color:color-mix(in srgb, var(--muted) 38%, var(--border))}
+.input:focus{
+  outline:none;border-color:var(--primary);
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--ring) 22%, transparent);
+}
+.input[aria-invalid="true"]{
+  border-color:var(--danger);
+  background:color-mix(in srgb, var(--danger) 3%, var(--card));
+}
+.input[aria-invalid="true"]:focus{box-shadow:0 0 0 3px color-mix(in srgb, var(--danger) 18%, transparent)}
+.input.has-toggle{padding-right:56px}
+.toggle{
+  position:absolute;top:3px;right:3px;width:44px;height:44px;
+  display:grid;place-items:center;
+  border:0;border-radius:8px;background:transparent;color:var(--muted);
+  cursor:pointer;transition:background 120ms ease,color 120ms ease;
+}
+.toggle:hover{background:var(--secondary);color:var(--foreground)}
+.toggle svg{width:19px;height:19px}
+
+.hint{margin-top:6px;font-size:12px;line-height:1.45;color:var(--muted)}
+.err{display:flex;gap:6px;margin-top:6px;font-size:12px;line-height:1.45;color:var(--danger)}
+.err svg{width:14px;height:14px;flex:none;margin-top:1px}
+
+.alert{
+  display:flex;gap:9px;margin-top:18px;padding:10px 12px;
+  border:1px solid color-mix(in srgb, var(--danger) 30%, var(--border));
+  border-radius:var(--r-sm);
+  background:color-mix(in srgb, var(--danger) 6%, var(--card));
+  color:var(--danger);font-size:14px;line-height:1.45;
+}
+.alert svg{width:16px;height:16px;flex:none;margin-top:1px}
+
+/* ---------- botones ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:48px;padding:0 16px;
+  border:1px solid transparent;border-radius:var(--r-sm);
+  font-size:16px;font-weight:600;letter-spacing:.005em;
+  text-decoration:none;cursor:pointer;
+  transition:background 120ms ease, border-color 120ms ease, color 120ms ease, transform 120ms ease;
+}
+.btn svg{width:17px;height:17px;flex:none}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground)}
+.btn-primary:hover{background:var(--primary-deep);border-color:var(--primary-deep);color:var(--primary-foreground)}
+.btn-primary:active{transform:translateY(1px)}
+.btn-secondary{background:var(--card);border-color:var(--border);color:var(--foreground)}
+.btn-secondary:hover{background:var(--secondary);border-color:color-mix(in srgb, var(--muted) 32%, var(--border));color:var(--foreground)}
+.btn-ghost{background:transparent;color:var(--primary);min-height:44px;padding:0 12px}
+.btn-ghost:hover{background:var(--secondary);color:var(--primary-deep)}
+.btn-block{width:100%;margin-top:20px;min-height:52px}
+.btn[disabled]{opacity:.55;cursor:not-allowed;transform:none}
+
+.rule{border:0;border-top:1px solid var(--border);margin:22px 0 6px}
+.links{display:grid;gap:1px}
+.link-row{
+  display:flex;align-items:center;gap:8px;min-height:44px;
+  font-size:14px;line-height:1.4;text-decoration:none;color:var(--primary);border-radius:8px;
+}
+.link-row:hover{color:var(--primary-deep);text-decoration:underline}
+.link-row svg{width:16px;height:16px;flex:none}
+.link-row .quiet{color:var(--muted);font-weight:400}
+.link-row b{font-weight:600}
+
+/* ---------- sesión iniciada ---------- */
+.session-head{display:flex;align-items:center;gap:12px}
+.session-badge{
+  width:44px;height:44px;flex:none;border-radius:50%;
+  display:grid;place-items:center;
+  background:color-mix(in srgb, var(--primary) 8%, var(--card));color:var(--primary);
+}
+.session-badge svg{width:20px;height:20px}
+.role-pill{
+  display:inline-flex;align-items:center;
+  padding:6px 10px;border-radius:999px;
+  background:var(--secondary);color:var(--foreground);
+  font-size:12px;font-weight:600;letter-spacing:.01em;
+}
+.session h2{margin-top:18px;font:500 28px/1.15 var(--font-display);letter-spacing:-.02em}
+.session > p{margin-top:7px;font-size:14px;line-height:1.55;color:var(--muted)}
+.session > p strong{color:var(--foreground);font-weight:500;word-break:break-word}
+.menu-label{
+  margin-top:20px;
+  font:600 12px/1 var(--font-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+}
+.menu{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.menu li{
+  padding:7px 10px;border:1px solid var(--border);border-radius:999px;
+  font-size:14px;font-weight:500;line-height:1.2;
+}
+.session-note{
+  margin-top:16px;padding:11px 12px;border-radius:var(--r-sm);
+  background:var(--secondary);
+  font-size:14px;line-height:1.5;color:var(--foreground);
+}
+.session-foot{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.session-foot .btn{flex:1 1 auto}
+
+/* ---------- puesta en marcha ---------- */
+.setup-steps{width:100%;max-width:370px}
+.setup-steps li{
+  display:grid;grid-template-columns:26px minmax(0,1fr) auto;align-items:center;gap:12px;
+  padding:13px 0;border-top:1px solid var(--border);
+}
+.setup-steps li:last-child{border-bottom:1px solid var(--border)}
+.step-n{
+  width:26px;height:26px;border-radius:50%;
+  display:grid;place-items:center;
+  border:1px solid var(--border);
+  font:500 12px/1 var(--font-mono);color:var(--muted);
+}
+.setup-steps b{display:block;font-size:14px;font-weight:500;line-height:1.35}
+.setup-steps small{display:block;margin-top:2px;font-size:12px;line-height:1.4;color:var(--muted)}
+.setup-steps .step-state{
+  font:500 12px/1 var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:right;
+}
+.setup-steps .is-done .step-n{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground)}
+.setup-steps .is-done .step-number{display:none}
+.setup-steps .is-done .step-check{display:block;width:12px;height:12px}
+.setup-steps .step-check{display:none}
+.setup-steps .is-done .step-state{color:var(--primary)}
+.setup-steps .is-now .step-n{border-color:var(--primary);color:var(--primary)}
+.setup-steps .is-now .step-state{color:var(--primary)}
+
+.token{
+  width:100%;max-width:370px;margin-top:20px;padding:13px 15px;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);
+}
+.token-k{
+  font:600 12px/1 var(--font-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+}
+.token-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:9px}
+.token code{font:400 14px/1 var(--font-mono);letter-spacing:.02em;color:var(--foreground)}
+.status{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;white-space:nowrap}
+.status svg{width:13px;height:13px;flex:none}
+.status.ok{color:var(--primary)}
+.status.bad{color:var(--danger)}
+.status.used{color:var(--muted)}
+
+/* ---------- estados de la tarjeta ---------- */
+.state-icon{
+  width:48px;height:48px;margin-bottom:18px;border-radius:50%;
+  display:grid;place-items:center;
+  background:color-mix(in srgb, var(--primary) 8%, var(--card));color:var(--primary);
+}
+.state-icon svg{width:22px;height:22px}
+.state-icon.bad{background:color-mix(in srgb, var(--danger) 7%, var(--card));color:var(--danger)}
+.state-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.state-actions .btn{flex:1 1 160px}
+.summary{
+  margin-top:20px;padding:13px 15px;
+  border:1px solid var(--border);border-radius:var(--r-md);
+}
+.summary-k{font:600 12px/1 var(--font-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.summary-v{margin-top:6px;font-size:14px;font-weight:500;line-height:1.4}
+.summary-v span{display:block;margin-top:2px;font-size:12px;font-weight:400;color:var(--muted);word-break:break-word}
+
+/* ---------- instalación ---------- */
+.install{width:100%;max-width:1120px;margin:0 auto;padding:0 clamp(20px,4vw,32px) 64px}
+.install-top{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:16px 0;border-bottom:1px solid var(--border);
+}
+.install-top .brand-row{gap:9px;min-height:44px;text-decoration:none}
+.install-top .mark{width:32px;height:32px}
+.install-top .wordmark{font-size:20px}
+.install-top .back{
+  display:inline-flex;align-items:center;gap:6px;min-height:44px;
+  font-size:14px;font-weight:500;text-decoration:none;color:var(--primary);white-space:nowrap;
+}
+.install-top .back svg{width:15px;height:15px}
+@media (max-width:479px){
+  .install-top .wordmark{font-size:20px}
+}
+
+.install-grid{
+  display:grid;grid-template-columns:1fr;
+  grid-template-areas:"intro" "sheet" "steps" "note";
+  gap:28px;padding-top:38px;align-items:start;
+}
+.install-intro{grid-area:intro}
+.sheet-col{grid-area:sheet}
+@media (min-width:900px){
+  .install-grid{
+    grid-template-columns:minmax(0,1.1fr) minmax(350px,.9fr);
+    grid-template-areas:"intro sheet" "steps sheet" "note sheet";
+    column-gap:clamp(40px,6vw,72px);row-gap:22px;padding-top:60px;
+  }
+}
+.install h1{
+  margin-top:12px;
+  font:500 clamp(36px,5vw,56px)/1.04 var(--font-display);
+  letter-spacing:-.03em;max-width:13ch;
+}
+.install h1 span{display:block;color:var(--primary)}
+.install-lead{margin-top:16px;max-width:46ch;font-size:16px;line-height:1.6;color:var(--muted)}
+.platform{display:flex;align-items:center;gap:7px;margin-top:22px;font-size:14px;color:var(--muted)}
+.platform svg{width:15px;height:15px;flex:none}
+
+.install-steps{grid-area:steps;margin-top:0;max-width:490px}
+.install-steps li{
+  display:grid;grid-template-columns:32px minmax(0,1fr);gap:14px;
+  padding:14px 0;border-top:1px solid var(--border);
+}
+.install-steps li:last-child{border-bottom:1px solid var(--border)}
+.install-steps .n{font:500 12px/1 var(--font-mono);letter-spacing:.05em;color:var(--muted);padding-top:4px}
+.install-steps b{display:block;font-size:16px;font-weight:500;line-height:1.4}
+.install-steps small{display:block;margin-top:3px;font-size:14px;line-height:1.5;color:var(--muted)}
+.install-note{
+  grid-area:note;margin-top:0;
+  max-width:46ch;font-size:14px;line-height:1.55;color:var(--muted);
+}
+
+.sheet{
+  width:100%;max-width:384px;margin:0 auto;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);
+  box-shadow:var(--shadow-sheet);
+  padding:22px 20px 18px;
+}
+.app-row{display:flex;align-items:center;gap:13px}
+.app-icon{width:58px;height:58px;flex:none;border-radius:12px;overflow:hidden}
+.app-icon svg{width:100%;height:100%}
+.app-name{font:500 20px/1.15 var(--font-display);letter-spacing:-.015em}
+.app-sub{margin-top:3px;font-size:14px;line-height:1.4;color:var(--muted)}
+.sheet-rule{border:0;border-top:1px solid var(--border);margin:16px 0}
+.features li{
+  display:flex;align-items:flex-start;gap:8px;
+  padding:6px 0;font-size:14px;line-height:1.45;
+}
+.features svg{width:15px;height:15px;flex:none;margin-top:2px;color:var(--primary)}
+.sheet .btn-block{margin-top:14px}
+.sheet .btn-ghost{width:100%;margin-top:2px}
+.sheet-meta{margin-top:10px;font-size:12px;line-height:1.5;color:var(--muted);text-align:center}
+
+.help{
+  margin-top:12px;padding:11px 12px;
+  border:1px solid var(--border);border-radius:var(--r-sm);
+  background:var(--secondary);
+  font-size:14px;line-height:1.5;color:var(--foreground);
+}
+.help b{font-weight:600}
+.installed{display:none}
+.is-installed .sheet{display:none}
+.is-installed .installed{display:block}
+.is-installed .install-lead,
+.is-installed .platform,
+.is-installed .install-steps,
+.is-installed .install-note{display:none}
+.installed{
+  width:100%;max-width:384px;margin:0 auto;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);
+  box-shadow:var(--shadow-card);padding:26px 22px;
+  text-align:center;
+}
+.installed-mark{
+  width:52px;height:52px;margin:0 auto 16px;border-radius:50%;
+  display:grid;place-items:center;
+  background:color-mix(in srgb, var(--primary) 8%, var(--card));color:var(--primary);
+}
+.installed-mark svg{width:23px;height:23px}
+.installed h2{font:500 28px/1.15 var(--font-display);letter-spacing:-.02em}
+.installed p{margin-top:7px;font-size:14px;line-height:1.55;color:var(--muted)}
+.installed .btn{margin-top:18px;width:100%}
+
+@media (max-width:519px){
+  .card{border-radius:var(--r-lg)}
+  .form-col{padding:20px 16px 40px}
+}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+  }
+}
+    .setup-steps .is-error .step-n{border-color:var(--danger);color:var(--danger)}
+    .setup-steps .is-error .step-state{color:var(--danger)}
+
+</style>
+</head>
+<body>
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <defs>
+    <symbol id="i-mark" viewBox="0 0 512 512">
+      <rect width="512" height="512" rx="112" fill="#1F4D3A"/>
+      <g transform="translate(-9 0)" fill="none" stroke="#F7F3E9" stroke-width="46" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M186 138V374"/>
+        <path d="M186 161H258A57 57 0 0 1 258 275H186"/>
+        <path d="M255 281C290 305 320 338 344 372"/>
+      </g>
+    </symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 6 9 17l-5-5"/>
+    </symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M12 8v4.5"/>
+      <path d="M12 16h.01"/>
+    </symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </symbol>
+    <symbol id="i-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 3l18 18"/>
+      <path d="M10.6 6.1A9.9 9.9 0 0 1 12 6c6 0 9.5 6 9.5 6a17 17 0 0 1-2.2 3"/>
+      <path d="M6.6 6.7C4 8.6 2.5 12 2.5 12S6 18 12 18a9.8 9.8 0 0 0 4.3-1"/>
+      <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
+    </symbol>
+    <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3v12"/>
+      <path d="m7 10 5 5 5-5"/>
+      <path d="M5 21h14"/>
+    </symbol>
+    <symbol id="i-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 12h14"/>
+      <path d="m13 6 6 6-6 6"/>
+    </symbol>
+    <symbol id="i-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 12H5"/>
+      <path d="m11 18-6-6 6-6"/>
+    </symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M12 7v5l3 2"/>
+    </symbol>
+    <symbol id="i-offline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M6 18 18 6"/>
+    </symbol>
+    <symbol id="i-cow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6Z"/>
+      <path d="M4 8 2.5 5.5"/>
+      <path d="M20 8l1.5-2.5"/>
+      <path d="M9 17v2"/>
+      <path d="M15 17v2"/>
+      <path d="M9 12h.01"/>
+      <path d="M15 12h.01"/>
+    </symbol>
+  </defs>
+</svg>
+
+
+<div class="shell">
+  <div class="offline" id="offline" hidden>
+    <svg aria-hidden="true"><use href="#i-offline"/></svg>
+    <span><b>Sin conexión.</b> Para entrar necesitas señal. Los registros guardados en este teléfono no se pierden.</span>
+  </div>
+
+  <div class="mobile-bar">
+    <svg class="mark" aria-hidden="true"><use href="#i-mark"/></svg>
+    <span class="wordmark">Rodeo</span>
+  </div>
+
+  <div class="split">
+    <aside class="brand-col" aria-label="Rodeo">
+      <div class="brand-row">
+        <svg class="mark" aria-hidden="true"><use href="#i-mark"/></svg>
+        <span class="wordmark">Rodeo</span>
+        <span class="brand-kicker">Acceso</span>
+      </div>
+
+      <div class="brand-main">
+        <div>
+          <p class="brand-statement">Cada litro queda.<span>Incluso sin señal.</span></p>
+          <p class="brand-sub">La planilla del turno vive en el teléfono. El panel del dueño concilia cuando vuelve la señal.</p>
+        </div>
+
+        <div>
+          <div class="ledger" role="group" aria-label="Ejemplo de planilla del turno">
+            <div class="ledger-head">
+              <span class="k">Hoy · turno tarde</span>
+              <span class="pill-local">Guardado local</span>
+            </div>
+            <div class="ledger-row">
+              <span class="cow">Vaca 042<small>Ordeño · 15:12</small></span>
+              <span class="l tnum">18,2<small>L</small></span>
+            </div>
+            <div class="ledger-row">
+              <span class="cow">Vaca 051<small>Ordeño · 15:18</small></span>
+              <span class="l tnum">21,0<small>L</small></span>
+            </div>
+            <div class="ledger-row">
+              <span class="cow">Vaca 063<small>Ordeño · 15:24</small></span>
+              <span class="l tnum">16,8<small>L</small></span>
+            </div>
+            <div class="ledger-foot">
+              <span class="k">Total del turno</span>
+              <span class="v tnum">56,0<small>L</small></span>
+            </div>
+          </div>
+          <p class="pending">
+            <svg aria-hidden="true"><use href="#i-clock"/></svg>
+            3 registros esperan señal. No se pierde nada.
+          </p>
+        </div>
+      </div>
+
+      <p class="brand-foot">Rodeo · Carabobo, Venezuela</p>
+    </aside>
+
+    <main class="form-col">
+      <div class="card">
+        <div id="loginBlock">
+          <p class="eyebrow">Tu cuenta</p>
+          <h1>Inicia sesión.</h1>
+          <p class="sub">Entra con tu email y contraseña. Tu rol define el menú; no se elige aquí.</p>
+
+          <form id="loginForm" novalidate>
+            <div class="alert" id="loginAlert" role="alert" hidden>
+              <svg aria-hidden="true"><use href="#i-alert"/></svg>
+              <span id="loginAlertText">Correo o contraseña incorrectos. Revísalos e intenta de nuevo.</span>
+            </div>
+
+            <div class="field">
+              <label class="label" for="email">Email</label>
+              <input class="input" id="email" name="email" type="email" inputmode="email" autocomplete="email" spellcheck="false" placeholder="tu@correo.com" aria-describedby="emailErr" />
+              <p class="err" id="emailErr" hidden>
+                <svg aria-hidden="true"><use href="#i-alert"/></svg>
+                <span>Ingresa un correo válido.</span>
+              </p>
+            </div>
+
+            <div class="field">
+              <label class="label" for="password">Contraseña</label>
+              <div class="input-shell">
+                <input class="input has-toggle" id="password" name="password" type="password" autocomplete="current-password" aria-describedby="passwordErr" />
+                <button class="toggle" id="togglePassword" type="button" aria-pressed="false" aria-label="Mostrar contraseña">
+                  <svg id="eyeOpen" aria-hidden="true"><use href="#i-eye"/></svg>
+                  <svg id="eyeClosed" aria-hidden="true" hidden><use href="#i-eye-off"/></svg>
+                </button>
+              </div>
+              <p class="err" id="passwordErr" hidden>
+                <svg aria-hidden="true"><use href="#i-alert"/></svg>
+                <span>La contraseña debe tener al menos 6 caracteres.</span>
+              </p>
+            </div>
+
+            <button class="btn btn-primary btn-block" type="submit">
+              Entrar
+              <svg aria-hidden="true"><use href="#i-arrow-right"/></svg>
+            </button>
+          </form>
+
+          <hr class="rule" />
+          <div class="links">
+            <a class="link-row" href="instalacion.html">
+              <svg aria-hidden="true"><use href="#i-download"/></svg>
+              Instala Rodeo en este celular
+            </a>
+            <a class="link-row" href="setup.html?token=RODEO-2026">
+              <svg aria-hidden="true"><use href="#i-arrow-right"/></svg>
+              <span><span class="quiet">¿Primera instalación?</span> <b>Configura el administrador</b></span>
+            </a>
+          </div>
+        </div>
+
+        <div class="session" id="session" hidden>
+          <div class="session-head">
+            <span class="session-badge"><svg aria-hidden="true"><use href="#i-check"/></svg></span>
+            <span class="role-pill" id="sessionRole">Capataz</span>
+          </div>
+          <h2 id="sessionTitle" tabindex="-1">Sesión iniciada.</h2>
+          <p><strong id="sessionEmail"></strong></p>
+          <p class="menu-label">Tu menú</p>
+          <ul class="menu" id="sessionMenu"></ul>
+          <div class="session-note" id="sessionNote"></div>
+          <div class="session-foot">
+            <button class="btn btn-secondary" id="logout" type="button">Cerrar sesión</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+(function () {
+  var offline = document.getElementById('offline');
+  var params = new URLSearchParams(location.search);
+
+  function paintConnection() {
+    var forced = params.get('offline') === '1';
+    var online = navigator.onLine && !forced;
+    offline.hidden = online;
+  }
+  paintConnection();
+  window.addEventListener('online', paintConnection);
+  window.addEventListener('offline', paintConnection);
+
+  var form = document.getElementById('loginForm');
+  var email = document.getElementById('email');
+  var password = document.getElementById('password');
+  var emailErr = document.getElementById('emailErr');
+  var passwordErr = document.getElementById('passwordErr');
+  var alertBox = document.getElementById('loginAlert');
+  var alertText = document.getElementById('loginAlertText');
+  var toggle = document.getElementById('togglePassword');
+  var eyeOpen = document.getElementById('eyeOpen');
+  var eyeClosed = document.getElementById('eyeClosed');
+  var loginBlock = document.getElementById('loginBlock');
+  var session = document.getElementById('session');
+
+  function setFieldError(input, box, show) {
+    if (show) {
+      input.setAttribute('aria-invalid', 'true');
+      box.hidden = false;
+    } else {
+      input.removeAttribute('aria-invalid');
+      box.hidden = true;
+    }
+  }
+
+  function clearErrors() {
+    setFieldError(email, emailErr, false);
+    setFieldError(password, passwordErr, false);
+    alertBox.hidden = true;
+  }
+
+  if (params.get('error') === '1') {
+    alertBox.hidden = false;
+    alertText.textContent = 'Correo o contraseña incorrectos. Revísalos e intenta de nuevo.';
+  }
+
+  email.addEventListener('input', function () { setFieldError(email, emailErr, false); alertBox.hidden = true; });
+  password.addEventListener('input', function () { setFieldError(password, passwordErr, false); alertBox.hidden = true; });
+
+  toggle.addEventListener('click', function () {
+    var showing = password.type === 'text';
+    password.type = showing ? 'password' : 'text';
+    toggle.setAttribute('aria-pressed', String(!showing));
+    toggle.setAttribute('aria-label', showing ? 'Mostrar contraseña' : 'Ocultar contraseña');
+    eyeOpen.hidden = !showing;
+    eyeClosed.hidden = showing;
+    password.focus();
+  });
+
+  function roleFor(address) {
+    var local = address.split('@')[0].toLowerCase();
+    if (local === 'admin' || local.indexOf('admin.') === 0) return 'admin';
+    if (local === 'dueno' || local === 'owner') return 'owner';
+    return 'capataz';
+  }
+
+  var roles = {
+    admin: {
+      name: 'Administrador',
+      menu: ['Vacas', 'Ordeño', 'Despacho', 'Panel', 'Usuarios'],
+      note: 'Puedes crear usuarios y ver la conciliación del día.'
+    },
+    owner: {
+      name: 'Dueño',
+      menu: ['Vacas', 'Ordeño', 'Despacho', 'Panel'],
+      note: 'El Panel muestra la conciliación. La captura del turno sigue en manos del capataz.'
+    },
+    capataz: {
+      name: 'Capataz',
+      menu: ['Vacas', 'Ordeño', 'Despacho'],
+      note: 'El Panel no aparece para tu rol. La planilla se captura sin señal y se sube sola.'
+    }
+  };
+
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    clearErrors();
+
+    var emailValue = email.value.trim();
+    var passwordValue = password.value;
+    var firstInvalid = null;
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
+      setFieldError(email, emailErr, true);
+      firstInvalid = email;
+    }
+    if (passwordValue.length < 6) {
+      setFieldError(password, passwordErr, true);
+      firstInvalid = firstInvalid || password;
+    }
+    if (firstInvalid) {
+      firstInvalid.focus();
+      return;
+    }
+
+    if (params.get('error') === '1') {
+      alertBox.hidden = false;
+      alertText.textContent = 'Correo o contraseña incorrectos. Revísalos e intenta de nuevo.';
+      email.focus();
+      return;
+    }
+
+    var key = roleFor(emailValue);
+    var role = roles[key];
+    document.getElementById('sessionRole').textContent = role.name;
+    document.getElementById('sessionEmail').textContent = emailValue;
+    var note = document.getElementById('sessionNote');
+    note.textContent = role.note;
+    var menu = document.getElementById('sessionMenu');
+    menu.textContent = '';
+    role.menu.forEach(function (item) {
+      var li = document.createElement('li');
+      li.textContent = item;
+      menu.appendChild(li);
+    });
+
+    loginBlock.hidden = true;
+    session.hidden = false;
+    document.getElementById('sessionTitle').focus();
+  });
+
+  document.getElementById('logout').addEventListener('click', function () {
+    session.hidden = true;
+    loginBlock.hidden = false;
+    alertBox.hidden = true;
+    password.value = '';
+    password.type = 'password';
+    toggle.setAttribute('aria-pressed', 'false');
+    toggle.setAttribute('aria-label', 'Mostrar contraseña');
+    eyeOpen.hidden = false;
+    eyeClosed.hidden = true;
+    email.focus();
+  });
+})();
+</script>
+</body>
+</html>

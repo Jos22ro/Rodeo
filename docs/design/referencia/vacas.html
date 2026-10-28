@@ -1,0 +1,1088 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#FAF7F0" />
+<title>Vacas · Rodeo</title>
+<meta name="description" content="Catálogo de vacas de Rodeo: alta, edición y baja lógica, también sin señal." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root{
+  color-scheme:light;
+  --background:#FAF7F0;
+  --card:#FFFFFF;
+  --secondary:#EFE9DA;
+  --foreground:#23211C;
+  --muted:#6B675C;
+  --border:#E3DCCC;
+  --primary:#1F4D3A;
+  --primary-deep:#17392B;
+  --primary-foreground:#F7F3E9;
+  --clay:#B5622F;
+  --clay-soft:#F3E2D5;
+  --clay-ink:#8F4A20;
+  --danger:#B4341F;
+  --ring:#2E6B4E;
+  --font-display:'Fraunces',Georgia,'Times New Roman',serif;
+  --font-body:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --font-mono:ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;
+  --r-sm:8px;
+  --r-md:12px;
+  --r-lg:16px;
+  --shadow-card:0 1px 2px rgba(35,33,28,.06);
+  --shadow-sheet:0 18px 40px -24px rgba(23,57,43,.35);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;min-height:100dvh;
+  background:var(--background);color:var(--foreground);
+  font:400 16px/1.55 var(--font-body);
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,p,ul,ol{margin:0}
+ul,ol{padding:0;list-style:none}
+button{font:inherit}
+svg{display:block}
+a{color:var(--primary);text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{color:var(--primary-deep)}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--ring) 60%,transparent);outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+[hidden]{display:none !important}
+.skip{position:absolute;left:12px;top:-52px;z-index:99;display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:8px;background:var(--primary);color:var(--primary-foreground);text-decoration:none;font-size:14px}
+.skip:focus{top:12px}
+
+/* ---------- barra de la app ---------- */
+.appbar{position:sticky;top:0;z-index:40;background:var(--background);border-bottom:1px solid var(--border)}
+.appbar-inner{max-width:1024px;margin:0 auto;padding:10px 20px 0;display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px}
+.brand{display:flex;align-items:center;gap:9px;min-height:44px;text-decoration:none;color:var(--foreground)}
+.brand .mark{width:30px;height:30px;border-radius:8px;flex:none}
+.brand .word{font:500 19px/1 var(--font-display);letter-spacing:-.015em}
+.brand .kicker{font:600 11px/1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding-left:10px;border-left:1px solid var(--border);white-space:nowrap}
+.brand:hover .word{color:var(--primary-deep)}
+.appnav{display:flex;gap:2px;order:3;width:100%;margin:0 -20px;padding:0 20px;border-top:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.appnav::-webkit-scrollbar{display:none}
+.appnav a{position:relative;display:inline-flex;align-items:center;min-height:44px;padding:0 10px;border-radius:8px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;white-space:nowrap}
+.appnav a:hover{background:var(--secondary);color:var(--foreground)}
+.appnav a[aria-current="page"]{color:var(--primary)}
+.appnav a[aria-current="page"]::after{content:"";position:absolute;left:10px;right:10px;bottom:0;height:2px;background:var(--primary)}
+.appbar-end{display:flex;align-items:center;gap:8px;margin-left:auto}
+@media (min-width:900px){
+  .appbar-inner{padding:0 20px;min-height:64px;flex-wrap:nowrap}
+  .appnav{order:0;width:auto;margin:0;padding:0;border-top:0;margin-left:6px}
+}
+@media (max-width:519px){
+  .brand .kicker{display:none}
+  .appnav a{padding:0 8px}
+}
+
+/* sincronización */
+.sync{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  min-width:44px;min-height:44px;padding:0 10px;border:1px solid transparent;border-radius:8px;
+  background:transparent;color:var(--muted);font:500 12px/1 var(--font-body);
+  cursor:pointer;white-space:nowrap;
+}
+.sync:hover{background:var(--secondary);color:var(--foreground)}
+.sync i{width:6px;height:6px;border-radius:50%;background:var(--primary);flex:none}
+.sync.has-pending,.sync.is-off{color:var(--clay-ink)}
+.sync.has-pending i,.sync.is-off i{background:var(--clay)}
+
+/* cuenta */
+.account{position:relative}
+.account summary{list-style:none;display:flex;align-items:center;gap:9px;min-width:44px;min-height:44px;padding:0 4px;border-radius:8px;cursor:pointer}
+.account summary::-webkit-details-marker{display:none}
+.account summary:hover{background:var(--secondary)}
+.avatar{width:32px;height:32px;flex:none;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--primary) 10%,var(--card));color:var(--primary);font:600 11px/1 var(--font-body);letter-spacing:.03em}
+.account .who{display:none}
+.account .chev{width:14px;height:14px;color:var(--muted);display:none}
+@media (min-width:640px){
+  .account .who{display:block;font-size:13px;line-height:1.25;font-weight:500}
+  .account .who small{display:block;font-size:11px;font-weight:400;color:var(--muted)}
+  .account .chev{display:block}
+}
+.account-menu{position:absolute;right:0;top:calc(100% + 8px);width:236px;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-sheet);padding:6px;z-index:60}
+.account-menu a{display:flex;align-items:center;gap:9px;min-height:44px;padding:0 10px;border-radius:8px;font-size:14px;color:var(--foreground);text-decoration:none}
+.account-menu a:hover{background:var(--secondary);color:var(--foreground)}
+.account-menu svg{width:16px;height:16px;color:var(--muted)}
+.account-menu .sep{height:1px;background:var(--border);margin:4px 6px}
+
+/* aviso de conexión */
+.offline{display:flex;align-items:center;justify-content:center;gap:9px;padding:9px 20px;background:var(--secondary);border-bottom:1px solid var(--border);font-size:14px;line-height:1.4}
+.offline svg{width:16px;height:16px;flex:none;color:var(--clay-ink)}
+.offline b{font-weight:600}
+@media (max-width:519px){.offline{justify-content:flex-start;padding:9px 16px}}
+
+/* ---------- página ---------- */
+.page{max-width:1024px;margin:0 auto;padding:clamp(24px,4vw,40px) 20px 48px}
+.page-head{display:flex;flex-direction:column;gap:24px;padding-bottom:26px}
+@media (min-width:800px){
+  .page-head{flex-direction:row;align-items:flex-end;justify-content:space-between;gap:48px}
+  .head-side{align-items:flex-end;min-width:262px}
+}
+.eyebrow{display:flex;align-items:center;gap:9px;font:600 11px/1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.eyebrow::before{content:"";width:16px;height:1px;background:var(--border);flex:none}
+h1{margin-top:11px;font:500 clamp(30px,4.2vw,40px)/1.08 var(--font-display);letter-spacing:-.028em}
+.lead{margin-top:10px;max-width:52ch;font-size:16px;line-height:1.6;color:var(--muted)}
+.head-side{display:flex;flex-direction:column;gap:16px;width:100%}
+
+/* conteo del hato */
+.herd{display:flex;flex-direction:column;gap:8px;width:100%}
+@media (min-width:800px){.herd{max-width:262px}}
+.herd-num{display:flex;align-items:baseline;gap:8px}
+.herd-num b{font:500 34px/1 var(--font-display);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.herd-num span{font-size:13px;line-height:1.3;color:var(--muted)}
+.herd-bar{height:4px;border-radius:999px;background:var(--secondary);overflow:hidden}
+.herd-bar i{display:block;height:100%;width:0;background:var(--primary);border-radius:999px;transition:width 240ms cubic-bezier(.2,.7,.3,1)}
+.herd-note{font-size:12px;line-height:1.45;color:var(--muted)}
+
+/* ---------- botones ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border:1px solid transparent;border-radius:var(--r-sm);font-size:15px;font-weight:600;letter-spacing:.005em;text-decoration:none;cursor:pointer;transition:background 120ms ease,border-color 120ms ease,color 120ms ease,transform 120ms ease}
+.btn svg{width:17px;height:17px;flex:none}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground)}
+.btn-primary:hover{background:var(--primary-deep);border-color:var(--primary-deep);color:var(--primary-foreground)}
+.btn-primary:active{transform:translateY(1px)}
+.btn-secondary{background:var(--card);border-color:var(--border);color:var(--foreground)}
+.btn-secondary:hover{background:var(--secondary);border-color:color-mix(in srgb,var(--muted) 32%,var(--border));color:var(--foreground)}
+.btn-ghost{background:transparent;color:var(--primary);padding:0 12px}
+.btn-ghost:hover{background:var(--secondary);color:var(--primary-deep)}
+.btn-ghost.is-danger{color:var(--clay-ink)}
+.btn-ghost.is-danger:hover{background:var(--clay-soft);color:var(--clay-ink)}
+.btn-danger{background:var(--danger);border-color:var(--danger);color:var(--primary-foreground)}
+.btn-danger:hover{background:color-mix(in srgb,var(--danger) 86%,var(--foreground));border-color:color-mix(in srgb,var(--danger) 86%,var(--foreground));color:var(--primary-foreground)}
+.btn[disabled]{opacity:.5;cursor:not-allowed;transform:none}
+.new-cow{width:100%}
+@media (min-width:800px){.new-cow{width:auto}}
+
+/* ---------- panel ---------- */
+.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow-card);overflow:hidden}
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border)}
+.search{position:relative;flex:1 1 240px;min-width:0}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted);pointer-events:none}
+.search input{width:100%;height:44px;padding:0 12px 0 36px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--card);color:var(--foreground);font:400 14px/1 var(--font-body);appearance:none}
+.search input::placeholder{color:color-mix(in srgb,var(--muted) 80%,transparent)}
+.search input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--ring) 22%,transparent)}
+.segmented{display:flex;gap:2px;padding:2px;background:var(--secondary);border-radius:10px;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.segmented::-webkit-scrollbar{display:none}
+.segmented button{min-height:44px;padding:0 12px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-size:13px;font-weight:500;white-space:nowrap;cursor:pointer;transition:background 120ms ease,color 120ms ease}
+.segmented button:hover{color:var(--foreground)}
+.segmented button[aria-pressed="true"]{background:var(--card);color:var(--foreground);box-shadow:var(--shadow-card)}
+.toolbar .count{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+
+/* tabla */
+.table-wrap{display:none}
+table{width:100%;border-collapse:collapse}
+th{padding:11px 16px;text-align:left;background:color-mix(in srgb,var(--secondary) 55%,var(--card));border-bottom:1px solid var(--border);font:600 11px/1 var(--font-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+td{padding:10px 16px;border-top:1px solid var(--border);font-size:14px;vertical-align:middle}
+tbody tr:first-child td{border-top:0}
+tbody tr:hover{background:color-mix(in srgb,var(--secondary) 32%,var(--card))}
+.col-code{width:96px}
+.col-state{width:158px}
+.col-last{width:150px}
+.col-act{width:178px}
+.code{font:600 14px/1 var(--font-mono);letter-spacing:.04em;font-variant-numeric:tabular-nums;color:var(--foreground)}
+.name{display:block;font-weight:500;line-height:1.35}
+.row-off .name,.row-off .code{color:var(--muted)}
+.last{color:var(--muted);white-space:nowrap;font-size:13px}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:500;line-height:1.2;white-space:nowrap}
+.badge.neutral{background:var(--secondary);color:var(--foreground)}
+.badge.green{background:color-mix(in srgb,var(--primary) 9%,var(--card));color:var(--primary)}
+.badge.clay{background:var(--clay-soft);color:var(--clay-ink)}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap}
+.status i{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.status.on{color:var(--primary)}
+.status.off{color:var(--muted)}
+.cell-state{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.row-actions{display:flex;justify-content:flex-end;gap:2px}
+.act{min-height:44px;padding:0 10px;border:0;border-radius:8px;background:transparent;color:var(--primary);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap}
+.act:hover{background:var(--secondary);color:var(--primary-deep)}
+.act.is-danger{color:var(--clay-ink)}
+.act.is-danger:hover{background:var(--clay-soft);color:var(--clay-ink)}
+
+/* lista móvil */
+.cow-list li{padding:14px 16px;border-top:1px solid var(--border)}
+.cow-list li:first-child{border-top:0}
+.li-top{display:flex;align-items:flex-start;gap:12px}
+.li-code{min-width:44px;padding-top:2px;font:500 15px/1.2 var(--font-mono);letter-spacing:.04em;color:var(--primary);font-variant-numeric:tabular-nums}
+.row-off .li-code{color:var(--muted)}
+.li-main{min-width:0;flex:1}
+.li-main b{display:block;font-size:15px;font-weight:500;line-height:1.35}
+.li-last{display:block;margin-top:3px;font-size:12px;line-height:1.4;color:var(--muted)}
+.li-state{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:none}
+.li-actions{display:flex;gap:8px;margin-top:11px}
+.li-actions .btn{flex:1 1 auto;font-size:14px}
+@media (min-width:768px){
+  .table-wrap{display:block}
+  .cow-list{display:none}
+}
+
+/* vacío */
+.empty{padding:56px 24px;text-align:center}
+.empty-icon{width:48px;height:48px;margin:0 auto 16px;border-radius:50%;display:grid;place-items:center;background:var(--secondary);color:var(--muted)}
+.empty-icon svg{width:21px;height:21px}
+.empty h2{font:500 22px/1.2 var(--font-display);letter-spacing:-.02em}
+.empty p{margin:6px auto 0;max-width:38ch;font-size:14px;line-height:1.55;color:var(--muted)}
+.empty .btn{margin-top:18px}
+
+/* nota del catálogo */
+.ledger{display:flex;align-items:flex-start;gap:9px;margin-top:16px;font-size:12px;line-height:1.5;color:var(--muted)}
+.ledger svg{width:15px;height:15px;flex:none;margin-top:1px;color:var(--primary)}
+.ledger b{color:var(--foreground);font-weight:500}
+
+/* ---------- diálogos ---------- */
+dialog{border:0;padding:0;background:transparent;max-width:100vw;max-height:100dvh}
+dialog::backdrop{background:color-mix(in srgb,var(--foreground) 45%,transparent)}
+.sheet{width:min(520px,calc(100vw - 32px));background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow-sheet);overflow:hidden}
+dialog[open] .sheet{animation:pop .18s cubic-bezier(.2,.7,.3,1) both}
+@keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.sheet-head{display:flex;align-items:flex-start;gap:12px;padding:20px 20px 0}
+.sheet-head h2{margin:0;flex:1;font:500 24px/1.15 var(--font-display);letter-spacing:-.02em}
+.sheet-head p{margin-top:6px;font-size:14px;line-height:1.5;color:var(--muted);max-width:40ch}
+.close{width:44px;height:44px;flex:none;margin:-6px -8px 0 0;display:grid;place-items:center;border:0;border-radius:8px;background:transparent;color:var(--muted);cursor:pointer}
+.close:hover{background:var(--secondary);color:var(--foreground)}
+.close svg{width:18px;height:18px}
+.sheet-body{padding:18px 20px 20px;max-height:min(68dvh,540px);overflow-y:auto}
+.sheet-foot{display:flex;gap:8px;padding:14px 20px;border-top:1px solid var(--border);background:color-mix(in srgb,var(--secondary) 40%,var(--card))}
+.sheet-foot .btn{flex:1 1 auto}
+.sheet-foot .btn-secondary{flex:0 0 auto}
+@media (max-width:560px){
+  dialog{width:100%;margin:auto 0 0}
+  .sheet{width:100%;border-radius:var(--r-lg) var(--r-lg) 0 0;border-bottom:0}
+  .sheet-body{max-height:62dvh}
+  .sheet-foot{padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+}
+
+/* formulario */
+.field + .field{margin-top:16px}
+.label{display:block;margin-bottom:6px;font:600 11px/1 var(--font-body);letter-spacing:.08em;text-transform:uppercase;color:var(--foreground)}
+.input{width:100%;height:48px;padding:0 13px;background:var(--card);color:var(--foreground);border:1px solid var(--border);border-radius:var(--r-sm);font:400 15px/1 var(--font-body);transition:border-color 120ms ease,box-shadow 120ms ease,background 120ms ease}
+.input::placeholder{color:color-mix(in srgb,var(--muted) 80%,transparent)}
+.input:hover{border-color:color-mix(in srgb,var(--muted) 38%,var(--border))}
+.input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--ring) 22%,transparent)}
+.input[aria-invalid="true"]{border-color:var(--danger);background:color-mix(in srgb,var(--danger) 3%,var(--card))}
+.input-code{font:500 16px/1 var(--font-mono);letter-spacing:.05em}
+.hint{margin-top:6px;font-size:12px;line-height:1.45;color:var(--muted)}
+.err{display:flex;gap:6px;margin-top:6px;font-size:12px;line-height:1.45;color:var(--danger)}
+.err svg{width:14px;height:14px;flex:none;margin-top:1px}
+.status-note{display:flex;gap:9px;margin-top:16px;padding:11px 12px;border-radius:var(--r-md);background:var(--secondary);font-size:13px;line-height:1.5}
+.status-note svg{width:16px;height:16px;flex:none;margin-top:1px;color:var(--primary)}
+.status-note b{font-weight:600}
+.toggle-warn{display:flex;gap:9px;margin-top:14px;padding:11px 12px;border-radius:var(--r-md);background:var(--clay-soft);font-size:13px;line-height:1.5;color:var(--clay-ink)}
+.toggle-warn svg{width:16px;height:16px;flex:none;margin-top:1px}
+
+/* cola de sincronización */
+.queue li{display:flex;align-items:center;gap:10px;min-height:44px;padding:6px 0;border-top:1px solid var(--border)}
+.queue li:first-child{border-top:0}
+.queue-op{flex:none;min-width:70px;font:600 12px/1 var(--font-body);letter-spacing:.06em;text-transform:uppercase;color:var(--clay-ink)}
+.queue b{font:500 13px/1 var(--font-mono);letter-spacing:.04em}
+.queue .qname{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.queue-empty{padding:6px 0 2px}
+.queue-empty b{display:block;font-size:14px;font-weight:600}
+.queue-empty p{margin-top:4px;font-size:13px;line-height:1.5;color:var(--muted)}
+
+/* ---------- toast ---------- */
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translate(-50%,12px);display:flex;align-items:center;gap:9px;max-width:calc(100vw - 32px);padding:11px 14px;border-radius:12px;background:var(--foreground);color:var(--background);font-size:14px;line-height:1.4;box-shadow:var(--shadow-sheet);opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;z-index:100}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.toast svg{width:16px;height:16px;flex:none;color:color-mix(in srgb,var(--primary) 55%,var(--background))}
+
+/* ---------- pie ---------- */
+.foot{max-width:1024px;margin:0 auto;padding:18px 20px 40px;display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:space-between;font-size:12px;line-height:1.5;color:var(--muted)}
+.foot b{font-weight:500;color:var(--foreground)}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
+}
+</style>
+</head>
+<body>
+
+<a class="skip" href="#catalogo">Saltar al catálogo</a>
+
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <defs>
+    <symbol id="i-mark" viewBox="0 0 512 512">
+      <rect width="512" height="512" rx="112" fill="#1F4D3A"/>
+      <g transform="translate(-9 0)" fill="none" stroke="#F7F3E9" stroke-width="46" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M186 138V374"/><path d="M186 161H258A57 57 0 0 1 258 275H186"/><path d="M255 281C290 305 320 338 344 372"/>
+      </g>
+    </symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5"/><path d="M12 16h.01"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></symbol>
+    <symbol id="i-offline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M6 18 18 6"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 13.4 13 20.8a2 2 0 0 1-2.8 0L3.2 13.8A2 2 0 0 1 2.6 12.4V4.8a2.2 2.2 0 0 1 2.2-2.2h7.6a2 2 0 0 1 1.4.6l6.6 6.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.6" cy="7.6" r="1.5"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 8 6 12l4 4"/><path d="M6 12h9"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></symbol>
+    <symbol id="i-power" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v9"/><path d="M6.4 6.4a8 8 0 1 0 11.2 0"/></symbol>
+  </defs>
+</svg>
+
+<header class="appbar">
+  <div class="appbar-inner">
+    <a class="brand" href="vacas.html" aria-label="Rodeo, catálogo de vacas">
+      <svg class="mark" aria-hidden="true"><use href="#i-mark"/></svg>
+      <span class="word">Rodeo</span>
+      <span class="kicker">Tambo La Palma</span>
+    </a>
+
+    <nav class="appnav" id="appnav" aria-label="Secciones de la app">
+      <a href="vacas.html" aria-current="page">Vacas</a>
+      <a href="#" data-soon="Ordeño">Ordeño</a>
+      <a href="#" data-soon="Despacho">Despacho</a>
+    </nav>
+
+    <div class="appbar-end">
+      <button class="sync" id="syncBtn" type="button" aria-label="Estado de sincronización">
+        <i aria-hidden="true"></i>
+        <span class="sync-txt" id="syncText">Al día</span>
+      </button>
+      <details class="account" id="account">
+        <summary aria-label="Cuenta y sesión">
+          <span class="avatar">MR</span>
+          <span class="who">María Rangel<small>Capataz</small></span>
+          <svg class="chev" aria-hidden="true"><use href="#i-chevron"/></svg>
+        </summary>
+        <div class="account-menu">
+          <a href="instalacion.html"><svg aria-hidden="true"><use href="#i-download"/></svg>Instalar en este equipo</a>
+          <div class="sep" role="presentation"></div>
+          <a href="login.html"><svg aria-hidden="true"><use href="#i-logout"/></svg>Cerrar sesión</a>
+        </div>
+      </details>
+    </div>
+  </div>
+</header>
+
+<div class="offline" id="offlineBanner" hidden>
+  <svg aria-hidden="true"><use href="#i-offline"/></svg>
+  <span><b>Sin conexión.</b> Los cambios se guardan en este equipo y suben al reconectar.</span>
+</div>
+
+<main class="page" id="catalogo">
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">Catálogo</p>
+      <h1>Vacas</h1>
+      <p class="lead">El catálogo que alimenta la planilla de ordeño. Si una vaca sale de producción, se desactiva: deja de aparecer en la planilla y su historial queda intacto.</p>
+    </div>
+    <div class="head-side">
+      <div class="herd" aria-live="polite">
+        <p class="herd-num"><b id="herdNum">0</b><span id="herdText">activas</span></p>
+        <div class="herd-bar" aria-hidden="true"><i id="herdBar"></i></div>
+        <p class="herd-note" id="herdNote">Carga la primera vaca para empezar.</p>
+      </div>
+      <button class="btn btn-primary new-cow" id="newCow" type="button">
+        <svg aria-hidden="true"><use href="#i-plus"/></svg>
+        Nueva vaca
+      </button>
+    </div>
+  </div>
+
+  <section class="panel" aria-label="Catálogo de vacas">
+    <div class="toolbar">
+      <div class="search">
+        <svg aria-hidden="true"><use href="#i-search"/></svg>
+        <label class="sr-only" for="q">Buscar vaca por código o nombre</label>
+        <input id="q" type="search" placeholder="Buscar por código o nombre" autocomplete="off" />
+      </div>
+      <div class="segmented" role="group" aria-label="Filtrar por estado">
+        <button type="button" data-filter="all" aria-pressed="true">Todas</button>
+        <button type="button" data-filter="active" aria-pressed="false">Activas</button>
+        <button type="button" data-filter="inactive" aria-pressed="false">Inactivas</button>
+      </div>
+      <span class="count" id="count" aria-live="polite">0 vacas</span>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <caption class="sr-only">Vacas del tambo, ordenadas por código numérico</caption>
+        <thead>
+          <tr>
+            <th class="col-code" scope="col">Código</th>
+            <th scope="col">Nombre</th>
+            <th class="col-state" scope="col">Estado</th>
+            <th class="col-last" scope="col">Último ordeño</th>
+            <th class="col-act" scope="col"><span class="sr-only">Acciones</span></th>
+          </tr>
+        </thead>
+        <tbody id="cowRows"></tbody>
+      </table>
+    </div>
+
+    <ul class="cow-list" id="cowList" aria-label="Listado de vacas"></ul>
+
+    <div class="empty" id="empty" hidden>
+      <div class="empty-icon"><svg aria-hidden="true"><use href="#i-tag"/></svg></div>
+      <h2 id="emptyTitle">Todavía no hay vacas</h2>
+      <p id="emptyText">Carga la primera para que aparezca en la planilla de ordeño.</p>
+      <button class="btn btn-primary" id="emptyCta" type="button">Cargar la primera vaca</button>
+    </div>
+  </section>
+
+  <p class="ledger">
+    <svg aria-hidden="true"><use href="#i-info"/></svg>
+    <span><b>El código manda en la planilla.</b> El orden es numérico, no alfabético: la vaca 9 va antes que la 10. Desactivar no borra registros.</span>
+  </p>
+</main>
+
+<footer class="foot">
+  <span><b>Rodeo</b> · Tambo La Palma</span>
+  <span>Datos guardados en este equipo. Se sincronizan al reconectar.</span>
+</footer>
+
+<!-- alta / edición -->
+<dialog id="cowDialog" aria-labelledby="cowTitle" aria-describedby="cowDesc">
+  <form class="sheet" id="cowForm" novalidate>
+    <div class="sheet-head">
+      <div>
+        <h2 id="cowTitle">Nueva vaca</h2>
+        <p id="cowDesc">Carga el código y el nombre. El código manda en la planilla.</p>
+      </div>
+      <button class="close" type="button" data-close aria-label="Cerrar">
+        <svg aria-hidden="true"><use href="#i-close"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body">
+      <div class="field">
+        <label class="label" for="cowCode">Código</label>
+        <input class="input input-code" id="cowCode" name="code" type="text" inputmode="numeric" maxlength="6" placeholder="Ej. 42" aria-describedby="codeHint codeErr" autocomplete="off" data-autofocus />
+        <p class="hint" id="codeHint">Número de la caravana. No se puede repetir.</p>
+        <p class="err" id="codeErr" hidden><svg aria-hidden="true"><use href="#i-alert"/></svg><span></span></p>
+      </div>
+      <div class="field">
+        <label class="label" for="cowName">Nombre</label>
+        <input class="input" id="cowName" name="name" type="text" maxlength="40" placeholder="Ej. Brisa" aria-describedby="nameErr" autocomplete="off" />
+        <p class="err" id="nameErr" hidden><svg aria-hidden="true"><use href="#i-alert"/></svg><span></span></p>
+      </div>
+      <p class="status-note" id="editNote" hidden>
+        <svg aria-hidden="true"><use href="#i-info"/></svg>
+        <span>Esta vaca está <b>inactiva</b>. Puedes corregir sus datos; para volver a la planilla, actívala desde la lista.</span>
+      </p>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-secondary" type="button" data-close>Cancelar</button>
+      <button class="btn btn-primary" type="submit" id="saveCow">Guardar vaca</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- activar / desactivar -->
+<dialog id="toggleDialog" aria-labelledby="toggleTitle" aria-describedby="toggleBody">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div>
+        <h2 id="toggleTitle">Desactivar vaca</h2>
+        <p id="toggleBody">Sale de la planilla de ordeño desde ahora.</p>
+      </div>
+      <button class="close" type="button" data-close aria-label="Cerrar">
+        <svg aria-hidden="true"><use href="#i-close"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body">
+      <p class="toggle-warn" id="toggleWarn">
+        <svg aria-hidden="true"><use href="#i-alert"/></svg>
+        <span>Los registros que ya cargaste se conservan. La baja es lógica: no se borra nada del historial.</span>
+      </p>
+      <p class="hint" id="toggleHint">Si la vaca vuelve a producción, puedes activarla de nuevo.</p>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-secondary" type="button" data-close>Cancelar</button>
+      <button class="btn btn-danger" type="button" id="toggleGo">Desactivar vaca</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- cola de sincronización -->
+<dialog id="syncDialog" aria-labelledby="syncTitle" aria-describedby="syncDesc">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div>
+        <h2 id="syncTitle">Cambios por subir</h2>
+        <p id="syncDesc">Estos cambios están guardados en este equipo y esperan señal.</p>
+      </div>
+      <button class="close" type="button" data-close aria-label="Cerrar">
+        <svg aria-hidden="true"><use href="#i-close"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body">
+      <ul class="queue" id="queue"></ul>
+      <div class="queue-empty" id="queueEmpty" hidden>
+        <b>Todo sincronizado</b>
+        <p id="queueEmptyText">No hay cambios esperando. Última subida: hoy, 06:18.</p>
+      </div>
+      <p class="err" id="syncErr" hidden><svg aria-hidden="true"><use href="#i-alert"/></svg><span></span></p>
+      <p class="hint">La cola vive en este equipo. Un fallo de red no borra el dato: queda pendiente y se reintenta.</p>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-secondary" type="button" data-close>Cerrar</button>
+      <button class="btn btn-primary" type="button" id="retryBtn">
+        <svg aria-hidden="true"><use href="#i-refresh"/></svg>
+        Reintentar
+      </button>
+    </div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <svg aria-hidden="true"><use href="#i-check"/></svg>
+  <span id="toastText"></span>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var params = new URLSearchParams(location.search);
+  var forcedOffline = params.get('offline') === '1';
+  var KEY = 'rodeo.cows.v1';
+  var BASE = [
+    { id:'c1',  code:'1',   name:'Lucero',  active:true,  last:'Hoy · 05:40' },
+    { id:'c2',  code:'2',   name:'Canela',  active:true,  last:'Hoy · 05:42' },
+    { id:'c3',  code:'3',   name:'Estrella',active:true,  last:'Hoy · 05:45' },
+    { id:'c4',  code:'4',   name:'Mora',    active:true,  last:'Hoy · 05:47' },
+    { id:'c5',  code:'5',   name:'Nube',    active:true,  last:'Hoy · 05:51' },
+    { id:'c6',  code:'6',   name:'Perla',   active:true,  last:'Ayer · 16:10' },
+    { id:'c7',  code:'7',   name:'Luna',    active:true,  last:'Hoy · 05:53' },
+    { id:'c8',  code:'8',   name:'Pinta',   active:true,  last:'Hoy · 05:55' },
+    { id:'c9',  code:'9',   name:'Violeta', active:true,  last:'Hoy · 05:57' },
+    { id:'c10', code:'10',  name:'Cereza',  active:true,  last:'Hoy · 05:59' },
+    { id:'c11', code:'11',  name:'Miel',    active:true,  last:'Hoy · 06:00' },
+    { id:'c12', code:'12',  name:'Rubia',   active:true,  last:'Ayer · 16:14' },
+    { id:'c15', code:'15',  name:'Negra',   active:true,  last:'Hoy · 06:01' },
+    { id:'c18', code:'18',  name:'Blanca',  active:false, last:'Hace 21 días' },
+    { id:'c21', code:'21',  name:'Zafiro',  active:true,  last:'Hoy · 06:02' },
+    { id:'c24', code:'24',  name:'Aurora',  active:true,  last:'Hoy · 06:03' },
+    { id:'c27', code:'27',  name:'Dalia',   active:true,  last:'Ayer · 16:16' },
+    { id:'c30', code:'30',  name:'Rosa',    active:true,  last:'Hoy · 06:04' },
+    { id:'c33', code:'33',  name:'Oliva',   active:true,  last:'Hoy · 06:05' },
+    { id:'c36', code:'36',  name:'Camelia', active:true,  last:'Hace 2 días' },
+    { id:'c42', code:'42',  name:'Brisa',   active:true,  last:'Hoy · 06:12' },
+    { id:'c45', code:'45',  name:'Trufa',   active:true,  last:'Ayer · 16:18' },
+    { id:'c51', code:'51',  name:'Sombra',  active:false, last:'Hace 58 días' },
+    { id:'c63', code:'63',  name:'Alba',    active:true,  last:'Hoy · 06:15' },
+    { id:'c77', code:'77',  name:'Nieve',   active:true,  last:'Ayer · 16:21' },
+    { id:'c102', code:'102',name:'Tordilla',active:true,  last:'Hoy · 06:17' },
+    { id:'c118', code:'118',name:'Serrana', active:true,  last:'Sin registros' },
+    { id:'c120', code:'120',name:'Pampa',   active:false, last:'Hace 34 días' }
+  ];
+
+  var storage = (function () {
+    try {
+      var k = '__rodeoProbe';
+      window.localStorage.setItem(k, '1');
+      window.localStorage.removeItem(k);
+      return window.localStorage;
+    } catch (e) {
+      return { getItem: function () { return null; }, setItem: function () {} };
+    }
+  })();
+
+  function seed() {
+    return BASE.map(function (c) {
+      return { id:c.id, code:c.code, name:c.name, active:c.active, last:c.last, pending:false, op:null };
+    });
+  }
+
+  function initial() {
+    if (params.get('reset') === '1') return seed();
+    if (params.get('vacio') === '1') return [];
+    try {
+      var raw = storage.getItem(KEY);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {}
+    return seed();
+  }
+
+  var cows = initial();
+  var filter = 'all';
+  var editingId = null;
+  var toggleId = null;
+  var emptyMode = 'new';
+  var lastSync = 'hoy, 06:18';
+  var toastTimer = null;
+
+  if (params.get('reset') === '1' || !storage.getItem(KEY)) persist();
+
+  if (forcedOffline) {
+    var pendingNow = cows.filter(function (c) { return c.pending; }).length;
+    if (pendingNow === 0 && cows.length) {
+      ['42', '118'].forEach(function (code, index) {
+        var cow = cows.find(function (c) { return c.code === code; });
+        if (cow) {
+          cow.pending = true;
+          cow.op = index === 0 ? 'edición' : 'alta';
+        }
+      });
+      persist();
+    }
+  }
+
+  var $ = function (id) { return document.getElementById(id); };
+  var rowsEl = $('cowRows');
+  var listEl = $('cowList');
+  var tableWrap = document.querySelector('.table-wrap');
+  var emptyEl = $('empty');
+  var emptyTitle = $('emptyTitle');
+  var emptyText = $('emptyText');
+  var emptyCta = $('emptyCta');
+  var qEl = $('q');
+  var countEl = $('count');
+  var syncBtn = $('syncBtn');
+  var syncText = $('syncText');
+  var banner = $('offlineBanner');
+
+  function persist() {
+    try { storage.setItem(KEY, JSON.stringify(cows)); } catch (e) {}
+  }
+
+  function isOffline() {
+    return forcedOffline || !navigator.onLine;
+  }
+
+  function norm(value) {
+    return String(value).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function esc(value) {
+    return String(value).replace(/[&<>"']/g, function (ch) {
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch];
+    });
+  }
+
+  function byCode(a, b) {
+    return a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' });
+  }
+
+  function findCow(id) {
+    return cows.find(function (c) { return c.id === id; });
+  }
+
+  function pendingCows() {
+    return cows.filter(function (c) { return c.pending; });
+  }
+
+  function plural(n, one, many) {
+    return n === 1 ? one : many;
+  }
+
+  function visibleCows() {
+    var q = norm(qEl.value.trim());
+    return cows.filter(function (c) {
+      if (filter === 'active' && !c.active) return false;
+      if (filter === 'inactive' && c.active) return false;
+      if (!q) return true;
+      return norm(c.code).indexOf(q) !== -1 || norm(c.name).indexOf(q) !== -1;
+    }).sort(byCode);
+  }
+
+  function statusMarkup(cow) {
+    return '<span class="status ' + (cow.active ? 'on' : 'off') + '"><i aria-hidden="true"></i>' +
+      (cow.active ? 'Activa' : 'Inactiva') + '</span>';
+  }
+
+  function pendingMarkup(cow) {
+    return cow.pending ? '<span class="badge clay">Pendiente</span>' : '';
+  }
+
+  function render() {
+    var list = visibleCows();
+    var active = cows.filter(function (c) { return c.active; }).length;
+    var inactive = cows.length - active;
+    var pending = pendingCows().length;
+
+    $('herdNum').textContent = String(active);
+    $('herdText').textContent = cows.length
+      ? (active === 1 ? 'activa de ' : 'activas de ') + cows.length
+      : 'activas';
+    $('herdBar').style.width = cows.length ? Math.round((active / cows.length) * 100) + '%' : '0%';
+    $('herdNote').textContent = !cows.length
+      ? 'Carga la primera vaca para empezar.'
+      : inactive
+        ? inactive + ' ' + plural(inactive, 'inactiva sigue', 'inactivas siguen') + ' en el historial.'
+        : 'Todas están activas en la planilla.';
+
+    if (!list.length) {
+      rowsEl.innerHTML = '';
+      listEl.innerHTML = '';
+      tableWrap.hidden = true;
+      listEl.hidden = true;
+      emptyEl.hidden = false;
+      var noCows = cows.length === 0;
+      emptyMode = noCows ? 'new' : 'clear';
+      emptyTitle.textContent = noCows ? 'Todavía no hay vacas' : 'Sin resultados';
+      emptyText.textContent = noCows
+        ? 'Carga la primera para que aparezca en la planilla de ordeño.'
+        : 'Ninguna vaca coincide con la búsqueda en ' + (filter === 'all' ? 'todo el catálogo' : filter === 'active' ? 'las activas' : 'las inactivas') + '.';
+      emptyCta.textContent = noCows ? 'Cargar la primera vaca' : 'Limpiar filtros';
+    } else {
+      emptyEl.hidden = true;
+      tableWrap.hidden = false;
+      listEl.hidden = false;
+      rowsEl.innerHTML = list.map(function (c) {
+        return '<tr class="' + (c.active ? '' : 'row-off') + '">' +
+          '<td><span class="code">' + esc(c.code) + '</span></td>' +
+          '<td><span class="name">' + esc(c.name) + '</span></td>' +
+          '<td><span class="cell-state">' + statusMarkup(c) + pendingMarkup(c) + '</span></td>' +
+          '<td><span class="last">' + esc(c.last || 'Sin registros') + '</span></td>' +
+          '<td><div class="row-actions">' +
+            '<button class="act" type="button" data-edit="' + c.id + '">Editar</button>' +
+            '<button class="act ' + (c.active ? 'is-danger' : '') + '" type="button" data-toggle="' + c.id + '">' +
+              (c.active ? 'Desactivar' : 'Activar') +
+            '</button>' +
+          '</div></td>' +
+        '</tr>';
+      }).join('');
+
+      listEl.innerHTML = list.map(function (c) {
+        return '<li class="' + (c.active ? '' : 'row-off') + '">' +
+          '<div class="li-top">' +
+            '<span class="li-code">' + esc(c.code) + '</span>' +
+            '<div class="li-main">' +
+              '<b>' + esc(c.name) + '</b>' +
+              '<span class="li-last">' + esc(c.last || 'Sin registros') + '</span>' +
+            '</div>' +
+            '<div class="li-state">' + statusMarkup(c) + pendingMarkup(c) + '</div>' +
+          '</div>' +
+          '<div class="li-actions">' +
+            '<button class="btn btn-secondary" type="button" data-edit="' + c.id + '">Editar</button>' +
+            '<button class="btn btn-ghost ' + (c.active ? 'is-danger' : '') + '" type="button" data-toggle="' + c.id + '">' +
+              (c.active ? 'Desactivar' : 'Activar') +
+            '</button>' +
+          '</div>' +
+        '</li>';
+      }).join('');
+    }
+
+    var total = cows.length;
+    countEl.textContent = list.length === total
+      ? total + ' ' + plural(total, 'vaca', 'vacas')
+      : list.length + ' de ' + total + ' ' + plural(total, 'vaca', 'vacas');
+
+    syncText.textContent = pending
+      ? pending + ' ' + plural(pending, 'pendiente', 'pendientes')
+      : isOffline() ? 'Sin conexión' : 'Al día';
+    syncBtn.classList.toggle('has-pending', pending > 0);
+    syncBtn.classList.toggle('is-off', pending === 0 && isOffline());
+    syncBtn.setAttribute('aria-label', pending
+      ? pending + ' ' + plural(pending, 'cambio pendiente', 'cambios pendientes') + ' de subir'
+      : isOffline() ? 'Sin conexión. Sin cambios pendientes' : 'Todo sincronizado');
+    banner.hidden = !isOffline();
+  }
+
+  function toast(message) {
+    $('toastText').textContent = message;
+    var el = $('toast');
+    el.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove('on'); }, 4200);
+  }
+
+  function openDialog(dialog) {
+    if (typeof dialog.showModal === 'function') dialog.showModal();
+    else dialog.setAttribute('open', '');
+    requestAnimationFrame(function () {
+      var first = dialog.querySelector('[data-autofocus]') || dialog.querySelector('input, button');
+      if (first) first.focus();
+    });
+  }
+
+  function closeDialog(dialog) {
+    if (typeof dialog.close === 'function') dialog.close();
+    else dialog.removeAttribute('open');
+  }
+
+  function clearErrors() {
+    ['codeErr', 'nameErr'].forEach(function (id) {
+      var el = $(id);
+      el.hidden = true;
+      el.querySelector('span').textContent = '';
+    });
+    $('cowCode').removeAttribute('aria-invalid');
+    $('cowName').removeAttribute('aria-invalid');
+  }
+
+  function setError(which, message) {
+    var input = which === 'code' ? $('cowCode') : $('cowName');
+    var box = which === 'code' ? $('codeErr') : $('nameErr');
+    input.setAttribute('aria-invalid', 'true');
+    box.hidden = false;
+    box.querySelector('span').textContent = message;
+  }
+
+  function openCreate() {
+    editingId = null;
+    clearErrors();
+    $('cowTitle').textContent = 'Nueva vaca';
+    $('cowDesc').textContent = 'Carga el código y el nombre. El código manda en la planilla.';
+    $('cowCode').value = '';
+    $('cowName').value = '';
+    $('editNote').hidden = true;
+    $('saveCow').textContent = 'Guardar vaca';
+    openDialog($('cowDialog'));
+  }
+
+  function openEdit(cow) {
+    editingId = cow.id;
+    clearErrors();
+    $('cowTitle').textContent = 'Editar vaca ' + cow.code;
+    $('cowDesc').textContent = 'Corrige el nombre o el código. El cambio se guarda en este equipo.';
+    $('cowCode').value = cow.code;
+    $('cowName').value = cow.name;
+    $('editNote').hidden = cow.active;
+    $('saveCow').textContent = 'Guardar cambios';
+    openDialog($('cowDialog'));
+  }
+
+  function openToggle(cow) {
+    toggleId = cow.id;
+    var goingOff = cow.active;
+    $('toggleTitle').textContent = (goingOff ? 'Desactivar' : 'Activar') + ' la vaca ' + cow.code;
+    $('toggleBody').textContent = goingOff
+      ? 'Sale de la planilla de ordeño desde ahora.'
+      : 'Vuelve a la planilla de ordeño de hoy.';
+    $('toggleWarn').hidden = !goingOff;
+    $('toggleHint').textContent = goingOff
+      ? 'Si la vaca vuelve a producción, puedes activarla de nuevo. Sus registros anteriores quedan en el historial.'
+      : 'Su historial no cambia: solo vuelve a aparecer para cargar litros.';
+    var go = $('toggleGo');
+    go.textContent = goingOff ? 'Desactivar vaca' : 'Activar vaca';
+    go.className = 'btn ' + (goingOff ? 'btn-danger' : 'btn-primary');
+    openDialog($('toggleDialog'));
+  }
+
+  function renderQueue() {
+    var pending = pendingCows().sort(byCode);
+    var queue = $('queue');
+    var empty = $('queueEmpty');
+    var retry = $('retryBtn');
+
+    $('syncTitle').textContent = pending.length ? 'Cambios por subir' : 'Todo sincronizado';
+    $('syncDesc').textContent = pending.length
+      ? 'Estos cambios están guardados en este equipo y esperan señal.'
+      : 'No hay cambios esperando. La última subida fue ' + lastSync + '.';
+
+    if (!pending.length) {
+      queue.innerHTML = '';
+      queue.hidden = true;
+      empty.hidden = false;
+      $('queueEmptyText').textContent = 'No hay cambios esperando. Última subida: ' + lastSync + '.';
+      retry.hidden = true;
+      $('syncErr').hidden = true;
+      return;
+    }
+
+    queue.hidden = false;
+    empty.hidden = true;
+    retry.hidden = false;
+    retry.disabled = false;
+    retry.innerHTML = '<svg aria-hidden="true"><use href="#i-refresh"/></svg>Reintentar';
+    queue.innerHTML = pending.map(function (c) {
+      return '<li><span class="queue-op">' + esc(c.op || 'edición') + '</span>' +
+        '<b>' + esc(c.code) + '</b><span class="qname">' + esc(c.name) + '</span></li>';
+    }).join('');
+  }
+
+  function openSync() {
+    $('syncErr').hidden = true;
+    renderQueue();
+    openDialog($('syncDialog'));
+  }
+
+  function syncPending() {
+    var pending = pendingCows();
+    if (!pending.length) return;
+    if (isOffline()) {
+      $('syncErr').hidden = false;
+      $('syncErr').querySelector('span').textContent = 'Sin señal. Los cambios siguen guardados en este equipo.';
+      return;
+    }
+    var retry = $('retryBtn');
+    $('syncErr').hidden = true;
+    retry.disabled = true;
+    retry.textContent = 'Subiendo…';
+    setTimeout(function () {
+      pending.forEach(function (c) { c.pending = false; c.op = null; });
+      lastSync = 'ahora mismo';
+      persist();
+      render();
+      renderQueue();
+      if ($('syncDialog').open) {
+        $('syncErr').hidden = true;
+      }
+      toast(pending.length + ' ' + plural(pending.length, 'cambio sincronizado', 'cambios sincronizados'));
+    }, 900);
+  }
+
+  function setFilter(value) {
+    filter = value;
+    document.querySelectorAll('[data-filter]').forEach(function (btn) {
+      btn.setAttribute('aria-pressed', String(btn.getAttribute('data-filter') === value));
+    });
+    render();
+  }
+
+  // acciones del catálogo
+  function onRowAction(event) {
+    var button = event.target.closest('[data-edit], [data-toggle]');
+    if (!button) return;
+    var id = button.getAttribute('data-edit') || button.getAttribute('data-toggle');
+    var cow = findCow(id);
+    if (!cow) return;
+    if (button.hasAttribute('data-edit')) openEdit(cow);
+    else openToggle(cow);
+  }
+  rowsEl.addEventListener('click', onRowAction);
+  listEl.addEventListener('click', onRowAction);
+
+  $('newCow').addEventListener('click', openCreate);
+  emptyCta.addEventListener('click', function () {
+    if (emptyMode === 'new') {
+      openCreate();
+    } else {
+      qEl.value = '';
+      setFilter('all');
+      qEl.focus();
+    }
+  });
+
+  qEl.addEventListener('input', render);
+
+  document.querySelectorAll('[data-filter]').forEach(function (btn) {
+    btn.addEventListener('click', function () { setFilter(btn.getAttribute('data-filter')); });
+  });
+
+  $('cowForm').addEventListener('submit', function (event) {
+    event.preventDefault();
+    clearErrors();
+    var code = $('cowCode').value.trim();
+    var name = $('cowName').value.trim();
+    if (!code) setError('code', 'Ingresa un código.');
+    if (!name) setError('name', 'Ingresa un nombre.');
+    if (!code || !name) {
+      (!code ? $('cowCode') : $('cowName')).focus();
+      return;
+    }
+    var duplicate = cows.some(function (c) {
+      return c.id !== editingId && c.code.toLowerCase() === code.toLowerCase();
+    });
+    if (duplicate) {
+      setError('code', 'Ya existe una vaca con el código ' + code + '.');
+      $('cowCode').focus();
+      return;
+    }
+
+    var offline = isOffline();
+    if (editingId) {
+      var cow = findCow(editingId);
+      cow.code = code;
+      cow.name = name;
+      cow.pending = offline;
+      cow.op = 'edición';
+      toast('Cambios guardados' + (offline ? ' · pendiente de subir' : ''));
+    } else {
+      cows.push({
+        id: 'c' + Date.now().toString(36),
+        code: code,
+        name: name,
+        active: true,
+        last: 'Sin registros',
+        pending: offline,
+        op: 'alta'
+      });
+      toast('Vaca ' + code + ' creada' + (offline ? ' · pendiente de subir' : ''));
+    }
+    persist();
+    closeDialog($('cowDialog'));
+    render();
+  });
+
+  $('cowCode').addEventListener('input', function () {
+    $('cowCode').removeAttribute('aria-invalid');
+    $('codeErr').hidden = true;
+  });
+  $('cowName').addEventListener('input', function () {
+    $('cowName').removeAttribute('aria-invalid');
+    $('nameErr').hidden = true;
+  });
+
+  $('toggleGo').addEventListener('click', function () {
+    var cow = findCow(toggleId);
+    if (!cow) return;
+    cow.active = !cow.active;
+    cow.op = cow.active ? 'reactivación' : 'baja';
+    cow.pending = isOffline();
+    if (!cow.pending) cow.op = null;
+    persist();
+    closeDialog($('toggleDialog'));
+    render();
+    toast(cow.active
+      ? 'Vaca ' + cow.code + ' activada · vuelve a la planilla' + (cow.pending ? ' · pendiente de subir' : '')
+      : 'Vaca ' + cow.code + ' desactivada · fuera de la planilla' + (cow.pending ? ' · pendiente de subir' : ''));
+  });
+
+  syncBtn.addEventListener('click', openSync);
+  $('retryBtn').addEventListener('click', syncPending);
+
+  // diálogos: cierre por botón, backdrop y Escape nativo
+  document.addEventListener('click', function (event) {
+    var closer = event.target.closest('[data-close]');
+    if (closer) {
+      var dialog = closer.closest('dialog');
+      if (dialog) closeDialog(dialog);
+    }
+    var account = $('account');
+    if (account.open && !account.contains(event.target)) account.open = false;
+  });
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && $('account').open) $('account').open = false;
+  });
+
+  document.querySelectorAll('[data-soon]').forEach(function (link) {
+    link.addEventListener('click', function (event) {
+      event.preventDefault();
+      toast(link.getAttribute('data-soon') + ' se abre desde la app completa.');
+    });
+  });
+
+  // conectividad real
+  window.addEventListener('offline', function () { render(); });
+  window.addEventListener('online', function () {
+    forcedOffline = false;
+    render();
+    if (pendingCows().length) {
+      setTimeout(function () {
+        var pending = pendingCows();
+        pending.forEach(function (c) { c.pending = false; c.op = null; });
+        lastSync = 'ahora mismo';
+        persist();
+        render();
+        toast(pending.length + ' ' + plural(pending.length, 'cambio sincronizado', 'cambios sincronizados') + ' al reconectar');
+      }, 700);
+    }
+  });
+
+  var nav = $('appnav');
+  function keepNavVisible() {
+    var active = nav.querySelector('[aria-current="page"]');
+    if (active && nav.scrollWidth > nav.clientWidth) {
+      nav.scrollLeft = Math.max(0, active.offsetLeft - 12);
+    }
+  }
+
+  render();
+  keepNavVisible();
+})();
+</script>
+</body>
+</html>

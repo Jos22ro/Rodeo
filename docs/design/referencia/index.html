@@ -1,0 +1,1553 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Rodeo: sistema de diseño V2</title>
+<meta name="description" content="Sistema de diseño, breakpoints y componentes de Rodeo: control de ordeño y venta offline-first." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================
+   1. Tokens - espejo de app/globals.css + lib/brand/brand.ts
+   ============================================================ */
+:root{
+  color-scheme: light;
+  --background:#FAF7F0;
+  --surface:#FFFFFF;
+  --secondary:#EFE9DA;
+  --foreground:#23211C;
+  --muted-foreground:#6B675C;
+  --border:#E3DCCC;
+  --border-strong:color-mix(in oklab, var(--border) 62%, var(--muted-foreground) 38%);
+  --primary:#1F4D3A;
+  --primary-deep:#17392B;
+  --primary-foreground:#F7F3E9;
+  --clay:#B5622F;
+  --clay-soft:#F3E2D5;
+  --clay-ink:#8F4A20;
+  --danger:#B4341F;
+  --danger-soft:color-mix(in oklab, var(--danger) 11%, var(--surface) 89%);
+  --ring:#2E6B4E;
+
+  --font-display:'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-body:'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono:ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  --r-sm:8px;
+  --r-md:12px;
+  --r-lg:16px;
+  --r-pill:999px;
+
+  --shadow-1:0 1px 2px rgba(35,33,28,.06);
+  --shadow-2:0 18px 40px -24px rgba(23,57,43,.35);
+  --ease:cubic-bezier(.2,.7,.3,1);
+
+  --page:1120px;
+  --pad:clamp(20px,4vw,40px);
+  --section:clamp(56px,7vw,88px);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+*{margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:112px;-webkit-text-size-adjust:100%}
+body{
+  background:var(--background);
+  color:var(--foreground);
+  font:400 16px/1.55 var(--font-body);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  overflow-x:clip;
+}
+img,svg{display:block;max-width:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0}
+a{color:inherit;text-decoration:none}
+h1,h2,h3,h4{font-weight:500;line-height:1.12;letter-spacing:-.02em}
+p{text-wrap:pretty}
+[hidden]{display:none!important}
+::selection{background:var(--clay-soft);color:var(--foreground)}
+
+.sprite{position:absolute;width:0;height:0;overflow:hidden}
+.ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.wrap{width:100%;max-width:var(--page);margin-inline:auto;padding-inline:var(--pad)}
+.skip{position:fixed;top:8px;left:8px;z-index:200;background:var(--primary);color:var(--primary-foreground);padding:10px 14px;border-radius:var(--r-sm);transform:translateY(-150%);transition:transform .15s}
+.skip:focus-visible{transform:none}
+
+:focus-visible{outline:3px solid color-mix(in srgb,var(--ring) 55%,transparent);outline-offset:2px}
+
+/* ============================================================
+   2. Barra superior
+   ============================================================ */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  background:color-mix(in srgb,var(--background) 86%,transparent);
+  -webkit-backdrop-filter:blur(14px);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+}
+.topbar-inner{display:flex;align-items:center;gap:18px;min-height:64px}
+.brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;border-radius:var(--r-sm);flex:none}
+.brand-mark{width:34px;height:34px;border-radius:10px}
+.brand-name{font-family:var(--font-display);font-size:21px;font-weight:600;letter-spacing:-.02em}
+.brand-sep{width:1px;height:20px;background:var(--border-strong);margin-inline:2px}
+.brand-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-foreground);white-space:nowrap}
+.topnav{display:flex;align-items:center;gap:2px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+.topnav::-webkit-scrollbar{display:none}
+.topnav a{
+  display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:var(--r-pill);
+  font-size:13.5px;font-weight:500;color:var(--muted-foreground);white-space:nowrap;
+  transition:background .15s,color .15s;
+}
+.topnav a:hover{background:var(--secondary);color:var(--foreground)}
+.topnav a.active{background:color-mix(in srgb,var(--primary) 10%,var(--surface));color:var(--primary)}
+.top-version{font:500 11px/1 var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted-foreground);white-space:nowrap}
+
+/* ============================================================
+   3. Portada
+   ============================================================ */
+.hero{padding-block:clamp(40px,6vw,76px) clamp(48px,7vw,80px)}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.06fr) minmax(0,.94fr);gap:clamp(32px,5vw,72px);align-items:center}
+.eyebrow{font:600 11px/1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted-foreground)}
+.hero h1{
+  margin-top:18px;
+  font-family:var(--font-display);
+  font-size:clamp(38px,4.2vw,52px);
+  line-height:1.04;
+  letter-spacing:-.03em;
+  font-weight:500;
+}
+.hero h1 span{color:var(--primary)}
+.hero-lead{margin-top:20px;font-size:clamp(16px,1.5vw,18px);line-height:1.6;color:var(--muted-foreground);max-width:52ch}
+.hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+
+/* Pieza de campo */
+.specimen{
+  position:relative;
+  background:var(--primary-deep);
+  color:var(--primary-foreground);
+  border:1px solid color-mix(in srgb,var(--primary-foreground) 14%,transparent);
+  border-radius:var(--r-lg);
+  padding:clamp(18px,2.4vw,24px);
+}
+.sp-top{display:flex;align-items:center;gap:10px;padding-bottom:14px;border-bottom:1px solid color-mix(in srgb,var(--primary-foreground) 16%,transparent)}
+.sp-glyph{width:17px;height:23px;color:var(--primary-foreground)}
+.sp-title{font-size:14px;font-weight:600;letter-spacing:-.01em}
+.sp-title span{display:block;font-size:11px;font-weight:400;letter-spacing:.04em;color:color-mix(in srgb,var(--primary-foreground) 62%,transparent)}
+.sp-offline{margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:var(--r-pill);background:var(--clay-soft);color:var(--clay-ink);font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.sp-offline i{width:5px;height:5px;border-radius:50%;background:var(--clay);display:block}
+.sp-rows{padding-block:4px}
+.sp-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid color-mix(in srgb,var(--primary-foreground) 12%,transparent)}
+.sp-code{font:500 12px/1 var(--font-mono);letter-spacing:.03em;color:color-mix(in srgb,var(--primary-foreground) 60%,transparent);width:44px;flex:none}
+.sp-name{font-size:13.5px;color:color-mix(in srgb,var(--primary-foreground) 86%,transparent);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sp-lit{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.sp-check{width:14px;height:14px;color:color-mix(in srgb,var(--primary-foreground) 50%,transparent)}
+.sp-total{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:15px 0 14px}
+.sp-big{font-family:var(--font-display);font-size:40px;line-height:1;font-weight:500;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.sp-meta{font-size:11px;letter-spacing:.04em;color:color-mix(in srgb,var(--primary-foreground) 58%,transparent);padding-bottom:5px;text-align:right}
+.sp-cta{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  min-height:48px;padding:0 14px;border-radius:var(--r-sm);
+  background:var(--primary-foreground);color:var(--primary-deep);
+  font-size:13.5px;font-weight:600;letter-spacing:-.005em;
+  transition:background .15s,transform .12s;
+}
+.sp-cta:hover{background:#FFFFFF}
+.sp-cta:active{transform:translateY(1px)}
+.sp-cta .ico{width:17px;height:17px}
+.sp-note{margin-top:12px;font-size:10.5px;line-height:1.5;color:color-mix(in srgb,var(--primary-foreground) 62%,transparent)}
+
+/* ============================================================
+   4. Secciones
+   ============================================================ */
+.section{padding-block:var(--section);border-top:1px solid var(--border);scroll-margin-top:112px}
+.sec-head{margin-bottom:clamp(26px,3.4vw,40px)}
+.sec-head h2{font-family:var(--font-display);font-size:clamp(28px,3.4vw,40px);letter-spacing:-.025em;max-width:24ch}
+.lead{margin-top:12px;color:var(--muted-foreground);font-size:16.5px;line-height:1.6;max-width:66ch}
+.lead strong{color:var(--foreground);font-weight:600}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:clamp(18px,2.5vw,28px)}
+.panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.panel-head h3{font-size:16px;font-weight:600;letter-spacing:-.01em}
+.panel-head p{font-size:12.5px;color:var(--muted-foreground)}
+.grid-2{display:grid;grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr);gap:16px;margin-top:16px}
+.panel-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.panel-title-row h3{font-family:var(--font-body);font-size:15px;font-weight:600;letter-spacing:-.01em}
+.kicker-mini{font:600 10.5px/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted-foreground)}
+
+/* ============================================================
+   5. Paleta
+   ============================================================ */
+.swatches{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.swatch{
+  display:flex;flex-direction:column;text-align:left;min-height:44px;padding:0;overflow:hidden;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);
+  color:inherit;transition:transform .15s var(--ease),border-color .15s,box-shadow .15s;
+}
+.swatch:hover{transform:translateY(-2px);border-color:var(--border-strong);box-shadow:var(--shadow-1)}
+.swatch .chip{height:76px;background:var(--c);border-bottom:1px solid var(--border)}
+.swatch .meta{padding:10px 11px 11px;display:flex;flex-direction:column;gap:2px}
+.swatch .meta b{font-size:13px;font-weight:600;letter-spacing:-.005em}
+.swatch .meta span{font-size:11.5px;color:var(--muted-foreground)}
+.swatch .meta code{font:500 10.5px/1.4 var(--font-mono);letter-spacing:.06em;color:var(--muted-foreground);text-transform:uppercase}
+.swatch .ratio{font-size:10.5px;color:var(--clay-ink);font-weight:600;letter-spacing:.01em}
+.token-extras{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.token-pill{display:inline-flex;align-items:center;gap:7px;min-height:30px;padding:0 10px;border:1px solid var(--border);border-radius:var(--r-pill);background:color-mix(in srgb,var(--secondary) 40%,var(--surface));font-size:11.5px;color:var(--muted-foreground)}
+.token-pill i{width:11px;height:11px;border-radius:50%;background:var(--c);border:1px solid color-mix(in srgb,var(--foreground) 12%,transparent);display:block}
+.token-pill code{font:500 10.5px/1 var(--font-mono);letter-spacing:.03em;color:var(--foreground)}
+
+/* Contraste */
+.mini-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.mini-table th{font:600 10.5px/1 var(--font-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted-foreground);text-align:left;padding:0 0 8px;border-bottom:1px solid var(--border)}
+.mini-table th:last-child,.mini-table td:last-child{text-align:right}
+.mini-table td{padding:9px 0;border-bottom:1px solid var(--border);vertical-align:middle}
+.mini-table tr:last-child td{border-bottom:0;padding-bottom:0}
+.mini-table .pair{display:flex;align-items:center}
+.dot{width:13px;height:13px;border-radius:50%;background:var(--c);border:1px solid color-mix(in srgb,var(--foreground) 16%,transparent);display:inline-block;flex:none}
+.pair .dot + .dot{margin-left:-4px}
+.pair span:last-child{margin-left:9px}
+.mini-table .num{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+
+/* Tipografía */
+.type-display{font-family:var(--font-display);font-size:clamp(34px,3.4vw,42px);line-height:1.02;letter-spacing:-.03em;font-weight:500}
+.type-display span{color:var(--primary)}
+.type-body{margin-top:14px;font-size:14.5px;line-height:1.6;color:var(--muted-foreground);max-width:48ch}
+.type-numbers{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.type-numbers span{display:inline-flex;align-items:baseline;gap:4px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--r-sm);background:color-mix(in srgb,var(--secondary) 35%,var(--surface));font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.type-numbers small{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-foreground)}
+.scale{margin-top:18px;border-top:1px solid var(--border)}
+.scale-row{display:flex;align-items:baseline;gap:12px;padding:8px 0;border-bottom:1px dashed var(--border)}
+.scale-row:last-child{border-bottom:0;padding-bottom:0}
+.scale-name{width:58px;flex:none;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-foreground)}
+.scale-sample{flex:1;font-family:var(--font-display);letter-spacing:-.02em;line-height:1.1;overflow:hidden;white-space:nowrap}
+.scale-size{font:500 10.5px/1 var(--font-mono);color:var(--muted-foreground);white-space:nowrap}
+
+/* Fundamentos */
+.foundations{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin-top:24px;border-top:1px solid var(--border)}
+.found-panel{background:none;border:0;border-radius:0;padding:20px 24px 0 0}
+.found-panel + .found-panel{border-left:1px solid var(--border);padding-left:24px}
+.found-panel h3{font-size:14px;font-weight:600;letter-spacing:-.01em;margin-bottom:14px}
+.space-list{display:flex;flex-direction:column;gap:9px}
+.space-row{display:flex;align-items:center;gap:10px}
+.space-row span{width:24px;flex:none;font:500 10.5px/1 var(--font-mono);color:var(--muted-foreground)}
+.space-row i{height:8px;background:var(--primary);border-radius:2px;display:block;opacity:.9}
+.radii{display:flex;gap:8px;flex-wrap:wrap}
+.radius-item{display:flex;flex-direction:column;gap:6px;align-items:center}
+.radius-box{width:52px;height:52px;border:1px solid var(--border-strong);background:color-mix(in srgb,var(--secondary) 60%,var(--surface))}
+.radius-item span{font:500 10px/1 var(--font-mono);color:var(--muted-foreground)}
+.motion-list{display:flex;flex-direction:column;gap:12px}
+.motion-row{display:flex;align-items:center;gap:10px}
+.motion-row span{width:48px;flex:none;font:500 10px/1.3 var(--font-mono);color:var(--muted-foreground)}
+.motion-track{flex:1;height:4px;border-radius:999px;background:var(--secondary);position:relative}
+.motion-track i{position:absolute;top:-3px;width:10px;height:10px;border-radius:50%;background:var(--primary);left:var(--x)}
+.found-note{margin-top:14px;font-size:11.5px;line-height:1.5;color:var(--muted-foreground)}
+
+/* ============================================================
+   6. Breakpoints
+   ============================================================ */
+.bp-grid{display:grid;grid-template-columns:1fr 1fr;gap:30px 24px}
+.bp-card{background:none;border:0;border-top:1px solid var(--border);border-radius:0;padding:16px 0 0;display:flex;flex-direction:column;gap:10px}
+.bp-head{display:flex;align-items:center;gap:9px}
+.bp-size{font:600 11px/1 var(--font-mono);letter-spacing:.04em;padding:5px 7px;border-radius:6px;background:color-mix(in srgb,var(--primary) 10%,var(--surface));color:var(--primary)}
+.bp-name{font-size:13.5px;font-weight:600;letter-spacing:-.005em}
+.bp-tag{margin-left:auto;font:500 10.5px/1 var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted-foreground)}
+.bp-caption{font-size:12px;line-height:1.5;color:var(--muted-foreground);margin-top:2px}
+.bp-caption b{color:var(--foreground);font-weight:600}
+.wire{position:relative;height:238px;background:color-mix(in srgb,var(--secondary) 34%,var(--surface));border:1px solid var(--border);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:7px;overflow:hidden}
+.wire-phone{padding:12px 26px;align-items:center;justify-content:center}
+.wphone{width:100%;max-width:198px;height:100%;border:1px solid var(--border-strong);border-radius:14px;background:var(--surface);padding:9px;display:flex;flex-direction:column;gap:7px;box-shadow:var(--shadow-1)}
+.whead{display:flex;align-items:center;gap:6px;min-height:16px}
+.wdot{width:16px;height:16px;border-radius:5px;background:var(--primary);flex:none}
+.wbar{height:6px;border-radius:3px;background:var(--secondary);display:block}
+.wbar.dark{background:var(--border-strong)}
+.wnav{display:flex;gap:4px;padding:2px 0}
+.wpill{height:12px;flex:1;border-radius:999px;background:var(--secondary)}
+.wpill.on{background:color-mix(in srgb,var(--primary) 32%,var(--surface))}
+.wtitle{height:10px;width:64%;background:color-mix(in srgb,var(--foreground) 60%,var(--surface));border-radius:3px}
+.wsub{height:6px;width:44%;background:var(--border-strong);border-radius:3px}
+.wrow{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px dashed var(--border)}
+.wlines{display:flex;flex-direction:column;gap:4px;flex:1}
+.wlines i{height:5px;border-radius:2px;background:var(--secondary);display:block}
+.wlines i:first-child{width:58%;background:var(--border-strong)}
+.winput{width:44px;height:24px;border:1px solid var(--border-strong);border-radius:5px;background:var(--surface);flex:none}
+.wfoot{margin-top:auto;display:flex;align-items:center;gap:6px;padding-top:7px;border-top:1px solid var(--border)}
+.wbtn{height:22px;border-radius:5px;background:var(--primary);flex:1}
+.wgrid3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.wbox{height:34px;border:1px solid var(--border);border-radius:6px;background:var(--surface);padding:5px;display:flex;flex-direction:column;gap:4px;justify-content:center}
+.wbox::before{content:"";height:4px;width:48%;background:var(--border-strong);border-radius:2px}
+.wbox::after{content:"";height:7px;width:68%;background:var(--secondary);border-radius:2px}
+.wcols{display:flex;gap:6px;flex:1;min-height:0}
+.wchart{flex:2;border:1px solid var(--border);border-radius:6px;background:var(--surface);display:flex;align-items:flex-end;gap:5px;padding:8px}
+.wchart span{flex:1;background:var(--secondary);border-radius:2px 2px 0 0}
+.wchart span.on{background:var(--primary)}
+.waside{flex:1;border:1px dashed var(--border-strong);border-radius:6px;background:color-mix(in srgb,var(--secondary) 45%,var(--surface))}
+.wtable{display:flex;flex-direction:column;gap:5px}
+.wtable i{height:6px;border-radius:2px;background:var(--secondary);display:block}
+.wtable i:nth-child(2){width:88%}
+.wtable i:nth-child(3){width:94%}
+.wire-wide{padding:10px}
+.wcontainer{flex:1;min-height:0;margin:0 11%;border:1px dashed var(--border-strong);border-radius:8px;background:var(--surface);padding:9px;display:flex;flex-direction:column;gap:6px;position:relative}
+.table-scroll{overflow-x:auto;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--surface);margin-top:16px}
+.bp-table{width:100%;min-width:900px;border-collapse:collapse;font-size:12.5px}
+.bp-table th{
+  position:sticky;top:0;text-align:left;padding:12px 14px;background:color-mix(in srgb,var(--secondary) 35%,var(--surface));
+  font:600 10px/1.3 var(--font-body);letter-spacing:.07em;text-transform:uppercase;color:var(--muted-foreground);border-bottom:1px solid var(--border);white-space:nowrap;
+}
+.bp-table td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--muted-foreground)}
+.bp-table tr:last-child td{border-bottom:0}
+.bp-table th:first-child,.bp-table td:first-child{position:sticky;left:0;background:var(--surface);z-index:1}
+.bp-table th:first-child{background:color-mix(in srgb,var(--secondary) 35%,var(--surface));z-index:2}
+.bp-table code{font:600 11px/1.3 var(--font-mono);color:var(--primary);letter-spacing:.02em}
+.bp-table b{display:block;color:var(--foreground);font-weight:600}
+
+/* ============================================================
+   7. Componentes
+   ============================================================ */
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
+.filters button{
+  display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:0 13px;border-radius:var(--r-pill);
+  border:1px solid var(--border);background:var(--surface);font-size:12.5px;font-weight:500;color:var(--muted-foreground);
+  transition:background .15s,color .15s,border-color .15s;
+}
+.filters button:hover{background:var(--secondary);color:var(--foreground)}
+.filters button[aria-pressed="true"]{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground)}
+.filters .count{font:500 10px/1 var(--font-mono);opacity:.7}
+.comp-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:34px 32px}
+.comp-card{grid-column:span 6;border-top:1px solid var(--border);padding-top:16px;display:flex;flex-direction:column;min-width:0}
+.span-7{grid-column:span 7}
+.span-5{grid-column:span 5}
+.comp-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.comp-head h3{font-size:16px;font-weight:600;letter-spacing:-.012em}
+.comp-head .tag{margin-top:3px;font:600 10.5px/1.3 var(--font-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted-foreground)}
+.comp-desc{padding:7px 0 0;font-size:12.5px;line-height:1.55;color:var(--muted-foreground);max-width:56ch}
+.comp-demo{margin:16px 0 0;padding:16px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface);display:flex;flex-direction:column;gap:12px;flex:none;min-width:0}
+.comp-foot{padding:12px 0 0;font-size:11.5px;line-height:1.5;color:var(--muted-foreground)}
+.comp-foot b{color:var(--foreground);font-weight:600}
+
+/* Botones */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  min-height:44px;padding:0 14px;border:1px solid transparent;border-radius:var(--r-sm);
+  font:600 13.5px/1 var(--font-body);letter-spacing:.005em;white-space:nowrap;
+  transition:background .15s,border-color .15s,color .15s,transform .12s;
+}
+.btn:active{transform:translateY(1px)}
+.btn:focus-visible{outline:3px solid color-mix(in srgb,var(--ring) 55%,transparent);outline-offset:2px}
+.btn-primary{background:var(--primary);color:var(--primary-foreground)}
+.btn-primary:hover{background:var(--primary-deep)}
+.btn-outline{background:var(--surface);border-color:var(--border-strong);color:var(--foreground)}
+.btn-outline:hover{background:var(--secondary)}
+.btn-ghost{background:transparent;color:var(--foreground)}
+.btn-ghost:hover{background:var(--secondary)}
+.btn-danger{background:var(--danger-soft);color:var(--danger);border-color:color-mix(in srgb,var(--danger) 18%,transparent)}
+.btn-danger:hover{background:color-mix(in srgb,var(--danger) 18%,var(--surface))}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn .ico{width:15px;height:15px}
+.btn-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.demo-note{font-size:11.5px;line-height:1.55;color:var(--muted-foreground)}
+.demo-note code{font:500 10.5px/1 var(--font-mono);color:var(--foreground)}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:5px;min-height:22px;padding:0 8px;border-radius:var(--r-pill);background:var(--secondary);color:var(--muted-foreground);font-size:10.5px;font-weight:600;letter-spacing:.03em;white-space:nowrap}
+.badge-clay{background:var(--clay-soft);color:var(--clay-ink)}
+.badge-ok{background:color-mix(in srgb,var(--primary) 11%,var(--surface));color:var(--primary)}
+.badge-danger{background:var(--danger-soft);color:var(--danger)}
+.badge-dot{width:5px;height:5px;border-radius:50%;background:currentColor;display:block}
+
+/* Inputs */
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label{font-size:12px;font-weight:600;letter-spacing:.01em}
+.input{
+  width:100%;height:44px;padding:0 12px;border:1px solid var(--border-strong);border-radius:var(--r-sm);
+  background:var(--surface);font-size:14px;color:var(--foreground);transition:border-color .15s,box-shadow .15s;
+}
+.input:focus{outline:none;border-color:var(--ring);box-shadow:0 0 0 3px color-mix(in srgb,var(--ring) 18%,transparent)}
+.input[aria-invalid="true"]{border-color:var(--danger);box-shadow:0 0 0 3px color-mix(in srgb,var(--danger) 14%,transparent)}
+.field-error{font-size:12px;color:var(--danger);line-height:1.4}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* Fila de ordeño */
+.milk-row{display:flex;align-items:center;gap:12px}
+.milk-id{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.milk-code{font:600 13px/1.2 var(--font-body);letter-spacing:.01em}
+.milk-name{font-size:11.5px;color:var(--muted-foreground);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.milk-id .badge{margin-top:4px;width:fit-content}
+.liters{
+  width:112px;height:64px;flex:none;padding:0 8px;border:1px solid var(--border-strong);border-radius:var(--r-md);
+  background:var(--surface);text-align:center;font-size:27px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;
+  transition:border-color .15s,box-shadow .15s;
+}
+.liters:focus{outline:none;border-color:var(--ring);box-shadow:0 0 0 3px color-mix(in srgb,var(--ring) 18%,transparent)}
+.liters[aria-invalid="true"]{border-color:var(--danger);box-shadow:0 0 0 3px color-mix(in srgb,var(--danger) 14%,transparent)}
+.milk-foot{display:flex;align-items:center;gap:10px;padding-top:12px;border-top:1px solid var(--border)}
+.milk-total{font-size:12px;color:var(--muted-foreground);flex:1;font-variant-numeric:tabular-nums}
+.milk-total strong{font-size:15px;color:var(--foreground);font-weight:600}
+.milk-foot .btn{flex:none;min-height:56px;padding-inline:18px}
+.hint{font-size:11px;color:var(--muted-foreground);line-height:1.45}
+
+/* Turno */
+.segmented{display:inline-flex;padding:3px;gap:3px;background:var(--secondary);border-radius:var(--r-sm);width:100%}
+.segmented button{flex:1;min-height:44px;border-radius:6px;font-size:12.5px;font-weight:500;color:var(--muted-foreground);transition:background .15s,color .15s}
+.segmented button[aria-pressed="true"]{background:var(--surface);color:var(--primary);font-weight:600;box-shadow:var(--shadow-1)}
+.shift-note{font-size:11.5px;color:var(--muted-foreground)}
+
+/* Sync */
+.sync-line{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--primary);flex:none}
+.sync-dot[data-state="pending"]{background:var(--clay)}
+.sync-dot[data-state="failed"]{background:var(--danger)}
+.sync-label{font-size:12.5px;color:var(--foreground);flex:1;min-width:130px;font-weight:500}
+.sync-line .btn{margin-left:auto}
+.sync-chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{min-height:44px;padding:0 12px;border:1px solid var(--border);border-radius:var(--r-pill);background:var(--surface);font-size:11.5px;font-weight:500;color:var(--muted-foreground)}
+.chip:hover{background:var(--secondary)}
+.chip[aria-pressed="true"]{background:color-mix(in srgb,var(--primary) 12%,var(--surface));border-color:color-mix(in srgb,var(--primary) 30%,var(--border));color:var(--primary)}
+.is-syncing .ico{animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Conciliación */
+.sum-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sum{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:11px 12px;min-width:0}
+.sum p:first-child{font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-foreground)}
+.sum-value{margin-top:7px;font-family:var(--font-display);font-size:21px;line-height:1.05;font-weight:500;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.sum-value.is-danger{color:var(--danger)}
+.sum-sub{margin-top:4px;font-size:10.5px;color:var(--muted-foreground);line-height:1.35}
+.link-btn{display:inline-flex;align-items:center;gap:5px;min-height:44px;font-size:11.5px;font-weight:600;color:var(--primary);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;align-self:flex-start}
+.link-btn:hover{color:var(--primary-deep)}
+
+/* Gráfico */
+.chart-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 10px 8px}
+.chart-wrap svg{width:100%;height:auto}
+.chart-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;font-size:10.5px;color:var(--muted-foreground)}
+.chart-foot b{color:var(--clay-ink);font-weight:600}
+.chart-legend{display:flex;align-items:center;gap:6px}
+.chart-legend i{width:14px;height:2px;border-radius:2px;background:var(--clay);display:block}
+
+/* Tabla de vacas */
+.data-table{width:100%;border-collapse:collapse;font-size:12px;min-width:340px}
+.data-table th{font:600 10.5px/1.3 var(--font-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted-foreground);text-align:left;padding:0 8px 8px;border-bottom:1px solid var(--border)}
+.data-table th.num,.data-table td.num{text-align:right;font-variant-numeric:tabular-nums}
+.data-table td{padding:9px 8px;border-bottom:1px solid var(--border);color:var(--muted-foreground)}
+.data-table tr:last-child td{border-bottom:0;padding-bottom:0}
+.data-table td strong{display:block;color:var(--foreground);font-weight:600;font-size:12.5px}
+.data-table td small{display:block;font-size:10.5px;margin-top:1px}
+.icon-btn{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:var(--r-sm);border:1px solid transparent;color:var(--muted-foreground)}
+.icon-btn:hover{background:var(--secondary);color:var(--foreground)}
+.icon-btn:focus-visible{outline:3px solid color-mix(in srgb,var(--ring) 55%,transparent);outline-offset:1px}
+
+/* Estados */
+.state-stack{display:flex;flex-direction:column;gap:9px}
+.banner{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid color-mix(in srgb,var(--clay) 30%,var(--border));border-radius:var(--r-sm);background:var(--clay-soft);color:var(--clay-ink)}
+.banner .ico{width:15px;height:15px;margin-top:1px}
+.banner b{display:block;font-size:12px;font-weight:600}
+.banner span{display:block;font-size:11px;line-height:1.4;color:color-mix(in srgb,var(--clay-ink) 80%,var(--foreground))}
+.gate{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface)}
+.gate .ico{width:16px;height:16px;color:var(--muted-foreground)}
+.gate b{display:block;font-size:12px;font-weight:600}
+.gate span{display:block;font-size:10.5px;color:var(--muted-foreground);line-height:1.4}
+.empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:5px;padding:16px 12px;border:1px dashed var(--border-strong);border-radius:var(--r-sm);background:var(--surface)}
+.empty .ico{width:20px;height:20px;color:var(--muted-foreground);margin-bottom:2px}
+.empty b{font-size:12px;font-weight:600}
+.empty span{font-size:10.5px;color:var(--muted-foreground);line-height:1.4;max-width:32ch}
+
+/* Diálogo demo */
+.dialog-actions{display:flex;flex-wrap:wrap;gap:8px}
+.toast-btn-row{display:flex;flex-wrap:wrap;gap:8px}
+
+/* Navegación demo */
+.mini-header{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface)}
+.mini-brand{display:inline-flex;align-items:center;gap:6px;padding-right:4px}
+.mini-brand i{width:24px;height:24px;border-radius:6px;background:var(--primary);color:var(--primary-foreground);display:grid;place-items:center;font:600 12px/1 var(--font-display);font-style:normal}
+.mini-brand b{font-family:var(--font-display);font-size:13px;font-weight:600;letter-spacing:-.01em}
+.mini-tabs{display:flex;gap:1px;overflow-x:auto;max-width:100%;scrollbar-width:none}
+.mini-tabs::-webkit-scrollbar{display:none}
+.mini-tab{min-height:44px;padding:0 9px;border-radius:6px;font-size:11px;font-weight:500;color:var(--muted-foreground);white-space:nowrap}
+.mini-tab:hover{background:var(--secondary);color:var(--foreground)}
+.mini-tab.is-active{background:color-mix(in srgb,var(--primary) 10%,var(--surface));color:var(--primary);font-weight:600}
+.mini-sync{margin-left:auto;display:inline-flex;align-items:center;gap:5px;min-height:34px;padding:0 8px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:10.5px;color:var(--muted-foreground);white-space:nowrap}
+.mini-sync i{width:6px;height:6px;border-radius:50%;background:var(--primary);display:block}
+.mini-sync .ico{width:12px;height:12px}
+
+/* ============================================================
+   8. Matriz por pantalla
+   ============================================================ */
+.matrix{border-top:1px solid var(--border)}
+.mrow{display:grid;grid-template-columns:180px minmax(0,1fr) 230px;gap:24px;padding:20px 0;border-bottom:1px solid var(--border);align-items:start}
+.mrow:last-child{border-bottom:0;padding-bottom:0}
+.mwho h3{font-family:var(--font-display);font-size:21px;font-weight:500;letter-spacing:-.02em}
+.mwho p{margin-top:3px;font-size:11px;color:var(--muted-foreground);letter-spacing:.02em}
+.mwho .badge{margin-top:8px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chips span{display:inline-flex;align-items:center;min-height:27px;padding:0 9px;border:1px solid var(--border);border-radius:var(--r-pill);background:var(--surface);font-size:11px;color:var(--muted-foreground);white-space:nowrap}
+.mrule{font-size:11.5px;line-height:1.55;color:var(--muted-foreground)}
+.mrule b{display:block;color:var(--foreground);font-size:12px;font-weight:600;margin-bottom:3px}
+
+/* ============================================================
+   9. Implementación / pie
+   ============================================================ */
+.impl-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:16px}
+.code-block{background:var(--primary-deep);color:var(--primary-foreground);border-radius:var(--r-lg);padding:18px 20px;overflow:auto;font:400 12px/1.75 var(--font-mono);letter-spacing:.01em}
+.code-block .c{color:color-mix(in srgb,var(--primary-foreground) 62%,transparent)}
+.code-block .k{color:var(--clay-soft)}
+.code-block .v{color:color-mix(in oklab, var(--ring) 30%, var(--surface) 70%)}
+.check-list{display:flex;flex-direction:column;gap:10px}
+.check-item{display:flex;align-items:flex-start;gap:9px;font-size:12.5px;line-height:1.5;color:var(--muted-foreground)}
+.check-item .ico{width:15px;height:15px;color:var(--primary);margin-top:2px}
+.check-item b{color:var(--foreground);font-weight:600}
+.pending{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+.pending p{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-foreground);width:100%}
+
+.footer{background:var(--primary-deep);color:var(--primary-foreground);padding:clamp(36px,5vw,56px) 0 28px;margin-top:var(--section)}
+.footer-grid{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start;justify-content:space-between}
+.footer-brand{display:flex;align-items:center;gap:12px;min-width:240px}
+.footer-glyph{width:26px;height:35px;color:var(--primary-foreground);flex:none}
+.footer-brand b{display:block;font-family:var(--font-display);font-size:26px;font-weight:500;letter-spacing:-.02em;line-height:1}
+.footer-brand span{display:block;margin-top:4px;font-size:11.5px;letter-spacing:.02em;color:color-mix(in srgb,var(--primary-foreground) 60%,transparent)}
+.footer-links{display:flex;flex-wrap:wrap;gap:4px 2px}
+.footer-links a{display:inline-flex;align-items:center;min-height:44px;padding:0 11px;border-radius:var(--r-sm);font-size:12.5px;color:color-mix(in srgb,var(--primary-foreground) 74%,transparent)}
+.footer-links a:hover{background:color-mix(in srgb,var(--primary-foreground) 10%,transparent);color:var(--primary-foreground)}
+.footer-note{margin-top:26px;padding-top:16px;border-top:1px solid color-mix(in srgb,var(--primary-foreground) 14%,transparent);display:flex;flex-wrap:wrap;gap:6px 24px;justify-content:space-between;font-size:10.5px;line-height:1.5;color:color-mix(in srgb,var(--primary-foreground) 62%,transparent)}
+
+/* ============================================================
+   10. Diálogo, toasts
+   ============================================================ */
+.dlg{width:min(420px,calc(100vw - 32px));border:1px solid var(--border);border-radius:var(--r-lg);background:var(--surface);color:var(--foreground);padding:0;box-shadow:var(--shadow-2)}
+.dlg::backdrop{background:color-mix(in srgb,var(--primary-deep) 58%,transparent);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+.dlg-form{padding:20px}
+.dlg-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.dlg-head h3{font-family:var(--font-display);font-size:23px;font-weight:500;letter-spacing:-.02em}
+.dlg-close{display:grid;place-items:center;width:44px;height:44px;margin:-8px -8px -8px 0;border-radius:var(--r-sm);color:var(--muted-foreground)}
+.dlg-close:hover{background:var(--secondary);color:var(--foreground)}
+.dlg-form .field + .field{margin-top:12px}
+.dlg-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+.toast-host{position:fixed;right:20px;bottom:20px;z-index:100;display:flex;flex-direction:column;gap:8px;width:min(330px,calc(100vw - 32px));pointer-events:none}
+.toast{display:flex;align-items:flex-start;gap:9px;padding:11px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);box-shadow:var(--shadow-2);opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s}
+.toast.in{opacity:1;transform:none}
+.toast.out{opacity:0;transform:translateY(4px)}
+.toast .ico{width:15px;height:15px;margin-top:1px;color:var(--primary)}
+.toast-error .ico{color:var(--danger)}
+.toast-info .ico{color:var(--clay-ink)}
+.toast-title{font-size:12.5px;font-weight:600;letter-spacing:-.005em}
+.toast-desc{font-size:11px;line-height:1.45;color:var(--muted-foreground);margin-top:1px}
+
+/* ============================================================
+   11. Responsive
+   ============================================================ */
+@media (max-width:1100px){
+  .top-version{display:none}
+}
+@media (max-width:980px){
+  .hero-grid{grid-template-columns:1fr;gap:34px}
+  .specimen{max-width:560px;width:100%}
+  .grid-2{grid-template-columns:1fr}
+  .foundations{grid-template-columns:1fr}
+  .found-panel{padding:20px 0 0}
+  .found-panel + .found-panel{border-left:0;border-top:1px solid var(--border);padding-left:0;margin-top:8px}
+  .comp-card,.span-7,.span-5{grid-column:1/-1}
+  .mrow{grid-template-columns:1fr;gap:12px;padding:20px 0}
+  .impl-grid{grid-template-columns:1fr}
+}
+@media (max-width:760px){
+  .topbar-inner{flex-wrap:wrap;gap:0;padding-block:8px}
+  .brand{margin-right:auto}
+  .brand-sep,.brand-label{display:none}
+  .topnav{order:3;width:100%;gap:0;padding-top:2px;margin-left:0}
+  .topnav a{padding:0 10px}
+  .bp-grid{grid-template-columns:1fr}
+  .swatches{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sum-grid{grid-template-columns:1fr}
+  .footer-grid{flex-direction:column}
+  .toast-host{right:16px;left:16px;bottom:16px;width:auto}
+}
+@media (max-width:520px){
+  .brand-mark{width:30px;height:30px}
+  .brand-name{font-size:19px}
+  .hero-actions .btn{width:100%}
+  .foundations{grid-template-columns:1fr}
+  .milk-row{gap:8px}
+  .liters{width:96px;height:60px;font-size:25px}
+  .milk-foot{flex-wrap:wrap}
+  .milk-foot .btn{width:100%}
+  .form-row{grid-template-columns:1fr}
+  .comp-grid{gap:28px}
+  .comp-demo{padding:12px}
+  .sum-grid{grid-template-columns:1fr}
+  .mini-sync span{display:none}
+  .footer-brand b{font-size:23px}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<a class="skip" href="#main">Saltar al contenido</a>
+
+<svg xmlns="http://www.w3.org/2000/svg" class="sprite" aria-hidden="true">
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2.5 20h19L12 3Z"/><path d="M12 9v5"/><path d="M12 17.5h.01"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="m6 6 12 12"/><path d="m18 6-12 12"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+  <symbol id="i-clipboard" viewBox="0 0 24 24"><path d="M9 4h6v3H9z"/><path d="M8 5H6a2 2 0 0 0-2 2v12h16V7a2 2 0 0 0-2-2h-2"/><path d="M8 11h8"/><path d="M8 15h5"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></symbol>
+</svg>
+
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="#top" aria-label="Rodeo, inicio">
+      <svg class="brand-mark" viewBox="0 0 512 512" aria-hidden="true">
+        <rect width="512" height="512" rx="112" fill="#1F4D3A"/>
+        <g transform="translate(-9 0)" fill="none" stroke="#F7F3E9" stroke-width="46" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M186 138V374"/>
+          <path d="M186 161H258A57 57 0 0 1 258 275H186"/>
+          <path d="M255 281C290 305 320 338 344 372"/>
+        </g>
+      </svg>
+      <span class="brand-name">Rodeo</span>
+      <span class="brand-sep" aria-hidden="true"></span>
+      <span class="brand-label">Sistema de diseño</span>
+    </a>
+    <nav class="topnav" aria-label="Secciones del sistema">
+      <a href="#fundamentos">Fundamentos</a>
+      <a href="#breakpoints">Breakpoints</a>
+      <a href="#componentes">Componentes</a>
+      <a href="#pantallas">Pantallas</a>
+      <a href="flujos.html">Flujos</a>
+      <a href="#implementacion">Código</a>
+    </nav>
+    <span class="top-version">V2, octubre 2026</span>
+  </div>
+</header>
+
+<main id="main">
+  <div id="top"></div>
+
+  <!-- ======================= PORTADA ======================= -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="wrap hero-grid">
+      <div>
+        <p class="eyebrow">Agro moderno, offline-first</p>
+        <h1 id="hero-title">Registrar en el campo. <span>Conciliar desde casa.</span></h1>
+        <p class="hero-lead">La dirección visual ya está en el código: papel cálido, verde profundo y arcilla para la merma.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#breakpoints">Ver breakpoints <svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+          <a class="btn btn-outline" href="#componentes">Explorar componentes</a>
+        </div>
+      </div>
+
+      <aside class="specimen" aria-label="Ejemplo de la planilla de ordeño">
+        <div class="sp-top">
+          <svg class="sp-glyph" viewBox="151 103 228 306" aria-hidden="true">
+            <g fill="none" stroke="currentColor" stroke-width="46" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M186 138V374"/>
+              <path d="M186 161H258A57 57 0 0 1 258 275H186"/>
+              <path d="M255 281C290 305 320 338 344 372"/>
+            </g>
+          </svg>
+          <p class="sp-title">Ordeño <span>Mañana · 27 oct</span></p>
+          <span class="sp-offline"><i aria-hidden="true"></i> Sin conexión</span>
+        </div>
+        <div class="sp-rows">
+          <div class="sp-row"><span class="sp-code">M-104</span><span class="sp-name">La Negra</span><span class="sp-lit">18,4 L</span><svg class="ico sp-check" aria-hidden="true"><use href="#i-check"/></svg></div>
+          <div class="sp-row"><span class="sp-code">M-112</span><span class="sp-name">Estrella</span><span class="sp-lit">16,2 L</span><svg class="ico sp-check" aria-hidden="true"><use href="#i-check"/></svg></div>
+          <div class="sp-row"><span class="sp-code">M-087</span><span class="sp-name">Canela</span><span class="sp-lit">14,0 L</span><svg class="ico sp-check" aria-hidden="true"><use href="#i-check"/></svg></div>
+        </div>
+        <div class="sp-total">
+          <span class="sp-big">48,6 L</span>
+          <span class="sp-meta">3 vacas · guardado local</span>
+        </div>
+        <a class="sp-cta" href="#fila-ordeno">Probar la fila de ordeño <svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <p class="sp-note">Datos de ejemplo. En producción el registro se escribe primero en el dispositivo y se sincroniza al volver la señal.</p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ======================= FUNDAMENTOS ======================= -->
+  <section class="section" id="fundamentos" aria-labelledby="fundamentos-title">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2 id="fundamentos-title">Un sistema para una mano, con sol y sin señal.</h2>
+        <p class="lead">La identidad ya existe en el repositorio: <strong>verde profundo para la acción, arcilla solo para la merma, papel cálido como base</strong>. Aquí se fija en tokens, no se reinventa.</p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Paleta</h3>
+          <p>Toca un token para copiar el hex.</p>
+        </div>
+        <div class="swatches">
+          <button type="button" class="swatch" data-copy="#FAF7F0" aria-label="Copiar el color papel, FAF7F0">
+            <span class="chip" style="--c:#FAF7F0"></span>
+            <span class="meta"><b>Papel</b><span>Fondo de página</span><code>#FAF7F0</code></span>
+          </button>
+          <button type="button" class="swatch" data-copy="#FFFFFF" aria-label="Copiar el color superficie, FFFFFF">
+            <span class="chip" style="--c:#FFFFFF"></span>
+            <span class="meta"><b>Superficie</b><span>Tarjetas y hojas</span><code>#FFFFFF</code></span>
+          </button>
+          <button type="button" class="swatch" data-copy="#23211C" aria-label="Copiar el color tinta, 23211C">
+            <span class="chip" style="--c:#23211C"></span>
+            <span class="meta"><b>Tinta</b><span>Texto principal</span><code>#23211C</code></span>
+          </button>
+          <button type="button" class="swatch" data-copy="#6B675C" aria-label="Copiar el color texto suave, 6B675C">
+            <span class="chip" style="--c:#6B675C"></span>
+            <span class="meta"><b>Texto suave</b><span>Metadatos</span><code>#6B675C</code></span>
+          </button>
+          <button type="button" class="swatch" data-copy="#E3DCCC" aria-label="Copiar el color borde, E3DCCC">
+            <span class="chip" style="--c:#E3DCCC"></span>
+            <span class="meta"><b>Borde</b><span>Hairline de 1 px</span><code>#E3DCCC</code></span>
+          </button>
+          <button type="button" class="swatch" data-copy="#1F4D3A" aria-label="Copiar el verde Rodeo, 1F4D3A">
+            <span class="chip" style="--c:#1F4D3A"></span>
+            <span class="meta"><b>Verde Rodeo</b><span>Acción principal</span><code>#1F4D3A</code></span>
+          </button>
+          <button type="button" class="swatch" data-copy="#17392B" aria-label="Copiar el verde profundo, 17392B">
+            <span class="chip" style="--c:#17392B"></span>
+            <span class="meta"><b>Verde profundo</b><span>Hover y marca</span><code>#17392B</code></span>
+          </button>
+          <button type="button" class="swatch" data-copy="#B5622F" aria-label="Copiar el color arcilla, B5622F">
+            <span class="chip" style="--c:#B5622F"></span>
+            <span class="meta"><b>Arcilla</b><span>Merma y riesgo</span><code>#B5622F</code><span class="ratio">4.1:1 · solo ≥24 px</span></span>
+          </button>
+        </div>
+        <div class="token-extras" aria-label="Tokens semánticos derivados">
+          <span class="token-pill"><i style="--c:#F3E2D5" aria-hidden="true"></i> Arcilla suave <code>#F3E2D5</code></span>
+          <span class="token-pill"><i style="--c:#8F4A20" aria-hidden="true"></i> Arcilla tinta · AA <code>#8F4A20</code></span>
+          <span class="token-pill"><i style="--c:#B4341F" aria-hidden="true"></i> Peligro <code>#B4341F</code></span>
+          <span class="token-pill"><i style="--c:#2E6B4E" aria-hidden="true"></i> Anillo de foco <code>#2E6B4E</code></span>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-title-row">
+            <h3>Contraste</h3>
+            <span class="kicker-mini">WCAG 2.2</span>
+          </div>
+          <table class="mini-table">
+            <caption class="sr-only">Ratios de contraste entre tokens</caption>
+            <thead><tr><th scope="col">Par</th><th scope="col">Ratio</th><th scope="col">Nivel</th></tr></thead>
+            <tbody>
+              <tr><td><span class="pair"><i class="dot" style="--c:#23211C"></i><i class="dot" style="--c:#FAF7F0"></i><span>Tinta / Papel</span></span></td><td class="num">15.03:1</td><td><span class="badge badge-ok">AAA</span></td></tr>
+              <tr><td><span class="pair"><i class="dot" style="--c:#6B675C"></i><i class="dot" style="--c:#FAF7F0"></i><span>Suave / Papel</span></span></td><td class="num">5.28:1</td><td><span class="badge badge-ok">AA</span></td></tr>
+              <tr><td><span class="pair"><i class="dot" style="--c:#1F4D3A"></i><i class="dot" style="--c:#FAF7F0"></i><span>Verde / Papel</span></span></td><td class="num">9.00:1</td><td><span class="badge badge-ok">AAA</span></td></tr>
+              <tr><td><span class="pair"><i class="dot" style="--c:#F7F3E9"></i><i class="dot" style="--c:#1F4D3A"></i><span>Crema / Verde</span></span></td><td class="num">8.69:1</td><td><span class="badge badge-ok">AAA</span></td></tr>
+              <tr><td><span class="pair"><i class="dot" style="--c:#B4341F"></i><i class="dot" style="--c:#FAF7F0"></i><span>Peligro / Papel</span></span></td><td class="num">5.69:1</td><td><span class="badge badge-ok">AA</span></td></tr>
+              <tr><td><span class="pair"><i class="dot" style="--c:#B5622F"></i><i class="dot" style="--c:#FAF7F0"></i><span>Arcilla / Papel</span></span></td><td class="num">4.13:1</td><td><span class="badge badge-clay">Solo grande</span></td></tr>
+            </tbody>
+          </table>
+          <p class="found-note">La arcilla pura no se usa para texto menor a 18.66 px en negrita. Los badges usan <code>#8F4A20</code> sobre arcilla suave para llegar a 5.26:1.</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title-row">
+            <h3>Tipografía</h3>
+            <span class="kicker-mini">Fraunces + Inter</span>
+          </div>
+          <p class="type-display">Trazabilidad <span>en el corral.</span></p>
+          <p class="type-body">El capataz registra litros por vaca sin señal; el dueño ve la diferencia entre lo ordeñado y lo despachado, todos los días.</p>
+          <div class="type-numbers">
+            <span>58,4 <small>L</small></span>
+            <span>3 <small>vacas</small></span>
+            <span>5,8 <small>% merma</small></span>
+          </div>
+          <div class="scale" aria-label="Escala tipográfica">
+            <div class="scale-row"><span class="scale-name">Display</span><span class="scale-sample" style="font-size:26px">Campo</span><span class="scale-size">64 px</span></div>
+            <div class="scale-row"><span class="scale-name">H1</span><span class="scale-sample" style="font-size:21px">Panel de merma</span><span class="scale-size">40 px</span></div>
+            <div class="scale-row"><span class="scale-name">H2</span><span class="scale-sample" style="font-family:var(--font-body);font-size:16px;font-weight:600">Tarjetas de hoy</span><span class="scale-size">28 px</span></div>
+            <div class="scale-row"><span class="scale-name">Cuerpo</span><span class="scale-sample" style="font-family:var(--font-body);font-size:13px;font-weight:400">Litros por vaca y turno</span><span class="scale-size">16 px</span></div>
+            <div class="scale-row"><span class="scale-name">Etiqueta</span><span class="scale-sample" style="font-family:var(--font-body);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase">Guardado local</span><span class="scale-size">12 px</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="foundations">
+        <div class="found-panel">
+          <h3>Espaciado · base 4 px</h3>
+          <div class="space-list">
+            <div class="space-row"><span>8</span><i style="width:8px"></i></div>
+            <div class="space-row"><span>16</span><i style="width:16px"></i></div>
+            <div class="space-row"><span>24</span><i style="width:24px"></i></div>
+            <div class="space-row"><span>32</span><i style="width:32px"></i></div>
+            <div class="space-row"><span>48</span><i style="width:48px"></i></div>
+            <div class="space-row"><span>64</span><i style="width:64px"></i></div>
+          </div>
+          <p class="found-note">Ritmo de 8 px. En campo, los gaps crecen: de 12 a 16 px entre filas para evitar toques accidentales.</p>
+        </div>
+        <div class="found-panel">
+          <h3>Radios</h3>
+          <div class="radii">
+            <div class="radius-item"><i class="radius-box" style="border-radius:8px"></i><span>8</span></div>
+            <div class="radius-item"><i class="radius-box" style="border-radius:12px"></i><span>12</span></div>
+            <div class="radius-item"><i class="radius-box" style="border-radius:16px"></i><span>16</span></div>
+            <div class="radius-item"><i class="radius-box" style="border-radius:999px"></i><span>999</span></div>
+          </div>
+          <p class="found-note">8 px en controles, 12 en inputs y hojas, 16 en tarjetas, 999 en pills. Sin excepciones por pantalla.</p>
+        </div>
+        <div class="found-panel">
+          <h3>Movimiento</h3>
+          <div class="motion-list">
+            <div class="motion-row"><span>Hover</span><div class="motion-track"><i style="--x:8%"></i></div><span style="text-align:right">120</span></div>
+            <div class="motion-row"><span>Estado</span><div class="motion-track"><i style="--x:48%"></i></div><span style="text-align:right">180</span></div>
+            <div class="motion-row"><span>Entrada</span><div class="motion-track"><i style="--x:88%"></i></div><span style="text-align:right">240</span></div>
+          </div>
+          <p class="found-note">Milisegundos, easing <code>cubic-bezier(.2,.7,.3,1)</code>. Todo se apaga con <code>prefers-reduced-motion</code>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= BREAKPOINTS ======================= -->
+  <section class="section" id="breakpoints" aria-labelledby="breakpoints-title">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2 id="breakpoints-title">El campo no se parte en dos columnas.</h2>
+        <p class="lead">Siete anchos, un contenedor máximo de <strong>1024 px</strong> y una regla fija: la planilla de ordeño siempre es una sola columna. Los demás módulos ganan densidad en tablet y escritorio.</p>
+      </div>
+
+      <div class="bp-grid">
+        <article class="bp-card">
+          <div class="bp-head"><span class="bp-size">360</span><span class="bp-name">Teléfono base</span><span class="bp-tag">base</span></div>
+          <div class="wire wire-phone" aria-hidden="true">
+            <div class="wphone">
+              <div class="whead"><span class="wdot"></span><span class="wbar" style="width:34px"></span><span class="wbar" style="width:18px;margin-left:auto"></span></div>
+              <div class="wnav"><span class="wpill on"></span><span class="wpill"></span><span class="wpill"></span><span class="wpill"></span></div>
+              <div class="wtitle"></div>
+              <div class="wsub"></div>
+              <div class="wrow"><span class="wlines"><i></i><i></i></span><span class="winput"></span></div>
+              <div class="wrow"><span class="wlines"><i></i><i></i></span><span class="winput"></span></div>
+              <div class="wrow"><span class="wlines"><i></i><i></i></span><span class="winput"></span></div>
+              <div class="wfoot"><span class="wbar" style="width:52px"></span><span class="wbtn" style="width:58px;flex:none"></span></div>
+            </div>
+          </div>
+          <p class="bp-caption"><b>Una columna.</b> Input de 64 px y barra de guardado fija al fondo. La navegación ocupa una segunda fila.</p>
+        </article>
+
+        <article class="bp-card">
+          <div class="bp-head"><span class="bp-size">768</span><span class="bp-name">Tablet</span><span class="bp-tag">md</span></div>
+          <div class="wire" aria-hidden="true">
+            <div class="whead"><span class="wdot"></span><span class="wbar" style="width:38px"></span><span class="wbar" style="width:26px;margin-left:auto"></span><span class="wbar" style="width:26px"></span></div>
+            <div class="wgrid3"><span class="wbox"></span><span class="wbox"></span><span class="wbox"></span></div>
+            <div class="wchart" style="min-height:64px"><span style="height:38%"></span><span style="height:62%" class="on"></span><span style="height:46%"></span><span style="height:72%"></span><span style="height:54%"></span><span style="height:84%"></span></div>
+            <div class="wtable"><i></i><i></i><i></i></div>
+            <div class="wrow" style="border-bottom:0"><span class="wlines"><i></i><i></i></span><span class="winput"></span></div>
+          </div>
+          <p class="bp-caption"><b>3 tarjetas y tabla.</b> El Panel muestra el gráfico completo; Vacas pasa de lista a tabla. Ordeño sigue a una columna.</p>
+        </article>
+
+        <article class="bp-card">
+          <div class="bp-head"><span class="bp-size">1024</span><span class="bp-name">Escritorio</span><span class="bp-tag">lg</span></div>
+          <div class="wire" aria-hidden="true">
+            <div class="whead"><span class="wdot"></span><span class="wbar" style="width:42px"></span><span class="wbar" style="width:24px;margin-left:auto"></span><span class="wbar" style="width:30px"></span><span class="wbar" style="width:24px"></span></div>
+            <div class="wgrid3"><span class="wbox"></span><span class="wbox"></span><span class="wbox"></span></div>
+            <div class="wcols">
+              <div class="wchart"><span style="height:34%"></span><span style="height:58%" class="on"></span><span style="height:44%"></span><span style="height:70%"></span><span style="height:52%"></span><span style="height:80%"></span><span style="height:62%"></span></div>
+              <div class="waside"></div>
+            </div>
+            <div class="wtable"><i></i><i></i></div>
+          </div>
+          <p class="bp-caption"><b>Contenedor completo.</b> Gráfico 2/3 + aside 1/3. El ordeño se centra en una tarjeta de 720 px.</p>
+        </article>
+
+        <article class="bp-card">
+          <div class="bp-head"><span class="bp-size">1440</span><span class="bp-name">Pantalla amplia</span><span class="bp-tag">xl / 2xl</span></div>
+          <div class="wire wire-wide" aria-hidden="true">
+            <div class="wcontainer">
+              <div class="whead"><span class="wdot"></span><span class="wbar" style="width:42px"></span><span class="wbar" style="width:24px;margin-left:auto"></span><span class="wbar" style="width:30px"></span></div>
+              <div class="wgrid3"><span class="wbox"></span><span class="wbox"></span><span class="wbox"></span></div>
+              <div class="wcols">
+                <div class="wchart"><span style="height:36%"></span><span style="height:60%" class="on"></span><span style="height:48%"></span><span style="height:76%"></span><span style="height:56%"></span><span style="height:84%"></span></div>
+                <div class="waside"></div>
+              </div>
+            </div>
+          </div>
+          <p class="bp-caption"><b>Mismo layout.</b> El contenido se centra y gana aire lateral. No se agregan columnas ni se estira la tabla.</p>
+        </article>
+      </div>
+
+      <div class="table-scroll">
+        <table class="bp-table">
+          <caption class="sr-only">Breakpoints, contenedor y comportamiento por superficie</caption>
+          <thead>
+            <tr><th scope="col">Token / desde</th><th scope="col">Contenedor</th><th scope="col">Navegación</th><th scope="col">Ordeño</th><th scope="col">Panel</th><th scope="col">Vacas</th><th scope="col">Despacho</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><b>base</b><code>360</code></td><td>100% − 32</td><td>2 filas · tabs con scroll</td><td>1 columna</td><td>1 columna</td><td>lista</td><td>1 columna</td></tr>
+            <tr><td><b>xs</b><code>430</code></td><td>100% − 32</td><td>2 filas</td><td>1 columna</td><td>1 columna</td><td>lista</td><td>1 columna</td></tr>
+            <tr><td><b>sm</b><code>640</code></td><td>100% − 48</td><td>1 fila</td><td>1 columna · máx. 560</td><td>3 tarjetas</td><td>lista con acciones</td><td>2 columnas</td></tr>
+            <tr><td><b>md</b><code>768</code></td><td>768</td><td>1 fila · texto sync</td><td>máx. 640</td><td>gráfico + tabla</td><td>tabla</td><td>2 col + resumen</td></tr>
+            <tr><td><b>lg</b><code>1024</code></td><td>1024</td><td>completa</td><td>tarjeta 720</td><td>2/3 + aside 1/3</td><td>tabla completa</td><td>2/3 + aside 1/3</td></tr>
+            <tr><td><b>xl</b><code>1280</code></td><td>1024</td><td>completa</td><td>igual</td><td>igual</td><td>igual</td><td>igual</td></tr>
+            <tr><td><b>2xl</b><code>1536</code></td><td>1024</td><td>completa</td><td>igual</td><td>igual</td><td>igual</td><td>igual</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= COMPONENTES ======================= -->
+  <section class="section" id="componentes" aria-labelledby="componentes-title">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2 id="componentes-title">Cada componente, con sus estados.</h2>
+        <p class="lead">Cada pieza sale de <code>components/</code> o se extiende desde ahí. Los estados no son decorativos: validan, bloquean el guardado, muestran la cola offline y explican la merma.</p>
+      </div>
+
+      <div class="filters" role="group" aria-label="Filtrar componentes">
+        <button type="button" data-filter="all" aria-pressed="true">Todos <span class="count">10</span></button>
+        <button type="button" data-filter="captura" aria-pressed="false">Captura <span class="count">2</span></button>
+        <button type="button" data-filter="datos" aria-pressed="false">Datos <span class="count">3</span></button>
+        <button type="button" data-filter="sistema" aria-pressed="false">Sistema <span class="count">5</span></button>
+      </div>
+
+      <div class="comp-grid">
+
+        <!-- Botones -->
+        <article class="comp-card span-5" data-group="sistema">
+          <div class="comp-head">
+            <div><h3>Botones</h3><p class="tag">Sistema · 4 variantes</p></div>
+            <span class="badge badge-ok">Existente</span>
+          </div>
+          <p class="comp-desc">Una acción primaria por pantalla. Altura mínima de 44 px; en ordeño el CTA sube a 56 px.</p>
+          <div class="comp-demo">
+            <div class="btn-row">
+              <button type="button" class="btn btn-primary" data-toast="Guardado local" data-toast-desc="3 vacas · 48,6 L">Guardar ordeño</button>
+              <button type="button" class="btn btn-outline">Cancelar</button>
+            </div>
+            <div class="btn-row">
+              <button type="button" class="btn btn-ghost">Ver detalle</button>
+              <button type="button" class="btn btn-danger">Eliminar</button>
+              <button type="button" class="btn btn-primary" disabled>Deshabilitado</button>
+            </div>
+            <p class="demo-note">Foco de 3 px con offset 2 px. El estado <code>disabled</code> baja la opacidad, nunca cambia el tamaño.</p>
+          </div>
+          <p class="comp-foot"><b>Dónde:</b> todas las pantallas · <b>Responsive:</b> ancho completo en acciones de formulario &lt;520 px.</p>
+        </article>
+
+        <!-- Fila de ordeño -->
+        <article class="comp-card span-7" data-group="captura" id="fila-ordeno">
+          <div class="comp-head">
+            <div><h3>Fila de ordeño</h3><p class="tag">Captura · input + validación</p></div>
+            <span class="badge badge-ok">Existente</span>
+          </div>
+          <p class="comp-desc">Prueba un valor. El total de la vaca no puede superar 100 L y el botón se bloquea con cualquier error.</p>
+          <div class="comp-demo">
+            <div class="milk-row">
+              <div class="milk-id">
+                <span class="milk-code">M-104</span>
+                <span class="milk-name">La Negra</span>
+                <span class="badge badge-clay" id="savedBadge" hidden>Ya: 0 L</span>
+              </div>
+              <label class="sr-only" for="litersDemo">Litros de la vaca M-104</label>
+              <input id="litersDemo" class="liters" type="text" inputmode="decimal" autocomplete="off" placeholder="0,0" aria-describedby="litersError" />
+            </div>
+            <p class="field-error" id="litersError" role="status" hidden></p>
+            <div class="milk-foot">
+              <p class="milk-total" aria-live="polite"><strong id="pendingLiters">0</strong> L · <span id="pendingCows">0 vacas</span></p>
+              <button type="button" class="btn btn-primary" id="saveMilk" disabled>Guardar ordeño</button>
+            </div>
+            <p class="hint">Probar con <code>18,4</code>, luego <code>abc</code> o <code>120</code> para ver los estados.</p>
+          </div>
+          <p class="comp-foot"><b>Dónde:</b> Ordeño · <b>Regla:</b> una columna en todos los breakpoints; input de 64 px de alto.</p>
+        </article>
+
+        <!-- Turno -->
+        <article class="comp-card span-5" data-group="captura">
+          <div class="comp-head">
+            <div><h3>Turno y fecha</h3><p class="tag">Captura · segmentado</p></div>
+            <span class="badge badge-ok">Existente</span>
+          </div>
+          <p class="comp-desc">Dos turnos, sin ambigüedad. El segmentado reemplaza al select en campo; la fecha se mantiene nativa.</p>
+          <div class="comp-demo">
+            <div class="segmented" role="group" aria-label="Turno">
+              <button type="button" class="seg-btn" data-shift="Mañana" aria-pressed="true">Mañana</button>
+              <button type="button" class="seg-btn" data-shift="Tarde" aria-pressed="false">Tarde</button>
+            </div>
+            <div class="field">
+              <label for="demoDate">Fecha</label>
+              <input class="input" id="demoDate" type="date" value="2026-10-27" />
+            </div>
+            <p class="shift-note" id="shiftNote">Turno activo: Mañana · 27 oct</p>
+          </div>
+          <p class="comp-foot"><b>Dónde:</b> Ordeño, Despacho, Panel · <b>Responsive:</b> ancho completo &lt;640 px.</p>
+        </article>
+
+        <!-- Sync -->
+        <article class="comp-card span-7" data-group="sistema">
+          <div class="comp-head">
+            <div><h3>Sincronización</h3><p class="tag">Sistema · 3 estados</p></div>
+            <span class="badge badge-ok">Existente</span>
+          </div>
+          <p class="comp-desc">Nunca dice “error de conexión”: dice cuántos quedan. En &lt;768 px queda solo el icono y el punto de color.</p>
+          <div class="comp-demo">
+            <div class="sync-line">
+              <span class="sync-dot" id="syncDot" data-state="idle" aria-hidden="true"></span>
+              <span class="sync-label" id="syncLabel" aria-live="polite">Sin pendientes</span>
+              <button type="button" class="btn btn-outline" id="syncBtn">
+                <svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg><span>Sincronizar</span>
+              </button>
+            </div>
+            <div class="sync-chips" role="group" aria-label="Simular estado de sincronización">
+              <button type="button" class="chip" data-state="idle" aria-pressed="true">Al día</button>
+              <button type="button" class="chip" data-state="pending" aria-pressed="false">3 pendientes</button>
+              <button type="button" class="chip" data-state="failed" aria-pressed="false">1 fallido</button>
+            </div>
+            <p class="demo-note">Tocar “Sincronizar” vacía la cola simulada. Los datos locales no se borran hasta confirmar la subida.</p>
+          </div>
+          <p class="comp-foot"><b>Dónde:</b> header global · <b>Responsive:</b> texto oculto &lt;768; botón de 44 px siempre.</p>
+        </article>
+
+        <!-- Conciliación -->
+        <article class="comp-card span-7" data-group="datos">
+          <div class="comp-head">
+            <div><h3>Conciliación</h3><p class="tag">Datos · tarjetas resumen</p></div>
+            <span class="badge badge-ok">Existente</span>
+          </div>
+          <p class="comp-desc">La merma se muestra con litros y porcentaje. El sobre-despacho usa peligro, no arcilla: es un dato contable distinto.</p>
+          <div class="comp-demo">
+            <div class="sum-grid">
+              <article class="sum"><p>Ordeñado hoy</p><p class="sum-value">58,4 L</p><p class="sum-sub">Mañana + Tarde</p></article>
+              <article class="sum"><p>Despachado hoy</p><p class="sum-value" id="sumDispatch">55,0 L</p><p class="sum-sub">Salidas registradas</p></article>
+              <article class="sum"><p>Merma hoy</p><p class="sum-value" id="sumMerma">3,4 L · 5,8%</p><p class="sum-sub" id="sumMermaSub">Leche sin despachar</p></article>
+            </div>
+            <button type="button" class="link-btn" id="overToggle">Ver caso sobre-despacho</button>
+          </div>
+          <p class="comp-foot"><b>Dónde:</b> Panel · <b>Responsive:</b> 1 → 3 columnas en 640 px. Cifras siempre tabulares.</p>
+        </article>
+
+        <!-- Chart -->
+        <article class="comp-card span-5" data-group="datos">
+          <div class="comp-head">
+            <div><h3>Merma 14 días</h3><p class="tag">Datos · serie</p></div>
+            <span class="badge badge-clay">Extender</span>
+          </div>
+          <p class="comp-desc">Línea de arcilla sobre grilla neutra. Falta definir el estado vacío y el skeleton de carga.</p>
+          <div class="comp-demo">
+            <div class="chart-wrap">
+              <svg viewBox="0 0 640 190" role="img" aria-label="Merma diaria de los últimos 14 días, entre 2,2% y 6,8%, con 5,8% hoy">
+                <g stroke="#E3DCCC" stroke-width="1">
+                  <line x1="44" y1="18" x2="608" y2="18"/>
+                  <line x1="44" y1="93" x2="608" y2="93"/>
+                  <line x1="44" y1="168" x2="608" y2="168"/>
+                </g>
+                <g fill="#6B675C" font-family="Inter, sans-serif" font-size="15">
+                  <text x="4" y="23">10%</text>
+                  <text x="10" y="98">5%</text>
+                  <text x="12" y="173">0</text>
+                </g>
+                <polygon points="44,168 44.0,105.0 87.4,121.5 130.8,81.0 174.2,94.5 217.5,135.0 260.9,111.0 304.3,72.0 347.7,106.5 391.1,118.5 434.5,126.0 477.8,91.5 521.2,66.0 564.6,102.0 608.0,81.0 608,168" fill="#F3E2D5" opacity=".65"/>
+                <polyline points="44.0,105.0 87.4,121.5 130.8,81.0 174.2,94.5 217.5,135.0 260.9,111.0 304.3,72.0 347.7,106.5 391.1,118.5 434.5,126.0 477.8,91.5 521.2,66.0 564.6,102.0 608.0,81.0" fill="none" stroke="#B5622F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="608" cy="81" r="5" fill="#B5622F" stroke="#FFFFFF" stroke-width="2"/>
+              </svg>
+              <div class="chart-foot">
+                <span class="chart-legend"><i aria-hidden="true"></i> Merma diaria · %</span>
+                <b>Hoy · 5,8%</b>
+              </div>
+            </div>
+            <p class="demo-note">Una serie, un eje. El punto de hoy se resalta; no se agregan líneas de ordeñado y despacho en la misma escala.</p>
+          </div>
+          <p class="comp-foot"><b>Dónde:</b> Panel · <b>Responsive:</b> ancho completo; en &lt;640 reduce a 7 días.</p>
+        </article>
+
+        <!-- Vacas -->
+        <article class="comp-card span-7" data-group="datos">
+          <div class="comp-head">
+            <div><h3>Vacas</h3><p class="tag">Datos · tabla / lista</p></div>
+            <span class="badge badge-ok">Existente</span>
+          </div>
+          <p class="comp-desc">Tabla desde 768 px; lista apilada por debajo. La acción de edición es un icono de 36 px con etiqueta accesible.</p>
+          <div class="comp-demo" style="overflow-x:auto">
+            <table class="data-table">
+              <caption class="sr-only">Vacas activas de ejemplo</caption>
+              <thead><tr><th scope="col">Código</th><th scope="col">Nombre</th><th scope="col">Estado</th><th scope="col" class="num">Hoy</th><th scope="col"><span class="sr-only">Acciones</span></th></tr></thead>
+              <tbody>
+                <tr><td><strong>M-104</strong><small>Alta</small></td><td>La Negra</td><td><span class="badge badge-ok"><i class="badge-dot" aria-hidden="true"></i>Activa</span></td><td class="num">18,4 L</td><td><button type="button" class="icon-btn" aria-label="Editar M-104" data-open-dialog><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button></td></tr>
+                <tr><td><strong>M-112</strong><small>Alta</small></td><td>Estrella</td><td><span class="badge badge-ok"><i class="badge-dot" aria-hidden="true"></i>Activa</span></td><td class="num">16,2 L</td><td><button type="button" class="icon-btn" aria-label="Editar M-112" data-open-dialog><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button></td></tr>
+                <tr><td><strong>M-087</strong><small>Baja</small></td><td>Canela</td><td><span class="badge">Inactiva</span></td><td class="num">Sin dato</td><td><button type="button" class="icon-btn" aria-label="Editar M-087" data-open-dialog><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="comp-foot"><b>Dónde:</b> Vacas · <b>Responsive:</b> lista &lt;768, tabla ≥768. El código es único por finca.</p>
+        </article>
+
+        <!-- Estados -->
+        <article class="comp-card span-5" data-group="sistema">
+          <div class="comp-head">
+            <div><h3>Estados del sistema</h3><p class="tag">Sistema · offline y permisos</p></div>
+            <span class="badge badge-clay">Extender</span>
+          </div>
+          <p class="comp-desc">Tres estados que hoy no tienen componente propio: sin conexión, sin permiso y vacío.</p>
+          <div class="comp-demo">
+            <div class="state-stack">
+              <div class="banner">
+                <svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg>
+                <div><b>Sin conexión</b><span>2 ordeños guardados localmente. Se suben al reconectar.</span></div>
+              </div>
+              <div class="gate">
+                <svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg>
+                <div><b>El Panel es del dueño</b><span>Tu rol de capataz no tiene permiso de conciliación.</span></div>
+              </div>
+              <div class="empty">
+                <svg class="ico" aria-hidden="true"><use href="#i-clipboard"/></svg>
+                <b>No hay vacas activas</b>
+                <span>Carga o activa vacas para registrar el ordeño.</span>
+              </div>
+            </div>
+          </div>
+          <p class="comp-foot"><b>Dónde:</b> global, Panel, Vacas · <b>Regla:</b> nunca una pantalla rota; siempre una salida.</p>
+        </article>
+
+        <!-- Diálogo -->
+        <article class="comp-card span-5" data-group="sistema">
+          <div class="comp-head">
+            <div><h3>Diálogo y aviso</h3><p class="tag">Sistema · overlay</p></div>
+            <span class="badge badge-ok">Existente</span>
+          </div>
+          <p class="comp-desc">Diálogo nativo para alta/edición; toast para confirmar sin interrumpir. El foco queda atrapado y Esc cierra.</p>
+          <div class="comp-demo">
+            <div class="toast-btn-row">
+              <button type="button" class="btn btn-outline" data-open-dialog>Editar vaca</button>
+              <button type="button" class="btn btn-primary" data-toast="Ordeño guardado" data-toast-desc="1 vaca · 18,4 L">Mostrar aviso</button>
+            </div>
+            <p class="demo-note">En móvil el diálogo se mantiene centrado; no se convierte en hoja para no competir con la barra de guardado.</p>
+          </div>
+          <p class="comp-foot"><b>Dónde:</b> Vacas, confirmaciones · <b>Responsive:</b> ancho mínimo 92vw hasta 420 px.</p>
+        </article>
+
+        <!-- Navegación -->
+        <article class="comp-card span-7" data-group="sistema">
+          <div class="comp-head">
+            <div><h3>Navegación</h3><p class="tag">Sistema · header</p></div>
+            <span class="badge badge-ok">Existente</span>
+          </div>
+          <p class="comp-desc">Cinco destinos como máximo y visibles según rol. Sin menú hamburguesa: son pocas opciones y el capataz necesita un toque.</p>
+          <div class="comp-demo">
+            <div class="mini-header">
+              <span class="mini-brand"><i aria-hidden="true">R</i><b>Rodeo</b></span>
+              <div class="mini-tabs" role="group" aria-label="Navegación de ejemplo">
+                <button type="button" class="mini-tab is-active" aria-pressed="true">Vacas</button>
+                <button type="button" class="mini-tab" aria-pressed="false">Ordeño</button>
+                <button type="button" class="mini-tab" aria-pressed="false">Despacho</button>
+                <button type="button" class="mini-tab" aria-pressed="false">Panel</button>
+              </div>
+              <span class="mini-sync"><i aria-hidden="true"></i><span>Sin pendientes</span><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></span>
+            </div>
+            <p class="demo-note">Toca los destinos para ver el estado activo. En &lt;640 la barra baja a una segunda fila con scroll horizontal.</p>
+          </div>
+          <p class="comp-foot"><b>Dónde:</b> todas · <b>Regla:</b> “Usuarios” y “Panel” solo aparecen para el rol dueño.</p>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= PANTALLAS ======================= -->
+  <section class="section" id="pantallas" aria-labelledby="pantallas-title">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2 id="pantallas-title">Qué debe aparecer en cada superficie.</h2>
+        <p class="lead">La matriz evita pantallas “completas” que no resuelven nada. Si un componente no está en esta lista, no pertenece a la V2.</p>
+      </div>
+
+      <div class="matrix">
+        <article class="mrow">
+          <div class="mwho"><h3>Ordeño</h3><p>Capataz · offline</p><span class="badge badge-ok">Prioridad 1</span></div>
+          <div class="chips"><span>Header + nav</span><span>Turno</span><span>Fecha</span><span>Fila de ordeño</span><span>Input de litros</span><span>Badge “Ya: X L”</span><span>Total pendiente</span><span>Guardar</span><span>Toast</span><span>Sync</span><span>Offline banner</span></div>
+          <p class="mrule"><b>Regla</b>Una columna siempre. Error inline bloquea el CTA. El guardado local ocurre antes de cualquier red.</p>
+        </article>
+        <article class="mrow">
+          <div class="mwho"><h3>Panel</h3><p>Dueño · online</p><span class="badge badge-ok">Prioridad 1</span></div>
+          <div class="chips"><span>Header + nav</span><span>3 tarjetas</span><span>Gráfico de merma</span><span>Última sync</span><span>Filtro de fecha</span><span>Tabla por día</span><span>Role gate</span></div>
+          <p class="mrule"><b>Regla</b>Solo rol dueño. La merma lleva litros, porcentaje y una frase; nunca solo color. Si la sync supera 24 h, se avisa.</p>
+        </article>
+        <article class="mrow">
+          <div class="mwho"><h3>Vacas</h3><p>Dueño / capataz</p><span class="badge">Soporte</span></div>
+          <div class="chips"><span>Lista / tabla</span><span>CTA alta</span><span>Diálogo</span><span>Badge código</span><span>Activa / inactiva</span><span>Vacío</span></div>
+          <p class="mrule"><b>Regla</b>Lista &lt;768 y tabla ≥768. El código es único; el error se muestra en el diálogo, no en un toast.</p>
+        </article>
+        <article class="mrow">
+          <div class="mwho"><h3>Despacho</h3><p>Dueño / capataz</p><span class="badge">Soporte</span></div>
+          <div class="chips"><span>Litros</span><span>Fecha</span><span>Turno opcional</span><span>Resumen del día</span><span>Guardar</span><span>Toast</span><span>Offline banner</span></div>
+          <p class="mrule"><b>Regla</b>Permite guardar sin ordeños; en ese caso el Panel muestra 100% de merma. El formulario no se parte en dos columnas antes de 768.</p>
+        </article>
+        <article class="mrow">
+          <div class="mwho"><h3>Acceso</h3><p>Dueño · primer admin</p><span class="badge badge-ok">Prioridad 1</span></div>
+          <div class="chips"><span>Login</span><span>Setup admin</span><span>Aviso de rol</span><span>Instalar app</span><span>Error inline</span></div>
+          <p class="mrule"><b>Regla</b>Tarjeta de 420 px como máximo. En ≥1024 se divide marca + formulario; el link de instalación no se esconde.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= IMPLEMENTACIÓN ======================= -->
+  <section class="section" id="implementacion" aria-labelledby="implementacion-title">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2 id="implementacion-title">Tokens primero. Hex, nunca.</h2>
+        <p class="lead">El proyecto ya usa Tailwind + shadcn y mapea los tokens en <code>@theme inline</code>. La regla es simple: si un valor no existe como token, se agrega al token set antes de usarlo.</p>
+      </div>
+
+      <div class="impl-grid">
+        <div class="code-block" aria-label="Tokens base en CSS">
+          <div><span class="c">/* app/globals.css */</span></div>
+          <div><span class="k">:root</span> {</div>
+          <div>&nbsp;&nbsp;<span class="v">--background</span>: #FAF7F0;</div>
+          <div>&nbsp;&nbsp;<span class="v">--foreground</span>: #23211C;</div>
+          <div>&nbsp;&nbsp;<span class="v">--primary</span>: #1F4D3A;</div>
+          <div>&nbsp;&nbsp;<span class="v">--primary-deep</span>: #17392B;</div>
+          <div>&nbsp;&nbsp;<span class="v">--clay</span>: #B5622F;</div>
+          <div>&nbsp;&nbsp;<span class="v">--clay-soft</span>: #F3E2D5;</div>
+          <div>&nbsp;&nbsp;<span class="v">--clay-ink</span>: #8F4A20;</div>
+          <div>&nbsp;&nbsp;<span class="v">--border</span>: #E3DCCC;</div>
+          <div>&nbsp;&nbsp;<span class="v">--ring</span>: #2E6B4E;</div>
+          <div>&nbsp;&nbsp;<span class="v">--radius</span>: 0.75rem;</div>
+          <div>}</div>
+          <div style="margin-top:10px"><span class="c">/* Tipografía */</span></div>
+          <div>--font-heading: Fraunces;</div>
+          <div>--font-sans: Inter;</div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title-row">
+            <h3>Reglas de oro</h3>
+            <span class="kicker-mini">Checklist</span>
+          </div>
+          <div class="check-list">
+            <div class="check-item"><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg><span><b>Una columna de ordeño.</b> Sin excepción, ni siquiera en 1440.</span></div>
+            <div class="check-item"><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg><span><b>44 px mínimo.</b> Inputs de ordeño a 64 px; CTA principal a 56 px.</span></div>
+            <div class="check-item"><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg><span><b>Cifras tabulares.</b> Litros, porcentajes y totales siempre alineados.</span></div>
+            <div class="check-item"><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg><span><b>Arcilla con freno.</b> Nunca texto pequeño sobre papel; sí badges con <code>--clay-ink</code>.</span></div>
+            <div class="check-item"><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg><span><b>Offline no es error.</b> Se informa la cola y se reintenta; no se borra nada local.</span></div>
+          </div>
+          <div class="pending">
+            <p>Pendiente V2</p>
+            <span class="badge">InstallPrompt</span>
+            <span class="badge">RoleGate UI</span>
+            <span class="badge">Chart vacío / loading</span>
+            <span class="badge">Dark theme</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <svg class="footer-glyph" viewBox="151 103 228 306" aria-hidden="true">
+          <g fill="none" stroke="currentColor" stroke-width="46" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M186 138V374"/>
+            <path d="M186 161H258A57 57 0 0 1 258 275H186"/>
+            <path d="M255 281C290 305 320 338 344 372"/>
+          </g>
+        </svg>
+        <div><b>Rodeo</b><span>Control de ordeño y venta · Carabobo, Venezuela</span></div>
+      </div>
+      <nav class="footer-links" aria-label="Enlaces del sistema">
+        <a href="#fundamentos">Fundamentos</a>
+        <a href="#breakpoints">Breakpoints</a>
+        <a href="#componentes">Componentes</a>
+        <a href="#pantallas">Pantallas</a>
+        <a href="#implementacion">Código</a>
+      </nav>
+    </div>
+    <div class="footer-note">
+      <span>Sistema de diseño V2 · basado en spec-v2.md, globals.css y components/.</span>
+      <span>Última revisión · 27 oct 2026</span>
+    </div>
+  </div>
+</footer>
+
+<!-- Diálogo de ejemplo -->
+<dialog class="dlg" id="cowDialog" aria-labelledby="dlgTitle">
+  <form class="dlg-form" id="cowForm">
+    <div class="dlg-head">
+      <h3 id="dlgTitle">Editar vaca</h3>
+      <button type="button" class="dlg-close" data-close-dialog aria-label="Cerrar">
+        <svg class="ico" aria-hidden="true"><use href="#i-x"/></svg>
+      </button>
+    </div>
+    <div class="field">
+      <label for="dlgCode">Código</label>
+      <input class="input" id="dlgCode" value="M-104" autocomplete="off" />
+    </div>
+    <div class="field">
+      <label for="dlgName">Nombre</label>
+      <input class="input" id="dlgName" value="La Negra" required autocomplete="off" />
+    </div>
+    <p class="demo-note" style="margin-top:10px">El código es único por finca. Cambiarlo no reescribe ordeños anteriores.</p>
+    <div class="dlg-foot">
+      <button type="button" class="btn btn-outline" data-close-dialog>Cancelar</button>
+      <button type="submit" class="btn btn-primary" id="dlgSave">Guardar cambios</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast-host" id="toast-host" aria-live="polite" aria-atomic="false"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var $ = function (sel, root) { return (root || document).querySelector(sel); };
+  var $$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
+  var fmt = function (n) { return Number(n).toLocaleString('es-VE', { maximumFractionDigits: 2 }); };
+
+  /* ---------- Toasts ---------- */
+  var host = $('#toast-host');
+  var ICONS = { success: '#i-check', error: '#i-alert', info: '#i-refresh' };
+
+  function toast(title, desc, type) {
+    type = type || 'success';
+    var el = document.createElement('div');
+    el.className = 'toast toast-' + type;
+    el.innerHTML = '<svg class="ico" aria-hidden="true"><use href="' + (ICONS[type] || ICONS.info) + '"></use></svg>' +
+      '<div><p class="toast-title"></p><p class="toast-desc"></p></div>';
+    $('.toast-title', el).textContent = title;
+    var descEl = $('.toast-desc', el);
+    if (desc) { descEl.textContent = desc; } else { descEl.remove(); }
+    host.appendChild(el);
+    while (host.children.length > 3) { host.removeChild(host.firstElementChild); }
+    requestAnimationFrame(function () { el.classList.add('in'); });
+    setTimeout(function () {
+      el.classList.add('out');
+      setTimeout(function () { if (el.parentNode) { el.parentNode.removeChild(el); } }, 240);
+    }, 3400);
+  }
+
+  $$('[data-toast]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      toast(btn.getAttribute('data-toast'), btn.getAttribute('data-toast-desc') || '', btn.getAttribute('data-toast-type') || 'success');
+    });
+  });
+
+  /* ---------- Copiar tokens ---------- */
+  $$('[data-copy]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var value = btn.getAttribute('data-copy');
+      if (!navigator.clipboard) {
+        toast('No se pudo copiar', 'Selecciona el hex manualmente.', 'error');
+        return;
+      }
+      navigator.clipboard.writeText(value).then(function () {
+        toast('Copiado', value, 'success');
+      }).catch(function () {
+        toast('No se pudo copiar', 'Selecciona el hex manualmente.', 'error');
+      });
+    });
+  });
+
+  /* ---------- Filtros de componentes ---------- */
+  var filterButtons = $$('.filters button');
+  filterButtons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var filter = btn.getAttribute('data-filter');
+      filterButtons.forEach(function (b) { b.setAttribute('aria-pressed', String(b === btn)); });
+      $$('.comp-card').forEach(function (card) {
+        card.hidden = filter !== 'all' && card.getAttribute('data-group') !== filter;
+      });
+    });
+  });
+
+  /* ---------- Fila de ordeño ---------- */
+  var litersInput = $('#litersDemo');
+  var litersError = $('#litersError');
+  var savedBadge = $('#savedBadge');
+  var saveBtn = $('#saveMilk');
+  var pendingLiters = $('#pendingLiters');
+  var pendingCows = $('#pendingCows');
+  var savedMilk = 0;
+
+  function parseLiters(raw) {
+    var value = raw.trim().replace(',', '.');
+    if (value === '') { return 0; }
+    if (!/^\d+(\.\d{0,2})?$/.test(value)) { return NaN; }
+    return parseFloat(value);
+  }
+
+  function updateMilk() {
+    var value = parseLiters(litersInput.value);
+    var message = '';
+    if (Number.isNaN(value)) { message = 'Ingresa solo números.'; }
+    else if (value < 0) { message = 'Los litros no pueden ser negativos.'; }
+    else if (savedMilk + value > 100) { message = 'El total de la vaca no puede superar 100 L.'; }
+
+    litersError.textContent = message;
+    litersError.hidden = !message;
+    litersInput.setAttribute('aria-invalid', message ? 'true' : 'false');
+    var valid = !message && value > 0;
+    pendingLiters.textContent = valid ? fmt(value) : '0';
+    pendingCows.textContent = valid ? '1 vaca' : '0 vacas';
+    saveBtn.disabled = !valid;
+  }
+
+  if (litersInput) {
+    litersInput.addEventListener('input', updateMilk);
+    saveBtn.addEventListener('click', function () {
+      var value = parseLiters(litersInput.value);
+      if (Number.isNaN(value) || value <= 0 || savedMilk + value > 100) { return; }
+      savedMilk = Math.round((savedMilk + value) * 100) / 100;
+      savedBadge.textContent = 'Ya: ' + fmt(savedMilk) + ' L';
+      savedBadge.hidden = false;
+      litersInput.value = '';
+      updateMilk();
+      toast('Ordeño guardado', '1 vaca · ' + fmt(value) + ' L', 'success');
+    });
+  }
+
+  /* ---------- Turno ---------- */
+  var shiftButtons = $$('.seg-btn');
+  shiftButtons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      shiftButtons.forEach(function (b) { b.setAttribute('aria-pressed', String(b === btn)); });
+      var note = $('#shiftNote');
+      if (note) { note.textContent = 'Turno activo: ' + btn.getAttribute('data-shift') + ' · 27 oct'; }
+    });
+  });
+
+  /* ---------- Sincronización ---------- */
+  var syncStates = {
+    idle: { label: 'Sin pendientes', p: 0 },
+    pending: { label: '3 pendientes', p: 3 },
+    failed: { label: '1 fallido · 3 pendientes', p: 3 }
+  };
+  var syncState = 'idle';
+  var syncDot = $('#syncDot');
+  var syncLabel = $('#syncLabel');
+  var syncBtn = $('#syncBtn');
+  var syncChips = $$('.sync-chips .chip');
+
+  function setSync(state) {
+    syncState = state;
+    var data = syncStates[state];
+    syncDot.setAttribute('data-state', state);
+    syncLabel.textContent = data.label;
+    syncChips.forEach(function (c) { c.setAttribute('aria-pressed', String(c.getAttribute('data-state') === state)); });
+  }
+
+  syncChips.forEach(function (chip) {
+    chip.addEventListener('click', function () { setSync(chip.getAttribute('data-state')); });
+  });
+
+  if (syncBtn) {
+    syncBtn.addEventListener('click', function () {
+      if (syncBtn.disabled) { return; }
+      if (syncState === 'idle') {
+        toast('Todo al día', 'No hay registros pendientes.', 'info');
+        return;
+      }
+      var pending = syncStates[syncState].p;
+      var label = $('span', syncBtn);
+      var previous = label.textContent;
+      syncBtn.disabled = true;
+      syncBtn.classList.add('is-syncing');
+      label.textContent = 'Sincronizando…';
+      setTimeout(function () {
+        setSync('idle');
+        syncBtn.disabled = false;
+        syncBtn.classList.remove('is-syncing');
+        label.textContent = previous;
+        toast('Sincronizado', pending + ' registros locales subidos.', 'success');
+      }, 1000);
+    });
+  }
+
+  /* ---------- Conciliación ---------- */
+  var overToggle = $('#overToggle');
+  var isOver = false;
+  if (overToggle) {
+    overToggle.addEventListener('click', function () {
+      isOver = !isOver;
+      $('#sumDispatch').textContent = isOver ? '61,8 L' : '55,0 L';
+      var merma = $('#sumMerma');
+      merma.textContent = isOver ? '−3,4 L · −5,8%' : '3,4 L · 5,8%';
+      merma.classList.toggle('is-danger', isOver);
+      $('#sumMermaSub').textContent = isOver ? 'Salida mayor al ordeño' : 'Leche sin despachar';
+      overToggle.textContent = isOver ? 'Ver caso normal' : 'Ver caso sobre-despacho';
+      toast(
+        isOver ? 'Sobre-despacho' : 'Conciliación normal',
+        isOver ? 'La salida supera lo ordeñado en 3,4 L.' : 'La merma vuelve al rango normal.',
+        isOver ? 'error' : 'info'
+      );
+    });
+  }
+
+  /* ---------- Navegación de ejemplo ---------- */
+  var miniTabs = $$('.mini-tab');
+  miniTabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      miniTabs.forEach(function (t) {
+        var active = t === tab;
+        t.classList.toggle('is-active', active);
+        t.setAttribute('aria-pressed', String(active));
+      });
+    });
+  });
+
+  /* ---------- Diálogo ---------- */
+  var dialog = $('#cowDialog');
+  var form = $('#cowForm');
+
+  $$('[data-open-dialog]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (!dialog) { return; }
+      dialog.returnValue = '';
+      dialog.showModal();
+    });
+  });
+
+  $$('[data-close-dialog]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (dialog) { dialog.close('cancel'); }
+    });
+  });
+
+  if (form) {
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      if (dialog) { dialog.close('save'); }
+    });
+  }
+
+  if (dialog) {
+    dialog.addEventListener('close', function () {
+      if (dialog.returnValue === 'save') {
+        var name = $('#dlgName') ? $('#dlgName').value : 'La Negra';
+        toast('Vaca actualizada', 'M-104 · ' + name, 'success');
+      }
+    });
+  }
+
+  /* ---------- Nav activa ---------- */
+  var navLinks = $$('.topnav a');
+  var sections = navLinks.map(function (link) {
+    return document.querySelector(link.getAttribute('href'));
+  }).filter(Boolean);
+
+  if ('IntersectionObserver' in window) {
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) { return; }
+        navLinks.forEach(function (link) {
+          var active = link.getAttribute('href') === '#' + entry.target.id;
+          link.classList.toggle('active', active);
+          if (active) { link.setAttribute('aria-current', 'true'); }
+          else { link.removeAttribute('aria-current'); }
+        });
+      });
+    }, { rootMargin: '-40% 0px -55% 0px' });
+    sections.forEach(function (section) { observer.observe(section); });
+  }
+
+  updateMilk();
+})();
+</script>
+</body>
+</html>
+

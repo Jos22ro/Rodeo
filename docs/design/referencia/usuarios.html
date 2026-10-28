@@ -1,0 +1,1281 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#FAF7F0" />
+<title>Usuarios · Rodeo</title>
+<meta name="description" content="Alta de usuarios y control de acceso de Rodeo: quién entra, con qué rol y qué puede hacer." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root{
+  color-scheme:light;
+  --background:#FAF7F0;
+  --card:#FFFFFF;
+  --secondary:#EFE9DA;
+  --foreground:#23211C;
+  --muted:#6B675C;
+  --border:#E3DCCC;
+  --primary:#1F4D3A;
+  --primary-deep:#17392B;
+  --primary-foreground:#F7F3E9;
+  --clay:#B5622F;
+  --clay-soft:#F3E2D5;
+  --clay-ink:#8F4A20;
+  --danger:#B4341F;
+  --ring:#2E6B4E;
+  --font-display:'Fraunces',Georgia,'Times New Roman',serif;
+  --font-body:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --font-mono:ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;
+  --r-sm:8px;
+  --r-md:12px;
+  --r-lg:16px;
+  --shadow-card:0 1px 2px rgba(35,33,28,.06);
+  --shadow-sheet:0 18px 40px -24px rgba(23,57,43,.35);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;min-height:100dvh;
+  background:var(--background);color:var(--foreground);
+  font:400 16px/1.55 var(--font-body);
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,p,ul,ol{margin:0}
+ul,ol{padding:0;list-style:none}
+button{font:inherit}
+svg{display:block}
+a{color:var(--primary);text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{color:var(--primary-deep)}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--ring) 55%,transparent);outline-offset:2px}
+.tnum{font-variant-numeric:tabular-nums}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+[hidden]{display:none !important}
+
+/* ---------- barra de la app ---------- */
+.appbar{
+  position:sticky;top:0;z-index:40;
+  background:var(--background);
+  border-bottom:1px solid var(--border);
+}
+.appbar-inner{
+  max-width:1024px;margin:0 auto;padding:10px 20px 0;
+  display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px;
+}
+.brand{display:flex;align-items:center;gap:9px;min-height:44px;text-decoration:none;color:var(--foreground)}
+.brand .mark{width:30px;height:30px;border-radius:8px;flex:none}
+.brand .word{font:500 19px/1 var(--font-display);letter-spacing:-.015em}
+.brand .kicker{
+  font:600 11px/1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);padding-left:10px;border-left:1px solid var(--border);white-space:nowrap;
+}
+.brand:hover .word{color:var(--primary-deep)}
+.appnav{
+  display:flex;gap:2px;order:3;width:100%;
+  margin:0 -20px;padding:0 20px;
+  border-top:1px solid var(--border);
+  overflow-x:auto;scrollbar-width:none;
+}
+.appnav::-webkit-scrollbar{display:none}
+.appnav a{
+  position:relative;display:inline-flex;align-items:center;
+  min-height:44px;padding:0 10px;border-radius:8px;
+  font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;white-space:nowrap;
+}
+.appnav a:hover{background:var(--secondary);color:var(--foreground)}
+.appnav a[aria-current="page"]{color:var(--primary)}
+.appnav a[aria-current="page"]::after{
+  content:"";position:absolute;left:10px;right:10px;bottom:0;height:2px;background:var(--primary);
+}
+.appbar-end{display:flex;align-items:center;gap:14px;margin-left:auto}
+.sync{display:none;align-items:center;gap:6px;font-size:12px;line-height:1;color:var(--muted);white-space:nowrap}
+.sync i{width:6px;height:6px;border-radius:50%;background:var(--primary);flex:none}
+@media (min-width:900px){
+  .appbar-inner{padding:0 20px;min-height:64px;flex-wrap:nowrap}
+  .appnav{order:0;width:auto;margin:0;padding:0;border-top:0;margin-left:6px}
+  .sync{display:inline-flex}
+}
+@media (max-width:430px){
+  .appnav{gap:0}
+  .appnav a{padding:0 8px}
+}
+@media (max-width:379px){
+  .appnav a{font-size:13px;padding:0 6px}
+}
+
+/* cuenta */
+.account{position:relative;margin-left:auto}
+.account summary{
+  list-style:none;display:flex;align-items:center;gap:9px;
+  min-height:44px;padding:0 4px;border-radius:8px;cursor:pointer;
+}
+.account summary::-webkit-details-marker{display:none}
+.account summary:hover{background:var(--secondary)}
+.avatar{
+  width:32px;height:32px;flex:none;border-radius:50%;
+  display:grid;place-items:center;
+  background:color-mix(in srgb,var(--primary) 10%,var(--card));
+  color:var(--primary);font:600 11px/1 var(--font-body);letter-spacing:.03em;
+}
+.account .who{display:none}
+.account .chev{width:14px;height:14px;color:var(--muted);display:none}
+@media (min-width:640px){
+  .account .who{display:block;font-size:13px;line-height:1.25;font-weight:500}
+  .account .who small{display:block;font-size:11px;font-weight:400;color:var(--muted)}
+  .account .chev{display:block}
+}
+.account-menu{
+  position:absolute;right:0;top:calc(100% + 8px);width:236px;
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  box-shadow:var(--shadow-sheet);padding:6px;z-index:60;
+}
+.account-menu a{
+  display:flex;align-items:center;gap:9px;min-height:44px;padding:0 10px;
+  border-radius:8px;font-size:14px;color:var(--foreground);text-decoration:none;
+}
+.account-menu a:hover{background:var(--secondary);color:var(--foreground)}
+.account-menu svg{width:16px;height:16px;color:var(--muted)}
+.account-menu .sep{height:1px;background:var(--border);margin:4px 6px}
+
+/* ---------- aviso de conexión ---------- */
+.offline{
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  padding:9px 20px;background:var(--secondary);border-bottom:1px solid var(--border);
+  font-size:14px;line-height:1.4;
+}
+.offline svg{width:16px;height:16px;flex:none;color:var(--clay-ink)}
+.offline b{font-weight:600}
+@media (max-width:519px){.offline{justify-content:flex-start;padding:9px 16px}}
+.notice{
+  display:flex;align-items:flex-start;gap:9px;
+  padding:10px 20px;background:var(--secondary);border-bottom:1px solid var(--border);
+  font-size:14px;line-height:1.45;
+}
+.notice svg{width:16px;height:16px;flex:none;margin-top:1px;color:var(--primary)}
+.notice b{font-weight:600}
+.notice a{white-space:nowrap}
+
+/* ---------- página ---------- */
+.page{max-width:1024px;margin:0 auto;padding:clamp(24px,4vw,40px) 20px 56px}
+.page-head{display:flex;flex-direction:column;gap:22px;padding-bottom:26px}
+@media (min-width:800px){
+  .page-head{flex-direction:row;align-items:flex-end;justify-content:space-between;gap:40px}
+  .head-side{align-items:flex-end}
+}
+.eyebrow{
+  display:flex;align-items:center;gap:9px;
+  font:600 11px/1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+}
+.eyebrow::before{content:"";width:16px;height:1px;background:var(--border);flex:none}
+h1{
+  margin-top:11px;
+  font:500 clamp(30px,4.2vw,40px)/1.08 var(--font-display);
+  letter-spacing:-.028em;
+}
+.lead{margin-top:10px;max-width:52ch;font-size:16px;line-height:1.6;color:var(--muted)}
+.head-side{display:flex;flex-direction:column;gap:14px}
+.people{display:flex;align-items:center;gap:9px}
+.stack{display:flex}
+.stack .avatar{width:28px;height:28px;border:2px solid var(--background);margin-left:-8px;font-size:10px}
+.stack .avatar:first-child{margin-left:0}
+.people span{font-size:13px;line-height:1.3;color:var(--muted)}
+
+/* ---------- botones ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:44px;padding:0 16px;
+  border:1px solid transparent;border-radius:var(--r-sm);
+  font-size:15px;font-weight:600;letter-spacing:.005em;
+  text-decoration:none;cursor:pointer;
+  transition:background 120ms ease,border-color 120ms ease,color 120ms ease,transform 120ms ease;
+}
+.btn svg{width:17px;height:17px;flex:none}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground)}
+.btn-primary:hover{background:var(--primary-deep);border-color:var(--primary-deep);color:var(--primary-foreground)}
+.btn-primary:active{transform:translateY(1px)}
+.btn-secondary{background:var(--card);border-color:var(--border);color:var(--foreground)}
+.btn-secondary:hover{background:var(--secondary);border-color:color-mix(in srgb,var(--muted) 32%,var(--border));color:var(--foreground)}
+.btn-ghost{background:transparent;color:var(--primary);padding:0 12px}
+.btn-ghost:hover{background:var(--secondary);color:var(--primary-deep)}
+.btn-ghost.is-danger{color:var(--clay-ink)}
+.btn-ghost.is-danger:hover{background:var(--clay-soft);color:var(--clay-ink)}
+.btn[disabled]{opacity:.5;cursor:not-allowed;transform:none}
+.btn .count-chip{
+  display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;
+  border-radius:999px;background:color-mix(in srgb,var(--primary-foreground) 18%,transparent);
+  font:600 12px/1 var(--font-body);
+}
+.new-user{width:100%}
+@media (min-width:800px){.new-user{width:auto}}
+
+/* ---------- panel de usuarios ---------- */
+.panel{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);
+  box-shadow:var(--shadow-card);overflow:hidden;
+}
+.toolbar{
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+  padding:14px 16px;border-bottom:1px solid var(--border);
+}
+.search{position:relative;flex:1 1 240px;min-width:0}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted);pointer-events:none}
+.search input{
+  width:100%;height:44px;padding:0 12px 0 36px;
+  border:1px solid var(--border);border-radius:var(--r-sm);
+  background:var(--card);color:var(--foreground);font:400 14px/1 var(--font-body);
+}
+.search input::placeholder{color:color-mix(in srgb,var(--muted) 80%,transparent)}
+.search input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--ring) 22%,transparent)}
+.segmented{
+  display:flex;gap:2px;padding:2px;
+  background:var(--secondary);border-radius:10px;
+  max-width:100%;overflow-x:auto;scrollbar-width:none;
+}
+.segmented::-webkit-scrollbar{display:none}
+.segmented button{
+  min-height:44px;padding:0 11px;border:0;border-radius:8px;background:transparent;
+  color:var(--muted);font-size:13px;font-weight:500;white-space:nowrap;cursor:pointer;
+  transition:background 120ms ease,color 120ms ease;
+}
+.segmented button:hover{color:var(--foreground)}
+.segmented button[aria-pressed="true"]{background:var(--card);color:var(--foreground);box-shadow:var(--shadow-card)}
+.toolbar .count{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap}
+@media (max-width:639px){
+  .toolbar .count{margin-left:0;flex:1 1 100%;text-align:left}
+}
+
+/* tabla */
+.table-wrap{display:none}
+table{width:100%;border-collapse:collapse}
+th{
+  padding:11px 16px;text-align:left;
+  background:color-mix(in srgb,var(--secondary) 55%,var(--card));
+  border-bottom:1px solid var(--border);
+  font:600 11px/1 var(--font-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+}
+td{padding:13px 16px;border-top:1px solid var(--border);font-size:14px;vertical-align:middle}
+tbody tr:first-child td{border-top:0}
+tbody tr:hover{background:color-mix(in srgb,var(--secondary) 32%,var(--card))}
+.person{display:flex;align-items:center;gap:10px;min-width:0}
+.person .who{min-width:0}
+.person b{display:block;font-size:14px;font-weight:500;line-height:1.35}
+.person small{display:block;font-size:12px;line-height:1.35;color:var(--muted);overflow-wrap:anywhere}
+.last{color:var(--muted);white-space:nowrap;font-size:13px}
+.badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 8px;border-radius:999px;
+  font-size:12px;font-weight:500;line-height:1.2;white-space:nowrap;
+}
+.badge.neutral{background:var(--secondary);color:var(--foreground)}
+.badge.green{background:color-mix(in srgb,var(--primary) 9%,var(--card));color:var(--primary)}
+.badge.outline{border:1px solid var(--border);color:var(--muted)}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap}
+.status i{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.status.on{color:var(--primary)}
+.status.off{color:var(--clay-ink)}
+.row-actions{display:flex;justify-content:flex-end;gap:2px}
+.act{
+  min-height:44px;padding:0 10px;border:0;border-radius:8px;background:transparent;
+  color:var(--primary);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;
+}
+.act:hover{background:var(--secondary);color:var(--primary-deep)}
+.act.is-danger{color:var(--clay-ink)}
+.act.is-danger:hover{background:var(--clay-soft);color:var(--clay-ink)}
+.act[disabled]{opacity:.45;cursor:not-allowed;background:transparent}
+
+/* lista móvil */
+.user-list li{padding:15px 16px;border-top:1px solid var(--border)}
+.user-list li:first-child{border-top:0}
+.li-top{display:flex;align-items:flex-start;gap:11px}
+.li-main{min-width:0;flex:1}
+.li-main b{display:block;font-size:15px;font-weight:500;line-height:1.35}
+.li-main .mail{display:block;margin-top:2px;font-size:12px;line-height:1.4;color:var(--muted);overflow-wrap:anywhere}
+.li-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:9px}
+.li-meta .last{margin-left:auto;font-size:12px}
+.li-actions{display:flex;gap:8px;margin-top:11px}
+.li-actions .btn{flex:1 1 auto;font-size:14px}
+@media (min-width:760px){
+  .table-wrap{display:block}
+  .user-list{display:none}
+}
+
+/* vacío */
+.empty{padding:56px 24px;text-align:center}
+.empty-icon{
+  width:48px;height:48px;margin:0 auto 16px;border-radius:50%;
+  display:grid;place-items:center;
+  background:var(--secondary);color:var(--muted);
+}
+.empty-icon svg{width:21px;height:21px}
+.empty h2{font:500 22px/1.2 var(--font-display);letter-spacing:-.02em}
+.empty p{margin:6px auto 0;max-width:34ch;font-size:14px;line-height:1.55;color:var(--muted)}
+.empty .btn{margin-top:18px}
+
+/* nota al pie del panel */
+.note{
+  display:flex;gap:10px;margin-top:18px;padding-top:16px;border-top:1px solid var(--border);
+  font-size:13px;line-height:1.55;color:var(--muted);max-width:72ch;
+}
+.note svg{width:16px;height:16px;flex:none;margin-top:1px;color:var(--primary)}
+.note b{color:var(--foreground);font-weight:500}
+
+/* ---------- diálogos ---------- */
+dialog{
+  border:0;padding:0;background:transparent;
+  max-width:100vw;max-height:100dvh;
+}
+dialog::backdrop{background:color-mix(in srgb,var(--foreground) 45%,transparent)}
+.sheet{
+  width:min(520px,calc(100vw - 32px));
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r-lg);box-shadow:var(--shadow-sheet);
+  overflow:hidden;
+}
+dialog[open] .sheet{animation:pop .18s cubic-bezier(.2,.7,.3,1) both}
+@keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.sheet-head{display:flex;align-items:flex-start;gap:12px;padding:20px 20px 0}
+.sheet-head h2{margin:0;flex:1;font:500 24px/1.15 var(--font-display);letter-spacing:-.02em}
+.sheet-head p{margin-top:6px;font-size:14px;line-height:1.5;color:var(--muted);max-width:38ch}
+.close{
+  width:44px;height:44px;flex:none;margin:-6px -8px 0 0;
+  display:grid;place-items:center;border:0;border-radius:8px;
+  background:transparent;color:var(--muted);cursor:pointer;
+}
+.close:hover{background:var(--secondary);color:var(--foreground)}
+.close svg{width:18px;height:18px}
+.sheet-body{padding:18px 20px 20px;max-height:min(68dvh,540px);overflow-y:auto}
+.sheet-foot{
+  display:flex;gap:8px;padding:14px 20px;
+  border-top:1px solid var(--border);
+  background:color-mix(in srgb,var(--secondary) 40%,var(--card));
+}
+.sheet-foot .btn{flex:1 1 auto}
+.sheet-foot .btn-secondary{flex:0 0 auto}
+@media (max-width:560px){
+  dialog{width:100%;margin:auto 0 0}
+  .sheet{width:100%;border-radius:var(--r-lg) var(--r-lg) 0 0;border-bottom:0}
+  .sheet-body{max-height:62dvh}
+  .sheet-foot{padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+}
+
+/* formulario */
+.field + .field{margin-top:16px}
+.label{display:block;margin-bottom:6px;font:600 11px/1 var(--font-body);letter-spacing:.08em;text-transform:uppercase;color:var(--foreground)}
+.input,.select{
+  width:100%;height:48px;padding:0 13px;
+  background:var(--card);color:var(--foreground);
+  border:1px solid var(--border);border-radius:var(--r-sm);
+  font:400 15px/1 var(--font-body);
+  transition:border-color 120ms ease,box-shadow 120ms ease,background 120ms ease;
+}
+.input::placeholder{color:color-mix(in srgb,var(--muted) 80%,transparent)}
+.input:hover,.select:hover{border-color:color-mix(in srgb,var(--muted) 38%,var(--border))}
+.input:focus,.select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--ring) 22%,transparent)}
+.input[aria-invalid="true"],.select[aria-invalid="true"]{
+  border-color:var(--danger);background:color-mix(in srgb,var(--danger) 3%,var(--card));
+}
+.select{appearance:none;-webkit-appearance:none;padding-right:38px;cursor:pointer}
+.select-shell{position:relative}
+.select-shell > svg{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted);pointer-events:none}
+.pass-row{display:flex;gap:8px}
+.pass-row .input{flex:1;min-width:0}
+.pass-row .btn{flex:none;min-height:48px;padding:0 14px;font-size:14px}
+.hint{margin-top:6px;font-size:12px;line-height:1.45;color:var(--muted)}
+.err{display:flex;gap:6px;margin-top:6px;font-size:12px;line-height:1.45;color:var(--danger)}
+.err svg{width:14px;height:14px;flex:none;margin-top:1px}
+.check{display:flex;align-items:flex-start;gap:10px;min-height:44px;margin-top:16px;font-size:14px;line-height:1.45}
+.check input{width:18px;height:18px;flex:none;margin-top:2px;accent-color:var(--primary)}
+.check span small{display:block;font-size:12px;line-height:1.4;color:var(--muted)}
+.check span small.is-clay{color:var(--clay-ink)}
+.resend{
+  display:flex;align-items:center;gap:8px;min-height:44px;margin-top:14px;
+  padding:0 2px;border:0;background:transparent;color:var(--primary);
+  font-size:13px;font-weight:500;cursor:pointer;
+}
+.resend svg{width:15px;height:15px}
+.resend:hover{color:var(--primary-deep);text-decoration:underline}
+.resend[hidden]{display:none}
+
+/* credenciales */
+.cred{margin-top:4px;padding:14px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--secondary)}
+.cred-k{font:600 11px/1 var(--font-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.cred-row{display:flex;align-items:center;gap:10px;margin-top:9px;min-height:44px}
+.cred-row code{flex:1;min-width:0;font:400 14px/1.4 var(--font-mono);letter-spacing:.01em;overflow-wrap:anywhere}
+.copy{
+  width:44px;height:44px;flex:none;display:grid;place-items:center;
+  border:1px solid var(--border);border-radius:8px;background:var(--card);
+  color:var(--primary);cursor:pointer;
+}
+.copy:hover{background:color-mix(in srgb,var(--primary) 7%,var(--card))}
+.copy svg{width:16px;height:16px}
+.cred-note{margin-top:12px;font-size:12px;line-height:1.5;color:var(--muted)}
+
+/* ---------- puerta de rol ---------- */
+.gate{
+  max-width:480px;margin:clamp(28px,8vh,88px) auto 0;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);
+  box-shadow:var(--shadow-card);padding:clamp(24px,5vw,36px);
+}
+.gate-icon{
+  width:48px;height:48px;border-radius:50%;display:grid;place-items:center;
+  background:var(--clay-soft);color:var(--clay-ink);
+}
+.gate-icon svg{width:22px;height:22px}
+.gate h1{margin-top:18px;font-size:30px;line-height:1.12}
+.gate p{margin-top:10px;font-size:15px;line-height:1.6;color:var(--muted)}
+.gate .who-now{
+  display:flex;align-items:center;gap:10px;margin-top:20px;padding-top:16px;
+  border-top:1px solid var(--border);font-size:13px;color:var(--muted);
+}
+.gate .who-now b{color:var(--foreground);font-weight:500}
+.gate-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.gate-actions .btn{flex:1 1 160px}
+
+/* ---------- toast ---------- */
+.toast{
+  position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));
+  transform:translate(-50%,12px);
+  display:flex;align-items:center;gap:9px;
+  max-width:calc(100vw - 32px);padding:11px 14px;
+  border-radius:12px;background:var(--foreground);color:var(--background);
+  font-size:14px;line-height:1.4;
+  box-shadow:var(--shadow-sheet);
+  opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;
+  z-index:100;
+}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.toast svg{width:16px;height:16px;flex:none;color:color-mix(in srgb,var(--primary) 55%,var(--background))}
+
+/* ---------- pie ---------- */
+.foot{
+  max-width:1024px;margin:0 auto;padding:22px 20px 40px;
+  border-top:1px solid var(--border);
+  display:flex;flex-wrap:wrap;gap:8px 18px;justify-content:space-between;
+  font-size:12px;line-height:1.5;color:var(--muted);
+}
+.foot a{color:var(--muted)}
+.foot a:hover{color:var(--primary)}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <defs>
+    <symbol id="i-mark" viewBox="0 0 512 512">
+      <rect width="512" height="512" rx="112" fill="#1F4D3A"/>
+      <g transform="translate(-9 0)" fill="none" stroke="#F7F3E9" stroke-width="46" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M186 138V374"/><path d="M186 161H258A57 57 0 0 1 258 275H186"/><path d="M255 281C290 305 320 338 344 372"/>
+      </g>
+    </symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5"/><path d="M12 16h.01"/></symbol>
+    <symbol id="i-offline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M6 18 18 6"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8"/><path d="m17 4 3 3"/><path d="m14 7 3 3"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.4 2.9 8.2 7 9.5 4.1-1.3 7-5.1 7-9.5V6Z"/><path d="m9.5 12 1.8 1.8 3.4-3.4"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 5.2a3 3 0 0 1 0 5.6"/><path d="M17.5 19a5.5 5.5 0 0 0-2.2-4.4"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 8 6 12l4 4"/><path d="M6 12h9"/></symbol>
+  </defs>
+</svg>
+
+<header class="appbar">
+  <div class="appbar-inner">
+    <a class="brand" href="index.html" aria-label="Rodeo, sistema de diseño">
+      <svg class="mark" aria-hidden="true"><use href="#i-mark"/></svg>
+      <span class="word">Rodeo</span>
+      <span class="kicker">Tambo La Palma</span>
+    </a>
+
+    <nav class="appnav" id="appnav" aria-label="Secciones de la app">
+      <a href="#" data-soon="Vacas">Vacas</a>
+      <a href="#" data-soon="Ordeño">Ordeño</a>
+      <a href="#" data-soon="Despacho">Despacho</a>
+      <a href="#" data-admin data-soon="Panel">Panel</a>
+      <a href="usuarios.html" aria-current="page" data-admin>Usuarios</a>
+    </nav>
+
+    <div class="appbar-end">
+      <span class="sync"><i aria-hidden="true"></i>Al día</span>
+      <details class="account" id="account">
+        <summary aria-label="Cuenta y sesión">
+          <span class="avatar" id="meAvatar">LM</span>
+          <span class="who"><span id="meName">Lucía Méndez</span><small id="meRole">Administrador</small></span>
+          <svg class="chev" aria-hidden="true"><use href="#i-chevron"/></svg>
+        </summary>
+        <div class="account-menu">
+          <a href="permisos.html"><svg aria-hidden="true"><use href="#i-shield"/></svg>Roles y permisos</a>
+          <div class="sep" role="presentation"></div>
+          <a href="login.html"><svg aria-hidden="true"><use href="#i-logout"/></svg>Cerrar sesión</a>
+        </div>
+      </details>
+    </div>
+  </div>
+</header>
+
+<div class="offline" id="offlineBanner" hidden>
+  <svg aria-hidden="true"><use href="#i-offline"/></svg>
+  <span><b>Sin conexión.</b> Puedes revisar la lista, pero crear, editar o desactivar cuentas necesita señal.</span>
+</div>
+
+<div class="notice" id="ownerBanner" hidden>
+  <svg aria-hidden="true"><use href="#i-shield"/></svg>
+  <span><b>Vista de solo lectura.</b> Como dueño ves quién tiene acceso, pero las cuentas las crea y desactiva un admin.</span>
+</div>
+
+<main class="page" id="content">
+  <div class="page-head">
+    <div>
+      <p class="eyebrow" id="pageEyebrow">Acceso · Administrador</p>
+      <h1>Quién entra y qué ve.</h1>
+      <p class="lead">El admin crea las cuentas. El rol decide el menú y la ruta; nadie lo elige al entrar.</p>
+    </div>
+    <div class="head-side">
+      <div class="people">
+        <div class="stack" id="peopleStack" aria-hidden="true"></div>
+        <span id="peopleCount">4 con acceso</span>
+      </div>
+      <button class="btn btn-primary new-user" id="newUser" type="button">
+        <svg aria-hidden="true"><use href="#i-plus"/></svg>
+        Nuevo usuario
+      </button>
+    </div>
+  </div>
+
+  <section class="panel" aria-label="Cuentas del tambo">
+    <div class="toolbar">
+      <div class="search">
+        <svg aria-hidden="true"><use href="#i-search"/></svg>
+        <label class="sr-only" for="q">Buscar por nombre o correo</label>
+        <input id="q" type="search" placeholder="Buscar por nombre o correo" autocomplete="off" spellcheck="false" />
+      </div>
+      <div class="segmented" id="roleFilter" role="group" aria-label="Filtrar por rol">
+        <button type="button" data-role="all" aria-pressed="true">Todos</button>
+        <button type="button" data-role="capataz" aria-pressed="false">Capataz</button>
+        <button type="button" data-role="owner" aria-pressed="false">Dueño</button>
+        <button type="button" data-role="admin" aria-pressed="false">Admin</button>
+      </div>
+      <span class="count" id="count" aria-live="polite">5 cuentas</span>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <caption class="sr-only">Cuentas con acceso al tambo, su rol y su estado.</caption>
+        <thead>
+          <tr>
+            <th scope="col">Persona</th>
+            <th scope="col">Rol</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Último acceso</th>
+            <th scope="col"><span class="sr-only">Acciones</span></th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+
+    <ul class="user-list" id="list"></ul>
+
+    <div class="empty" id="empty" hidden>
+      <div class="empty-icon"><svg aria-hidden="true"><use href="#i-search"/></svg></div>
+      <h2>Nadie coincide con la búsqueda.</h2>
+      <p>Prueba con otro nombre, correo o rol. Las cuentas desactivadas siguen en la lista.</p>
+      <button class="btn btn-secondary" id="clearFilters" type="button">Limpiar filtros</button>
+    </div>
+  </section>
+
+  <p class="note" id="offlineNote">
+    <svg aria-hidden="true"><use href="#i-shield"/></svg>
+    <span><b>El rol admin no se reparte desde aquí.</b> Solo se crea en la puesta en marcha. En el día a día puedes dar <b>Dueño</b> o <b>Capataz</b>; el dueño ve el panel, el capataz no. <a href="permisos.html">Ver la matriz de permisos</a>.</span>
+  </p>
+</main>
+
+<section class="page" id="gate" hidden aria-labelledby="gateTitle">
+  <div class="gate">
+    <div class="gate-icon"><svg aria-hidden="true"><use href="#i-shield"/></svg></div>
+    <h1 id="gateTitle">Solo un admin puede crear usuarios.</h1>
+    <p>Tu sesión es de capataz. Puedes registrar ordeños y despachos, y consultar las vacas; las cuentas y el panel quedan fuera de tu alcance.</p>
+    <div class="who-now">
+      <span class="avatar">MC</span>
+      <span><b>María Colmenares</b> · Capataz · Tambo La Palma</span>
+    </div>
+    <div class="gate-actions">
+      <a class="btn btn-primary" href="login.html">Cerrar sesión</a>
+      <a class="btn btn-secondary" href="flujos.html#flujos">Volver a los flujos</a>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <span>Rodeo · Tambo La Palma · Carabobo, Venezuela</span>
+  <span><a href="flujos.html#flujos">Flujos del producto</a> · <a href="index.html">Sistema de diseño</a></span>
+</footer>
+
+<!-- Alta y edición -->
+<dialog id="userDialog" aria-labelledby="userDialogTitle">
+  <form class="sheet" id="userForm" novalidate>
+    <div class="sheet-head">
+      <div>
+        <h2 id="userDialogTitle">Nuevo usuario</h2>
+        <p id="userDialogSub">La cuenta se crea con una contraseña temporal. La persona la cambia al entrar.</p>
+      </div>
+      <button class="close" type="button" data-close aria-label="Cerrar">
+        <svg aria-hidden="true"><use href="#i-close"/></svg>
+      </button>
+    </div>
+
+    <div class="sheet-body">
+      <div class="field">
+        <label class="label" for="uName">Nombre</label>
+        <input class="input" id="uName" name="name" type="text" autocomplete="off" placeholder="Nombre y apellido" aria-describedby="nameErr" data-autofocus />
+        <p class="err" id="nameErr" hidden><svg aria-hidden="true"><use href="#i-alert"/></svg><span>Escribe el nombre de la persona.</span></p>
+      </div>
+
+      <div class="field">
+        <label class="label" for="uEmail">Email</label>
+        <input class="input" id="uEmail" name="email" type="email" inputmode="email" autocomplete="off" spellcheck="false" placeholder="nombre@tambolapalma.com" aria-describedby="emailErr" />
+        <p class="err" id="emailErr" hidden><svg aria-hidden="true"><use href="#i-alert"/></svg><span>Ingresa un correo válido.</span></p>
+        <p class="err" id="dupErr" hidden><svg aria-hidden="true"><use href="#i-alert"/></svg><span>Ese correo ya tiene cuenta en este tambo.</span></p>
+      </div>
+
+      <div class="field">
+        <label class="label" for="uRole">Rol</label>
+        <div class="select-shell">
+          <select class="select" id="uRole" name="role" aria-describedby="roleHint roleErr">
+            <option value="">Elige un rol</option>
+            <option value="capataz">Capataz</option>
+            <option value="owner">Dueño</option>
+          </select>
+          <svg aria-hidden="true"><use href="#i-chevron"/></svg>
+        </div>
+        <p class="err" id="roleErr" hidden><svg aria-hidden="true"><use href="#i-alert"/></svg><span>Elige el rol con el que entra.</span></p>
+        <p class="hint" id="roleHint">El capataz registra producción. El dueño además ve el panel y la merma.</p>
+      </div>
+
+      <div class="field" id="passField">
+        <label class="label" for="uPass">Contraseña temporal</label>
+        <div class="pass-row">
+          <input class="input" id="uPass" name="password" type="text" autocomplete="new-password" minlength="6" spellcheck="false" placeholder="Mínimo 6 caracteres" aria-describedby="passErr" />
+          <button class="btn btn-secondary" id="genPass" type="button">Generar</button>
+        </div>
+        <p class="err" id="passErr" hidden><svg aria-hidden="true"><use href="#i-alert"/></svg><span>La contraseña necesita al menos 6 caracteres.</span></p>
+        <p class="hint">Se muestra una sola vez. Compártela por fuera de la app.</p>
+      </div>
+
+      <label class="check" id="activeField" hidden>
+        <input type="checkbox" id="uActive" />
+        <span>Cuenta activa<small>Si la desactivas, no puede entrar. Sus registros anteriores se conservan.</small><small class="is-clay" id="selfNote" hidden>No puedes desactivar tu propia cuenta.</small></span>
+      </label>
+
+      <button class="resend" id="resend" type="button" hidden>
+        <svg aria-hidden="true"><use href="#i-key"/></svg>
+        Reenviar enlace de acceso
+      </button>
+    </div>
+
+    <div class="sheet-foot">
+      <button class="btn btn-secondary" type="button" data-close>Cancelar</button>
+      <button class="btn btn-primary" id="submitUser" type="submit">Crear usuario</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Credenciales temporales -->
+<dialog id="credDialog" aria-labelledby="credTitle">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div>
+        <h2 id="credTitle">Cuenta creada.</h2>
+        <p>Estos datos se muestran una vez. Si se pierden, hay que reenviar el acceso.</p>
+      </div>
+      <button class="close" type="button" data-close aria-label="Cerrar">
+        <svg aria-hidden="true"><use href="#i-close"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body">
+      <div class="cred">
+        <p class="cred-k">Email</p>
+        <div class="cred-row">
+          <code id="credEmail">—</code>
+          <button class="copy" type="button" data-copy="credEmail" aria-label="Copiar email">
+            <svg aria-hidden="true"><use href="#i-copy"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="cred" style="margin-top:10px">
+        <p class="cred-k">Contraseña temporal</p>
+        <div class="cred-row">
+          <code id="credPass">—</code>
+          <button class="copy" type="button" data-copy="credPass" aria-label="Copiar contraseña">
+            <svg aria-hidden="true"><use href="#i-copy"/></svg>
+          </button>
+        </div>
+      </div>
+      <p class="cred-note">Pásasela a <span id="credWho">la persona</span> por WhatsApp o en persona. No la envíes por el mismo correo de la cuenta.</p>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-secondary" type="button" id="copyAll">Copiar todo</button>
+      <button class="btn btn-primary" type="button" data-close data-autofocus>Entendido</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- Confirmación de estado -->
+<dialog id="confirmDialog" aria-labelledby="confirmTitle">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div>
+        <h2 id="confirmTitle">Desactivar cuenta</h2>
+        <p id="confirmText">No podrá entrar hasta que la actives de nuevo.</p>
+      </div>
+      <button class="close" type="button" data-close aria-label="Cerrar">
+        <svg aria-hidden="true"><use href="#i-close"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body">
+      <p class="hint" id="confirmWho">—</p>
+      <p class="hint">Los ordeños y despachos que ya registró se conservan. La desactivación no borra historial.</p>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-secondary" type="button" data-close>Cancelar</button>
+      <button class="btn btn-primary" id="confirmGo" type="button" data-autofocus>Desactivar</button>
+    </div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <svg aria-hidden="true"><use href="#i-check"/></svg>
+  <span id="toastText"></span>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var params = new URLSearchParams(location.search);
+  var KEY = 'rodeo.users.v1';
+  var ROLE = { admin: 'Administrador', owner: 'Dueño', capataz: 'Capataz' };
+
+  var seed = [
+    { id: 'u1', name: 'Lucía Méndez', email: 'lucia@tambolapalma.com', role: 'admin', active: true, last: 'Hoy, 06:42' },
+    { id: 'u2', name: 'José Rangel', email: 'jose@tambolapalma.com', role: 'owner', active: true, last: 'Ayer, 18:20' },
+    { id: 'u3', name: 'María Colmenares', email: 'maria@tambolapalma.com', role: 'capataz', active: true, last: 'Hoy, 05:58' },
+    { id: 'u4', name: 'Pedro Salas', email: 'pedro@tambolapalma.com', role: 'capataz', active: true, last: '12 oct, 14:05' },
+    { id: 'u5', name: 'Ana Quintero', email: 'ana@tambolapalma.com', role: 'capataz', active: false, last: '30 sep, 16:40' }
+  ];
+
+  var users;
+  try {
+    if (params.get('reset') === '1') localStorage.removeItem(KEY);
+    var raw = localStorage.getItem(KEY);
+    var parsed = raw ? JSON.parse(raw) : null;
+    users = Array.isArray(parsed) && parsed.length ? parsed : seed.slice();
+  } catch (e) {
+    users = seed.slice();
+  }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(users)); } catch (e) {}
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function initials(name) {
+    var parts = String(name).trim().split(/\s+/).filter(Boolean);
+    var a = parts[0] ? parts[0].charAt(0) : '';
+    var b = parts.length > 1 ? parts[parts.length - 1].charAt(0) : '';
+    return (a + b).toUpperCase();
+  }
+  function roleClass(role) {
+    if (role === 'admin') return 'green';
+    if (role === 'owner') return 'neutral';
+    return 'outline';
+  }
+  function find(id) {
+    for (var i = 0; i < users.length; i++) if (users[i].id === id) return users[i];
+    return null;
+  }
+
+  var tbody = document.getElementById('rows');
+  var list = document.getElementById('list');
+  var empty = document.getElementById('empty');
+  var count = document.getElementById('count');
+  var stack = document.getElementById('peopleStack');
+  var peopleCount = document.getElementById('peopleCount');
+  var search = document.getElementById('q');
+  var roleFilter = document.getElementById('roleFilter');
+  var newUser = document.getElementById('newUser');
+  var offline = params.get('offline') === '1';
+  var readOnly = params.get('rol') === 'owner';
+
+  if (params.get('sinpermiso') === '1') {
+    document.getElementById('content').hidden = true;
+    document.getElementById('gate').hidden = false;
+    document.title = 'Sin permiso · Rodeo';
+    var adminLinks = document.querySelectorAll('[data-admin]');
+    for (var i = 0; i < adminLinks.length; i++) adminLinks[i].hidden = true;
+    document.querySelector('.appnav a[href="#"]').setAttribute('aria-current', 'page');
+    document.getElementById('meAvatar').textContent = 'MC';
+    document.getElementById('meName').textContent = 'María Colmenares';
+    document.getElementById('meRole').textContent = 'Capataz';
+  }
+
+  if (offline) {
+    document.getElementById('offlineBanner').hidden = false;
+    newUser.disabled = true;
+    newUser.setAttribute('title', 'Necesitas señal para crear cuentas');
+    newUser.setAttribute('aria-describedby', 'offlineBanner');
+  }
+
+  if (readOnly) {
+    document.getElementById('ownerBanner').hidden = false;
+    newUser.hidden = true;
+    document.getElementById('meAvatar').textContent = 'JR';
+    document.getElementById('meName').textContent = 'José Rangel';
+    document.getElementById('meRole').textContent = 'Dueño';
+    document.getElementById('pageEyebrow').textContent = 'Acceso · Dueño';
+    var rolesLink = document.querySelector('.account-menu a[href="permisos.html"]');
+    if (rolesLink) rolesLink.setAttribute('href', 'permisos.html?rol=owner');
+  }
+
+  var currentRole = 'all';
+  var query = '';
+  var editingId = null;
+  var pendingToggle = null;
+  var toastTimer = null;
+
+  function rowHtml(u) {
+    var disabled = (offline || readOnly) ? ' disabled' : '';
+    return '<tr data-id="' + u.id + '">' +
+      '<td><div class="person"><span class="avatar" aria-hidden="true">' + esc(initials(u.name)) + '</span>' +
+        '<span class="who"><b>' + esc(u.name) + '</b><small>' + esc(u.email) + '</small></span></div></td>' +
+      '<td><span class="badge ' + roleClass(u.role) + '">' + ROLE[u.role] + '</span></td>' +
+      '<td><span class="status ' + (u.active ? 'on' : 'off') + '"><i aria-hidden="true"></i>' + (u.active ? 'Activa' : 'Desactivada') + '</span></td>' +
+      '<td class="last">' + esc(u.last) + '</td>' +
+      '<td><div class="row-actions">' +
+        '<button class="act" type="button" data-act="edit" data-id="' + u.id + '"' + disabled + '>Editar</button>' +
+        '<button class="act ' + (u.active ? 'is-danger' : '') + '" type="button" data-act="toggle" data-id="' + u.id + '"' + disabled + '>' + (u.active ? 'Desactivar' : 'Activar') + '</button>' +
+      '</div></td></tr>';
+  }
+
+  function liHtml(u) {
+    var disabled = (offline || readOnly) ? ' disabled' : '';
+    return '<li data-id="' + u.id + '">' +
+      '<div class="li-top">' +
+        '<span class="avatar" aria-hidden="true">' + esc(initials(u.name)) + '</span>' +
+        '<span class="li-main"><b>' + esc(u.name) + '</b><span class="mail">' + esc(u.email) + '</span></span>' +
+      '</div>' +
+      '<div class="li-meta">' +
+        '<span class="badge ' + roleClass(u.role) + '">' + ROLE[u.role] + '</span>' +
+        '<span class="status ' + (u.active ? 'on' : 'off') + '"><i aria-hidden="true"></i>' + (u.active ? 'Activa' : 'Desactivada') + '</span>' +
+        '<span class="last">' + esc(u.last) + '</span>' +
+      '</div>' +
+      '<div class="li-actions">' +
+        '<button class="btn btn-secondary" type="button" data-act="edit" data-id="' + u.id + '"' + disabled + '>Editar</button>' +
+        '<button class="btn btn-ghost ' + (u.active ? 'is-danger' : '') + '" type="button" data-act="toggle" data-id="' + u.id + '"' + disabled + '>' + (u.active ? 'Desactivar' : 'Activar') + '</button>' +
+      '</div></li>';
+  }
+
+  function render() {
+    var q = query.toLowerCase();
+    var shown = users.filter(function (u) {
+      var okRole = currentRole === 'all' || u.role === currentRole;
+      var okText = !q || (u.name + ' ' + u.email).toLowerCase().indexOf(q) !== -1;
+      return okRole && okText;
+    });
+
+    tbody.innerHTML = shown.map(rowHtml).join('');
+    list.innerHTML = shown.map(liHtml).join('');
+    empty.hidden = shown.length > 0;
+
+    count.textContent = shown.length + (shown.length === 1 ? ' cuenta' : ' cuentas');
+
+    var active = users.filter(function (u) { return u.active; });
+    stack.innerHTML = active.slice(0, 4).map(function (u) {
+      return '<span class="avatar">' + esc(initials(u.name)) + '</span>';
+    }).join('');
+    peopleCount.textContent = active.length + (active.length === 1 ? ' con acceso' : ' con acceso');
+  }
+
+  roleFilter.addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-role]');
+    if (!btn) return;
+    currentRole = btn.getAttribute('data-role');
+    var all = roleFilter.querySelectorAll('button');
+    for (var i = 0; i < all.length; i++) {
+      all[i].setAttribute('aria-pressed', all[i] === btn ? 'true' : 'false');
+    }
+    render();
+  });
+
+  search.addEventListener('input', function () {
+    query = search.value.trim();
+    render();
+  });
+
+  document.getElementById('clearFilters').addEventListener('click', function () {
+    query = '';
+    search.value = '';
+    currentRole = 'all';
+    var all = roleFilter.querySelectorAll('button');
+    for (var i = 0; i < all.length; i++) {
+      all[i].setAttribute('aria-pressed', all[i].getAttribute('data-role') === 'all' ? 'true' : 'false');
+    }
+    render();
+  });
+
+  function toast(message) {
+    var el = document.getElementById('toast');
+    document.getElementById('toastText').textContent = message;
+    el.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove('on'); }, 4200);
+  }
+
+  function openDialog(dialog) {
+    if (typeof dialog.showModal === 'function') dialog.showModal();
+    else dialog.setAttribute('open', '');
+    requestAnimationFrame(function () {
+      var first = dialog.querySelector('[data-autofocus]') ||
+        dialog.querySelector('input:not([type="checkbox"]), select');
+      if (first) first.focus();
+    });
+  }
+  function closeDialog(dialog) {
+    if (typeof dialog.close === 'function') dialog.close();
+    else dialog.removeAttribute('open');
+  }
+
+  document.addEventListener('click', function (e) {
+    var closer = e.target.closest('[data-close]');
+    if (closer) {
+      var d = closer.closest('dialog');
+      if (d) closeDialog(d);
+    }
+  });
+
+  var dialogs = document.querySelectorAll('dialog');
+  for (var di = 0; di < dialogs.length; di++) {
+    dialogs[di].addEventListener('click', function (e) {
+      if (e.target === this) closeDialog(this);
+    });
+  }
+
+  var userDialog = document.getElementById('userDialog');
+  var userForm = document.getElementById('userForm');
+  var uName = document.getElementById('uName');
+  var uEmail = document.getElementById('uEmail');
+  var uRole = document.getElementById('uRole');
+  var uPass = document.getElementById('uPass');
+  var uActive = document.getElementById('uActive');
+  var passField = document.getElementById('passField');
+  var activeField = document.getElementById('activeField');
+  var resend = document.getElementById('resend');
+  var submitUser = document.getElementById('submitUser');
+
+  function setErr(id, on) {
+    var el = document.getElementById(id);
+    if (el) el.hidden = !on;
+  }
+
+  function resetErrors() {
+    setErr('nameErr', false);
+    setErr('emailErr', false);
+    setErr('dupErr', false);
+    setErr('passErr', false);
+    setErr('roleErr', false);
+    uName.removeAttribute('aria-invalid');
+    uEmail.removeAttribute('aria-invalid');
+    uRole.removeAttribute('aria-invalid');
+    uPass.removeAttribute('aria-invalid');
+  }
+
+  function openCreate() {
+    editingId = null;
+    resetErrors();
+    userForm.reset();
+    document.getElementById('userDialogTitle').textContent = 'Nuevo usuario';
+    document.getElementById('userDialogSub').textContent = 'La cuenta se crea con una contraseña temporal. La persona la cambia al entrar.';
+    submitUser.textContent = 'Crear usuario';
+    passField.hidden = false;
+    activeField.hidden = true;
+    resend.hidden = true;
+    uRole.disabled = false;
+    uRole.innerHTML = '<option value="">Elige un rol</option><option value="capataz">Capataz</option><option value="owner">Dueño</option>';
+    uRole.value = '';
+    uActive.disabled = false;
+    document.getElementById('selfNote').hidden = true;
+    document.getElementById('roleHint').textContent = 'El capataz registra producción. El dueño además ve el panel y la merma.';
+    openDialog(userDialog);
+  }
+
+  function openEdit(id) {
+    var u = find(id);
+    if (!u) return;
+    editingId = id;
+    resetErrors();
+    userForm.reset();
+    uName.value = u.name;
+    uEmail.value = u.email;
+    uRole.innerHTML = '<option value="capataz">Capataz</option><option value="owner">Dueño</option>' +
+      (u.role === 'admin' ? '<option value="admin">Administrador</option>' : '');
+    uRole.value = u.role;
+    uActive.checked = u.active;
+    document.getElementById('userDialogTitle').textContent = 'Editar usuario';
+    document.getElementById('userDialogSub').textContent = 'El cambio de rol aplica la próxima vez que entre. La sesión abierta no se cierra.';
+    submitUser.textContent = 'Guardar cambios';
+    passField.hidden = true;
+    activeField.hidden = false;
+    resend.hidden = false;
+    uRole.disabled = u.role === 'admin';
+    var isSelf = u.id === 'u1';
+    uActive.disabled = isSelf;
+    document.getElementById('selfNote').hidden = !isSelf;
+    document.getElementById('roleHint').textContent = u.role === 'admin'
+      ? 'El rol admin no se cambia desde aquí.'
+      : 'El capataz registra producción. El dueño además ve el panel y la merma.';
+    openDialog(userDialog);
+  }
+
+  newUser.addEventListener('click', openCreate);
+
+  function handleAction(e) {
+    var btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    if (readOnly) {
+      toast('Solo un admin puede cambiar cuentas.');
+      return;
+    }
+    if (offline) {
+      toast('Necesitas señal para cambiar cuentas.');
+      return;
+    }
+    var id = btn.getAttribute('data-id');
+    var act = btn.getAttribute('data-act');
+    if (act === 'edit') openEdit(id);
+    if (act === 'toggle') askToggle(id);
+  }
+  tbody.addEventListener('click', handleAction);
+  list.addEventListener('click', handleAction);
+
+  var confirmDialog = document.getElementById('confirmDialog');
+  var confirmGo = document.getElementById('confirmGo');
+
+  function askToggle(id) {
+    var u = find(id);
+    if (!u) return;
+    if (u.id === 'u1' && u.active) {
+      toast('No puedes desactivar tu propia cuenta.');
+      return;
+    }
+    pendingToggle = id;
+    var on = !u.active;
+    document.getElementById('confirmTitle').textContent = on ? 'Activar cuenta' : 'Desactivar cuenta';
+    document.getElementById('confirmText').textContent = on
+      ? 'Volverá a entrar con el rol que ya tiene.'
+      : 'No podrá entrar hasta que la actives de nuevo.';
+    document.getElementById('confirmWho').textContent = u.name + ' · ' + u.email + ' · ' + ROLE[u.role];
+    confirmGo.textContent = on ? 'Activar' : 'Desactivar';
+    confirmGo.className = 'btn btn-primary';
+    openDialog(confirmDialog);
+  }
+
+  confirmGo.addEventListener('click', function () {
+    var u = find(pendingToggle);
+    if (u) {
+      u.active = !u.active;
+      save();
+      render();
+      toast(u.active ? 'Cuenta activada. Ya puede entrar.' : 'Cuenta desactivada. Su historial queda intacto.');
+    }
+    pendingToggle = null;
+    closeDialog(confirmDialog);
+  });
+
+  resend.addEventListener('click', function () {
+    var u = editingId ? find(editingId) : null;
+    if (!u) return;
+    if (!u.active) {
+      toast('Activa la cuenta antes de reenviar el acceso.');
+      return;
+    }
+    toast('Enlace de acceso enviado a ' + u.email + '.');
+  });
+
+  document.getElementById('genPass').addEventListener('click', function () {
+    var words = ['tambo', 'leche', 'turno', 'vaca', 'campo'];
+    var w = words[Math.floor(Math.random() * words.length)];
+    var n;
+    if (window.crypto && window.crypto.getRandomValues) {
+      var buf = new Uint32Array(1);
+      window.crypto.getRandomValues(buf);
+      n = 1000 + (buf[0] % 9000);
+    } else {
+      n = 1000 + Math.floor(Math.random() * 9000);
+    }
+    uPass.value = w + '-' + n;
+    uPass.removeAttribute('aria-invalid');
+    setErr('passErr', false);
+    uPass.focus();
+  });
+
+  userForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    resetErrors();
+
+    var name = uName.value.trim();
+    var email = uEmail.value.trim();
+    var role = uRole.value;
+    var pass = uPass.value;
+    var ok = true;
+
+    if (name.length < 2) {
+      setErr('nameErr', true);
+      uName.setAttribute('aria-invalid', 'true');
+      ok = false;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setErr('emailErr', true);
+      uEmail.setAttribute('aria-invalid', 'true');
+      ok = false;
+    } else {
+      var dup = users.some(function (u) {
+        return u.id !== editingId && u.email.toLowerCase() === email.toLowerCase();
+      });
+      if (dup) {
+        setErr('dupErr', true);
+        uEmail.setAttribute('aria-invalid', 'true');
+        ok = false;
+      }
+    }
+    if (!role) {
+      setErr('roleErr', true);
+      uRole.setAttribute('aria-invalid', 'true');
+      ok = false;
+    }
+    if (!editingId && pass.length < 6) {
+      setErr('passErr', true);
+      uPass.setAttribute('aria-invalid', 'true');
+      ok = false;
+    }
+    if (!ok) {
+      var bad = userForm.querySelector('[aria-invalid="true"]');
+      if (bad) bad.focus();
+      return;
+    }
+
+    if (editingId) {
+      var u = find(editingId);
+      if (u) {
+        u.name = name;
+        u.email = email;
+        u.role = role;
+        u.active = uActive.checked;
+        save();
+        render();
+        closeDialog(userDialog);
+        toast('Cambios guardados en la cuenta de ' + name + '.');
+      }
+      return;
+    }
+
+    var created = {
+      id: 'u' + Date.now(),
+      name: name,
+      email: email,
+      role: role,
+      active: true,
+      last: 'Sin accesos aún'
+    };
+    users.unshift(created);
+    save();
+    render();
+    closeDialog(userDialog);
+
+    document.getElementById('credEmail').textContent = email;
+    document.getElementById('credPass').textContent = pass;
+    document.getElementById('credWho').textContent = name;
+    openDialog(document.getElementById('credDialog'));
+  });
+
+  function copyText(text, btn) {
+    function done() {
+      toast('Copiado.');
+      if (btn) {
+        btn.setAttribute('aria-label', 'Copiado');
+        setTimeout(function () { btn.removeAttribute('aria-label'); }, 1500);
+      }
+    }
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); done(); }
+      catch (err) { toast('No se pudo copiar. Selecciona el texto.'); }
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else {
+      fallback();
+    }
+  }
+
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-copy]');
+    if (!btn) return;
+    var el = document.getElementById(btn.getAttribute('data-copy'));
+    if (el) copyText(el.textContent, btn);
+  });
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var email = document.getElementById('credEmail').textContent;
+    var pass = document.getElementById('credPass').textContent;
+    copyText('Rodeo · ' + email + ' · ' + pass, null);
+  });
+
+  document.querySelectorAll('[data-soon]').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      toast(a.getAttribute('data-soon') + ' no forma parte de este prototipo.');
+    });
+  });
+
+  var account = document.getElementById('account');
+  document.addEventListener('click', function (e) {
+    if (account.open && !account.contains(e.target)) account.open = false;
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && account.open) account.open = false;
+  });
+
+  render();
+
+  var nav = document.getElementById('appnav');
+  var activeLink = nav.querySelector('[aria-current="page"]');
+  if (activeLink && nav.scrollWidth > nav.clientWidth) {
+    nav.scrollLeft = Math.max(0, activeLink.getBoundingClientRect().left - nav.getBoundingClientRect().left + nav.scrollLeft - 12);
+  }
+})();
+</script>
+</body>
+</html>

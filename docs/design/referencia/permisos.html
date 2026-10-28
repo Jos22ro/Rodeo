@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#FAF7F0" />
+<title>Roles y permisos · Rodeo</title>
+<meta name="description" content="Control de acceso de Rodeo: qué puede cada rol, qué rutas se protegen y qué pasa cuando falta permiso." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root{
+  color-scheme:light;
+  --background:#FAF7F0;
+  --card:#FFFFFF;
+  --secondary:#EFE9DA;
+  --foreground:#23211C;
+  --muted:#6B675C;
+  --border:#E3DCCC;
+  --primary:#1F4D3A;
+  --primary-deep:#17392B;
+  --primary-foreground:#F7F3E9;
+  --clay:#B5622F;
+  --clay-soft:#F3E2D5;
+  --clay-ink:#8F4A20;
+  --danger:#B4341F;
+  --ring:#2E6B4E;
+  --font-display:'Fraunces',Georgia,'Times New Roman',serif;
+  --font-body:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --font-mono:ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;
+  --r-sm:8px;
+  --r-md:12px;
+  --r-lg:16px;
+  --shadow-card:0 1px 2px rgba(35,33,28,.06);
+  --shadow-sheet:0 18px 40px -24px rgba(23,57,43,.35);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;min-height:100dvh;
+  background:var(--background);color:var(--foreground);
+  font:400 16px/1.55 var(--font-body);
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,p,ul,ol{margin:0}
+ul,ol{padding:0;list-style:none}
+button{font:inherit}
+svg{display:block}
+a{color:var(--primary);text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{color:var(--primary-deep)}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--ring) 55%,transparent);outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+[hidden]{display:none !important}
+
+/* ---------- barra de la app ---------- */
+.appbar{
+  position:sticky;top:0;z-index:40;
+  background:var(--background);border-bottom:1px solid var(--border);
+}
+.appbar-inner{
+  max-width:1024px;margin:0 auto;padding:10px 20px 0;
+  display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px;
+}
+.brand{display:flex;align-items:center;gap:9px;min-height:44px;text-decoration:none;color:var(--foreground)}
+.brand .mark{width:30px;height:30px;border-radius:8px;flex:none}
+.brand .word{font:500 19px/1 var(--font-display);letter-spacing:-.015em}
+.brand .kicker{
+  font:600 11px/1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);padding-left:10px;border-left:1px solid var(--border);white-space:nowrap;
+}
+.brand:hover .word{color:var(--primary-deep)}
+.appnav{
+  display:flex;gap:2px;order:3;width:100%;
+  margin:0 -20px;padding:0 20px;border-top:1px solid var(--border);
+  overflow-x:auto;scrollbar-width:none;
+}
+.appnav::-webkit-scrollbar{display:none}
+.appnav a{
+  position:relative;display:inline-flex;align-items:center;
+  min-height:44px;padding:0 10px;border-radius:8px;
+  font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;white-space:nowrap;
+}
+.appnav a:hover{background:var(--secondary);color:var(--foreground)}
+.appnav a[aria-current="page"]{color:var(--primary)}
+.appnav a[aria-current="page"]::after{
+  content:"";position:absolute;left:10px;right:10px;bottom:0;height:2px;background:var(--primary);
+}
+.appbar-end{display:flex;align-items:center;gap:14px;margin-left:auto}
+.sync{display:none;align-items:center;gap:6px;font-size:12px;line-height:1;color:var(--muted);white-space:nowrap}
+.sync i{width:6px;height:6px;border-radius:50%;background:var(--primary);flex:none}
+@media (min-width:900px){
+  .appbar-inner{padding:0 20px;min-height:64px;flex-wrap:nowrap}
+  .appnav{order:0;width:auto;margin:0 0 0 6px;padding:0;border-top:0}
+  .sync{display:inline-flex}
+}
+@media (max-width:430px){
+  .appnav{gap:0}
+  .appnav a{padding:0 8px}
+}
+@media (max-width:379px){
+  .appnav a{font-size:13px;padding:0 6px}
+}
+
+.account{position:relative;margin-left:auto}
+.account summary{
+  list-style:none;display:flex;align-items:center;gap:9px;
+  min-height:44px;padding:0 4px;border-radius:8px;cursor:pointer;
+}
+.account summary::-webkit-details-marker{display:none}
+.account summary:hover{background:var(--secondary)}
+.avatar{
+  width:32px;height:32px;flex:none;border-radius:50%;
+  display:grid;place-items:center;
+  background:color-mix(in srgb,var(--primary) 10%,var(--card));
+  color:var(--primary);font:600 11px/1 var(--font-body);letter-spacing:.03em;
+}
+.account .who{display:none}
+.account .chev{width:14px;height:14px;color:var(--muted);display:none}
+@media (min-width:640px){
+  .account .who{display:block;font-size:13px;line-height:1.25;font-weight:500}
+  .account .who small{display:block;font-size:11px;font-weight:400;color:var(--muted)}
+  .account .chev{display:block}
+}
+.account-menu{
+  position:absolute;right:0;top:calc(100% + 8px);width:236px;
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  box-shadow:var(--shadow-sheet);padding:6px;z-index:60;
+}
+.account-menu a{
+  display:flex;align-items:center;gap:9px;min-height:44px;padding:0 10px;
+  border-radius:8px;font-size:14px;color:var(--foreground);text-decoration:none;
+}
+.account-menu a:hover{background:var(--secondary);color:var(--foreground)}
+.account-menu svg{width:16px;height:16px;color:var(--muted)}
+.account-menu .sep{height:1px;background:var(--border);margin:4px 6px}
+
+.offline{
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  padding:9px 20px;background:var(--secondary);border-bottom:1px solid var(--border);
+  font-size:14px;line-height:1.4;
+}
+.offline svg{width:16px;height:16px;flex:none;color:var(--clay-ink)}
+.offline b{font-weight:600}
+@media (max-width:519px){.offline{justify-content:flex-start;padding:9px 16px}}
+.notice{
+  display:flex;align-items:flex-start;gap:9px;
+  padding:10px 20px;background:var(--secondary);border-bottom:1px solid var(--border);
+  font-size:14px;line-height:1.45;
+}
+.notice svg{width:16px;height:16px;flex:none;margin-top:1px;color:var(--primary)}
+.notice b{font-weight:600}
+
+/* ---------- página ---------- */
+.page{max-width:1024px;margin:0 auto;padding:clamp(24px,4vw,40px) 20px 56px}
+.eyebrow{
+  display:flex;align-items:center;gap:9px;
+  font:600 11px/1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+}
+.eyebrow::before{content:"";width:16px;height:1px;background:var(--border);flex:none}
+h1{
+  margin-top:11px;
+  font:500 clamp(30px,4.2vw,40px)/1.08 var(--font-display);
+  letter-spacing:-.028em;
+}
+.lead{margin-top:10px;max-width:56ch;font-size:16px;line-height:1.6;color:var(--muted)}
+.head-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-top:16px;font-size:13px;color:var(--muted)}
+.head-meta span{display:inline-flex;align-items:center;gap:6px}
+.head-meta i{width:4px;height:4px;border-radius:50%;background:var(--border);flex:none}
+.head-meta b{color:var(--foreground);font-weight:500}
+@media (max-width:639px){
+  .head-meta i{display:none}
+  .head-meta{gap:4px 16px}
+}
+
+.subtabs{
+  display:flex;gap:4px;margin-top:24px;
+  border-bottom:1px solid var(--border);
+  overflow-x:auto;scrollbar-width:none;
+}
+.subtabs::-webkit-scrollbar{display:none}
+.subtabs a{
+  position:relative;display:inline-flex;align-items:center;
+  min-height:44px;padding:0 10px;
+  font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;white-space:nowrap;
+}
+.subtabs a:hover{color:var(--foreground)}
+.subtabs a[aria-current="page"]{color:var(--primary)}
+.subtabs a[aria-current="page"]::after{
+  content:"";position:absolute;left:8px;right:8px;bottom:-1px;height:2px;background:var(--primary);
+}
+
+.block{margin-top:30px}
+.block-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;padding-bottom:12px}
+.block-head h2{font:500 24px/1.2 var(--font-display);letter-spacing:-.02em}
+.block-head p{font-size:14px;line-height:1.5;color:var(--muted)}
+
+.panel{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);
+  box-shadow:var(--shadow-card);overflow:hidden;
+}
+
+/* roles */
+.role-row{display:grid;gap:8px;padding:18px 16px;border-top:1px solid var(--border)}
+.role-row:first-child{border-top:0}
+@media (min-width:760px){
+  .role-row{
+    grid-template-columns:minmax(0,1.15fr) minmax(0,1.5fr) auto;
+    align-items:center;gap:24px;padding:18px 20px;
+  }
+}
+.role-id{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.role-id b{font:500 20px/1.2 var(--font-display);letter-spacing:-.015em}
+.role-id code{
+  padding:3px 6px;border-radius:6px;background:var(--secondary);
+  font:400 11px/1 var(--font-mono);letter-spacing:.03em;color:var(--muted);
+}
+.role-row > p{font-size:14px;line-height:1.5;color:var(--muted);max-width:48ch}
+.role-side{display:flex;align-items:center;justify-content:space-between;gap:12px}
+@media (min-width:760px){.role-side{justify-content:flex-end;gap:14px}}
+.stack{display:flex}
+.stack .avatar{width:28px;height:28px;border:2px solid var(--card);margin-left:-8px;font-size:10px}
+.stack .avatar:first-child{margin-left:0}
+.role-count{font-size:12px;color:var(--muted);white-space:nowrap}
+.badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 8px;border-radius:999px;
+  font-size:12px;font-weight:500;line-height:1.2;white-space:nowrap;
+}
+.badge.neutral{background:var(--secondary);color:var(--foreground)}
+.badge.green{background:color-mix(in srgb,var(--primary) 9%,var(--card));color:var(--primary)}
+.badge.outline{border:1px solid var(--border);color:var(--muted)}
+
+/* matriz */
+.matrix-wrap{display:none}
+table{width:100%;border-collapse:collapse}
+th{
+  padding:11px 16px;text-align:left;
+  background:color-mix(in srgb,var(--secondary) 55%,var(--card));
+  border-bottom:1px solid var(--border);
+  font:600 11px/1 var(--font-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+}
+th.role-col{text-align:center;white-space:nowrap}
+td{padding:13px 16px;border-top:1px solid var(--border);font-size:14px;vertical-align:middle}
+tbody tr:first-child td{border-top:0}
+tbody tr:hover{background:color-mix(in srgb,var(--secondary) 32%,var(--card))}
+td.cap{font-weight:500}
+td.cell{text-align:center}
+.yes{
+  display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;
+  background:color-mix(in srgb,var(--primary) 9%,var(--card));color:var(--primary);
+}
+.yes svg{width:13px;height:13px}
+.no{font-size:13px;color:var(--muted)}
+
+.matrix-mobile{display:block}
+.role-block{padding:16px 16px 18px;border-top:1px solid var(--border)}
+.role-block:first-child{border-top:0}
+.role-block-head{display:flex;align-items:baseline;gap:8px;margin-bottom:4px}
+.role-block h3{font:500 18px/1.25 var(--font-display);letter-spacing:-.015em}
+.role-block code{font:400 11px/1 var(--font-mono);color:var(--muted)}
+.role-block li{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:9px 0;border-top:1px dashed var(--border);font-size:14px;
+}
+.role-block li:first-of-type{border-top:0}
+@media (min-width:760px){
+  .matrix-wrap{display:block}
+  .matrix-mobile{display:none}
+}
+
+/* rutas */
+.routes li{display:grid;gap:5px;padding:14px 16px;border-top:1px solid var(--border)}
+.routes li:first-child{border-top:0}
+@media (min-width:760px){
+  .routes li{
+    grid-template-columns:140px minmax(0,.9fr) minmax(0,1.5fr);
+    align-items:center;gap:20px;padding:13px 20px;
+  }
+}
+.routes code{font:400 13px/1.4 var(--font-mono);color:var(--foreground);overflow-wrap:anywhere}
+.routes .who{display:flex;flex-wrap:wrap;gap:5px}
+.routes .beh{font-size:13px;line-height:1.5;color:var(--muted)}
+.routes .beh b{color:var(--foreground);font-weight:500}
+
+.note{
+  display:flex;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);
+  font-size:13px;line-height:1.55;color:var(--muted);max-width:76ch;
+}
+.note svg{width:16px;height:16px;flex:none;margin-top:1px;color:var(--primary)}
+.note b{color:var(--foreground);font-weight:500}
+
+/* ---------- botones ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:44px;padding:0 16px;
+  border:1px solid transparent;border-radius:var(--r-sm);
+  font-size:15px;font-weight:600;letter-spacing:.005em;
+  text-decoration:none;cursor:pointer;
+  transition:background 120ms ease,border-color 120ms ease,color 120ms ease;
+}
+.btn svg{width:17px;height:17px;flex:none}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground)}
+.btn-primary:hover{background:var(--primary-deep);border-color:var(--primary-deep);color:var(--primary-foreground)}
+.btn-secondary{background:var(--card);border-color:var(--border);color:var(--foreground)}
+.btn-secondary:hover{background:var(--secondary);border-color:color-mix(in srgb,var(--muted) 32%,var(--border));color:var(--foreground)}
+
+/* ---------- puerta de rol ---------- */
+.gate{
+  max-width:480px;margin:clamp(28px,8vh,88px) auto 0;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);
+  box-shadow:var(--shadow-card);padding:clamp(24px,5vw,36px);
+}
+.gate-icon{
+  width:48px;height:48px;border-radius:50%;display:grid;place-items:center;
+  background:var(--clay-soft);color:var(--clay-ink);
+}
+.gate-icon svg{width:22px;height:22px}
+.gate h1{margin-top:18px;font-size:30px;line-height:1.12}
+.gate p{margin-top:10px;font-size:15px;line-height:1.6;color:var(--muted)}
+.gate .who-now{
+  display:flex;align-items:center;gap:10px;margin-top:20px;padding-top:16px;
+  border-top:1px solid var(--border);font-size:13px;color:var(--muted);
+}
+.gate .who-now b{color:var(--foreground);font-weight:500}
+.gate-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.gate-actions .btn{flex:1 1 160px}
+
+.toast{
+  position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));
+  transform:translate(-50%,12px);
+  display:flex;align-items:center;gap:9px;
+  max-width:calc(100vw - 32px);padding:11px 14px;
+  border-radius:12px;background:var(--foreground);color:var(--background);
+  font-size:14px;line-height:1.4;box-shadow:var(--shadow-sheet);
+  opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;
+  z-index:100;
+}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.toast svg{width:16px;height:16px;flex:none;color:color-mix(in srgb,var(--primary) 55%,var(--background))}
+
+.foot{
+  max-width:1024px;margin:0 auto;padding:22px 20px 40px;
+  border-top:1px solid var(--border);
+  display:flex;flex-wrap:wrap;gap:8px 18px;justify-content:space-between;
+  font-size:12px;line-height:1.5;color:var(--muted);
+}
+.foot a{color:var(--muted)}
+.foot a:hover{color:var(--primary)}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <defs>
+    <symbol id="i-mark" viewBox="0 0 512 512">
+      <rect width="512" height="512" rx="112" fill="#1F4D3A"/>
+      <g transform="translate(-9 0)" fill="none" stroke="#F7F3E9" stroke-width="46" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M186 138V374"/><path d="M186 161H258A57 57 0 0 1 258 275H186"/><path d="M255 281C290 305 320 338 344 372"/>
+      </g>
+    </symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-offline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M6 18 18 6"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.4 2.9 8.2 7 9.5 4.1-1.3 7-5.1 7-9.5V6Z"/><path d="m9.5 12 1.8 1.8 3.4-3.4"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 8 6 12l4 4"/><path d="M6 12h9"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 5.2a3 3 0 0 1 0 5.6"/><path d="M17.5 19a5.5 5.5 0 0 0-2.2-4.4"/></symbol>
+    <symbol id="i-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></symbol>
+  </defs>
+</svg>
+
+<header class="appbar">
+  <div class="appbar-inner">
+    <a class="brand" href="index.html" aria-label="Rodeo, sistema de diseño">
+      <svg class="mark" aria-hidden="true"><use href="#i-mark"/></svg>
+      <span class="word">Rodeo</span>
+      <span class="kicker">Tambo La Palma</span>
+    </a>
+
+    <nav class="appnav" id="appnav" aria-label="Secciones de la app">
+      <a href="#" data-soon="Vacas">Vacas</a>
+      <a href="#" data-soon="Ordeño">Ordeño</a>
+      <a href="#" data-soon="Despacho">Despacho</a>
+      <a href="#" data-admin data-soon="Panel">Panel</a>
+      <a href="usuarios.html" aria-current="page" data-admin>Usuarios</a>
+    </nav>
+
+    <div class="appbar-end">
+      <span class="sync"><i aria-hidden="true"></i>Al día</span>
+      <details class="account" id="account">
+        <summary aria-label="Cuenta y sesión">
+          <span class="avatar" id="meAvatar">LM</span>
+          <span class="who"><span id="meName">Lucía Méndez</span><small id="meRole">Administrador</small></span>
+          <svg class="chev" aria-hidden="true"><use href="#i-chevron"/></svg>
+        </summary>
+        <div class="account-menu">
+          <a href="permisos.html"><svg aria-hidden="true"><use href="#i-shield"/></svg>Roles y permisos</a>
+          <div class="sep" role="presentation"></div>
+          <a href="login.html"><svg aria-hidden="true"><use href="#i-logout"/></svg>Cerrar sesión</a>
+        </div>
+      </details>
+    </div>
+  </div>
+</header>
+
+<div class="offline" id="offlineBanner" hidden>
+  <svg aria-hidden="true"><use href="#i-offline"/></svg>
+  <span><b>Sin conexión.</b> La matriz se lee del último estado guardado. Cambiar roles necesita señal.</span>
+</div>
+
+<div class="notice" id="ownerNotice" hidden>
+  <svg aria-hidden="true"><use href="#i-lock"/></svg>
+  <span><b>Vista de solo lectura.</b> Como dueño ves el panel y esta matriz, pero las cuentas las administra un admin. <a href="usuarios.html?rol=owner">Ver las cuentas</a></span>
+</div>
+
+<main class="page" id="content">
+  <p class="eyebrow">Acceso · Tambo La Palma</p>
+  <h1>Tres roles. Sin permisos a medida.</h1>
+  <p class="lead">El rol se guarda en la cuenta y se valida en el servidor. Ocultar una pestaña no es seguridad: la ruta se protege aparte.</p>
+
+  <div class="head-meta" id="headMeta">
+    <span><b id="metaUsers">5</b> cuentas</span>
+    <i aria-hidden="true"></i>
+    <span><b>3</b> roles fijos</span>
+    <i aria-hidden="true"></i>
+    <span>Sin roles personalizados</span>
+  </div>
+
+  <nav class="subtabs" aria-label="Sección de acceso">
+    <a href="usuarios.html">Usuarios</a>
+    <a href="permisos.html" aria-current="page">Roles y permisos</a>
+  </nav>
+
+  <section class="block" aria-labelledby="rolesTitle">
+    <div class="block-head">
+      <h2 id="rolesTitle">Quién es quién</h2>
+      <p>Una persona, una cuenta, un rol.</p>
+    </div>
+    <div class="panel">
+      <ul id="roleRows"></ul>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="matrixTitle">
+    <div class="block-head">
+      <h2 id="matrixTitle">Qué puede hacer cada rol</h2>
+      <p>Lo que no está marcado, no se muestra ni se ejecuta.</p>
+    </div>
+    <div class="panel">
+      <div class="matrix-wrap">
+        <table>
+          <caption class="sr-only">Capacidades por rol en Rodeo.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Capacidad</th>
+              <th scope="col" class="role-col">Capataz</th>
+              <th scope="col" class="role-col">Dueño</th>
+              <th scope="col" class="role-col">Admin</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="cap">Ver y editar vacas</td>
+              <td class="cell"><span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span><span class="sr-only">Sí</span></td>
+              <td class="cell"><span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span><span class="sr-only">Sí</span></td>
+              <td class="cell"><span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span><span class="sr-only">Sí</span></td>
+            </tr>
+            <tr>
+              <td class="cap">Registrar ordeño</td>
+              <td class="cell"><span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span><span class="sr-only">Sí</span></td>
+              <td class="cell"><span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span><span class="sr-only">Sí</span></td>
+              <td class="cell"><span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span><span class="sr-only">Sí</span></td>
+            </tr>
+            <tr>
+              <td class="cap">Registrar despacho</td>
+              <td class="cell"><span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span><span class="sr-only">Sí</span></td>
+              <td class="cell"><span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span><span class="sr-only">Sí</span></td>
+              <td class="cell"><span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span><span class="sr-only">Sí</span></td>
+            </tr>
+            <tr>
+              <td class="cap">Ver panel y merma</td>
+              <td class="cell"><span class="no" aria-hidden="true">—</span><span class="sr-only">No</span></td>
+              <td class="cell"><span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span><span class="sr-only">Sí</span></td>
+              <td class="cell"><span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span><span class="sr-only">Sí</span></td>
+            </tr>
+            <tr>
+              <td class="cap">Crear y editar usuarios</td>
+              <td class="cell"><span class="no" aria-hidden="true">—</span><span class="sr-only">No</span></td>
+              <td class="cell"><span class="no" aria-hidden="true">—</span><span class="sr-only">No</span></td>
+              <td class="cell"><span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span><span class="sr-only">Sí</span></td>
+            </tr>
+            <tr>
+              <td class="cap">Desactivar cuentas</td>
+              <td class="cell"><span class="no" aria-hidden="true">—</span><span class="sr-only">No</span></td>
+              <td class="cell"><span class="no" aria-hidden="true">—</span><span class="sr-only">No</span></td>
+              <td class="cell"><span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span><span class="sr-only">Sí</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="matrix-mobile">
+        <div class="role-block">
+          <div class="role-block-head"><h3>Capataz</h3><code>capataz</code></div>
+          <ul>
+            <li>Ver y editar vacas <span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span></li>
+            <li>Registrar ordeño <span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span></li>
+            <li>Registrar despacho <span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span></li>
+            <li>Ver panel y merma <span class="no">No</span></li>
+            <li>Crear usuarios <span class="no">No</span></li>
+            <li>Desactivar cuentas <span class="no">No</span></li>
+          </ul>
+        </div>
+        <div class="role-block">
+          <div class="role-block-head"><h3>Dueño</h3><code>owner</code></div>
+          <ul>
+            <li>Ver y editar vacas <span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span></li>
+            <li>Registrar ordeño <span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span></li>
+            <li>Registrar despacho <span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span></li>
+            <li>Ver panel y merma <span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span></li>
+            <li>Crear usuarios <span class="no">No</span></li>
+            <li>Desactivar cuentas <span class="no">No</span></li>
+          </ul>
+        </div>
+        <div class="role-block">
+          <div class="role-block-head"><h3>Administrador</h3><code>admin</code></div>
+          <ul>
+            <li>Ver y editar vacas <span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span></li>
+            <li>Registrar ordeño <span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span></li>
+            <li>Registrar despacho <span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span></li>
+            <li>Ver panel y merma <span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span></li>
+            <li>Crear usuarios <span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span></li>
+            <li>Desactivar cuentas <span class="yes"><svg aria-hidden="true"><use href="#i-check"/></svg></span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="routesTitle">
+    <div class="block-head">
+      <h2 id="routesTitle">Rutas protegidas</h2>
+      <p>Si alguien escribe la URL a mano, la respuesta es la misma.</p>
+    </div>
+    <div class="panel">
+      <ul class="routes">
+        <li>
+          <code>/cows</code>
+          <span class="who"><span class="badge outline">Capataz</span><span class="badge outline">Dueño</span><span class="badge outline">Admin</span></span>
+          <span class="beh">Sin sesión: <b>va a /login</b>. No hay ruta pública de datos.</span>
+        </li>
+        <li>
+          <code>/milking</code>
+          <span class="who"><span class="badge outline">Capataz</span><span class="badge outline">Dueño</span><span class="badge outline">Admin</span></span>
+          <span class="beh">Funciona sin señal. El usuario de la sesión firma cada registro.</span>
+        </li>
+        <li>
+          <code>/dispatch</code>
+          <span class="who"><span class="badge outline">Capataz</span><span class="badge outline">Dueño</span><span class="badge outline">Admin</span></span>
+          <span class="beh">Permite despachar sin ordeños; avisa que la merma será del 100 %.</span>
+        </li>
+        <li>
+          <code>/dashboard</code>
+          <span class="who"><span class="badge green">Dueño</span><span class="badge green">Admin</span></span>
+          <span class="beh">Capataz: <b>redirige a /cows</b> con “El panel es solo para el dueño.”</span>
+        </li>
+        <li>
+          <code>/register</code>
+          <span class="who"><span class="badge green">Admin</span></span>
+          <span class="beh">Dueño o capataz: <b>sin permiso</b>. No se puede crear cuentas por URL.</span>
+        </li>
+        <li>
+          <code>/setup</code>
+          <span class="who"><span class="badge neutral">Sin sesión</span><span class="badge neutral">Token</span></span>
+          <span class="beh">Con un admin creado: <b>“Configuración completa.”</b> El link se deshabilita.</span>
+        </li>
+      </ul>
+    </div>
+
+    <p class="note">
+      <svg aria-hidden="true"><use href="#i-shield"/></svg>
+      <span><b>El rol viaja con la sesión, no con el teléfono.</b> Si el capataz entra desde otro equipo, sigue siendo capataz. Al desactivar una cuenta, la sesión abierta pierde acceso en la siguiente petición; sus registros ya guardados no se borran.</span>
+    </p>
+  </section>
+</main>
+
+<section class="page" id="gate" hidden aria-labelledby="gateTitle">
+  <div class="gate">
+    <div class="gate-icon"><svg aria-hidden="true"><use href="#i-lock"/></svg></div>
+    <h1 id="gateTitle">Los permisos no se cambian desde tu cuenta.</h1>
+    <p>Tu sesión es de capataz. Puedes registrar ordeños, despachos y mantener las vacas; el panel y la administración de cuentas son del dueño y del admin.</p>
+    <div class="who-now">
+      <span class="avatar">MC</span>
+      <span><b>María Colmenares</b> · Capataz · Tambo La Palma</span>
+    </div>
+    <div class="gate-actions">
+      <a class="btn btn-primary" href="login.html">Cerrar sesión</a>
+      <a class="btn btn-secondary" href="flujos.html#flujos">Volver a los flujos</a>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <span>Rodeo · Tambo La Palma · Carabobo, Venezuela</span>
+  <span><a href="flujos.html#flujos">Flujos del producto</a> · <a href="index.html">Sistema de diseño</a></span>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <svg aria-hidden="true"><use href="#i-check"/></svg>
+  <span id="toastText"></span>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var params = new URLSearchParams(location.search);
+  var KEY = 'rodeo.users.v1';
+  var ROLE = { admin: 'Administrador', owner: 'Dueño', capataz: 'Capataz' };
+
+  var seed = [
+    { name: 'Lucía Méndez', role: 'admin', active: true },
+    { name: 'José Rangel', role: 'owner', active: true },
+    { name: 'María Colmenares', role: 'capataz', active: true },
+    { name: 'Pedro Salas', role: 'capataz', active: true },
+    { name: 'Ana Quintero', role: 'capataz', active: false }
+  ];
+
+  var users;
+  try {
+    var raw = localStorage.getItem(KEY);
+    var parsed = raw ? JSON.parse(raw) : null;
+    users = Array.isArray(parsed) && parsed.length ? parsed : seed;
+  } catch (e) {
+    users = seed;
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function initials(name) {
+    var parts = String(name).trim().split(/\s+/).filter(Boolean);
+    var a = parts[0] ? parts[0].charAt(0) : '';
+    var b = parts.length > 1 ? parts[parts.length - 1].charAt(0) : '';
+    return (a + b).toUpperCase();
+  }
+
+  var DESCR = {
+    capataz: 'Registra el día a día. No ve conciliación ni cuentas.',
+    owner: 'Ve el panel y la merma. No administra personas.',
+    admin: 'Todo lo del dueño, más alta y baja de usuarios.'
+  };
+
+  var rows = document.getElementById('roleRows');
+  var roleOrder = ['capataz', 'owner', 'admin'];
+
+  function renderRoles() {
+    rows.innerHTML = roleOrder.map(function (role) {
+      var people = users.filter(function (u) { return u.role === role; });
+      var active = people.filter(function (u) { return u.active; });
+      var avatars = active.slice(0, 3).map(function (u) {
+        return '<span class="avatar" title="' + esc(u.name) + '">' + esc(initials(u.name)) + '</span>';
+      }).join('');
+      return '<li class="role-row">' +
+        '<div class="role-id"><b>' + ROLE[role] + '</b><code>' + role + '</code></div>' +
+        '<p>' + DESCR[role] + '</p>' +
+        '<div class="role-side">' +
+          '<span class="role-count">' + people.length + (people.length === 1 ? ' cuenta' : ' cuentas') + '</span>' +
+          '<div class="stack" aria-hidden="true">' + avatars + '</div>' +
+        '</div>' +
+      '</li>';
+    }).join('');
+    document.getElementById('metaUsers').textContent = String(users.length);
+  }
+
+  var role = params.get('rol');
+  if (role === 'capataz') {
+    document.getElementById('content').hidden = true;
+    document.getElementById('gate').hidden = false;
+    document.title = 'Sin permiso · Rodeo';
+    var adminLinks = document.querySelectorAll('[data-admin]');
+    for (var i = 0; i < adminLinks.length; i++) adminLinks[i].hidden = true;
+    document.querySelector('.appnav a[href="#"]').setAttribute('aria-current', 'page');
+    document.getElementById('meAvatar').textContent = 'MC';
+    document.getElementById('meName').textContent = 'María Colmenares';
+    document.getElementById('meRole').textContent = 'Capataz';
+  }
+
+  if (role === 'owner') {
+    document.getElementById('ownerNotice').hidden = false;
+    document.getElementById('meAvatar').textContent = 'JR';
+    document.getElementById('meName').textContent = 'José Rangel';
+    document.getElementById('meRole').textContent = 'Dueño';
+    document.title = 'Roles y permisos · Rodeo';
+  }
+
+  if (params.get('offline') === '1') {
+    document.getElementById('offlineBanner').hidden = false;
+  }
+
+  renderRoles();
+
+  function toast(message) {
+    var el = document.getElementById('toast');
+    document.getElementById('toastText').textContent = message;
+    el.classList.add('on');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { el.classList.remove('on'); }, 3600);
+  }
+
+  document.querySelectorAll('[data-soon]').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      toast(a.getAttribute('data-soon') + ' no forma parte de este prototipo.');
+    });
+  });
+
+  var account = document.getElementById('account');
+  document.addEventListener('click', function (e) {
+    if (account.open && !account.contains(e.target)) account.open = false;
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && account.open) account.open = false;
+  });
+
+  var nav = document.getElementById('appnav');
+  var activeLink = nav.querySelector('[aria-current="page"]');
+  if (activeLink && nav.scrollWidth > nav.clientWidth) {
+    nav.scrollLeft = Math.max(0, activeLink.getBoundingClientRect().left - nav.getBoundingClientRect().left + nav.scrollLeft - 12);
+  }
+})();
+</script>
+</body>
+</html>

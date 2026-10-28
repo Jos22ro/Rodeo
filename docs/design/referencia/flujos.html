@@ -1,0 +1,953 @@
+<!doctype html>
+<html lang="es-VE">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Rodeo: flujos del producto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================
+   1. Tokens Rodeo (fuente: app/globals.css)
+   ============================================================ */
+:root{
+  --background:#FAF7F0;
+  --surface:#FFFFFF;
+  --secondary:#EFE9DA;
+  --foreground:#23211C;
+  --muted-foreground:#6B675C;
+  --border:#E3DCCC;
+  --border-strong:color-mix(in oklab, var(--border) 62%, var(--muted-foreground) 38%);
+  --primary:#1F4D3A;
+  --primary-deep:#17392B;
+  --primary-foreground:#F7F3E9;
+  --clay:#B5622F;
+  --clay-soft:#F3E2D5;
+  --clay-ink:#8F4A20;
+  --danger:#B4341F;
+  --ring:#2E6B4E;
+
+  --font-display:'Fraunces',Georgia,'Times New Roman',serif;
+  --font-body:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --font-mono:ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;
+
+  --r-sm:8px;
+  --r-md:12px;
+  --r-lg:16px;
+  --r-pill:999px;
+  --shadow-1:0 1px 2px rgba(35,33,28,.06);
+  --shadow-2:0 18px 40px -24px rgba(23,57,43,.35);
+  --ease:cubic-bezier(.2,.7,.3,1);
+
+  --page:1120px;
+  --pad:clamp(20px,4vw,40px);
+  --section:clamp(52px,7vw,84px);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+*{margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:104px;-webkit-text-size-adjust:100%}
+body{
+  background:var(--background);
+  color:var(--foreground);
+  font:400 16px/1.55 var(--font-body);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  overflow-x:clip;
+}
+img,svg{display:block;max-width:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0}
+a{color:inherit;text-decoration:none}
+h1,h2,h3,h4{font-weight:500;line-height:1.12;letter-spacing:-.02em}
+p{text-wrap:pretty}
+[hidden]{display:none!important}
+::selection{background:var(--clay-soft);color:var(--foreground)}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--ring) 55%,transparent);outline-offset:2px}
+.sprite{position:absolute;width:0;height:0;overflow:hidden}
+.ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.wrap{width:100%;max-width:var(--page);margin-inline:auto;padding-inline:var(--pad)}
+.skip{position:fixed;top:8px;left:8px;z-index:200;background:var(--primary);color:var(--primary-foreground);padding:10px 14px;border-radius:var(--r-sm);transform:translateY(-150%);transition:transform .15s}
+.skip:focus-visible{transform:none}
+
+/* ============================================================
+   2. Barra superior
+   ============================================================ */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  background:color-mix(in srgb,var(--background) 88%,transparent);
+  -webkit-backdrop-filter:blur(14px);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+}
+.topbar-inner{display:flex;align-items:center;gap:16px;min-height:64px}
+.brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;border-radius:var(--r-sm);flex:none}
+.brand-mark{width:34px;height:34px;border-radius:10px}
+.brand-name{font-family:var(--font-display);font-size:21px;font-weight:600;letter-spacing:-.02em}
+.brand-sep{width:1px;height:20px;background:var(--border-strong);margin-inline:2px}
+.brand-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-foreground);white-space:nowrap}
+.topnav{display:flex;align-items:center;gap:2px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+.topnav::-webkit-scrollbar{display:none}
+.topnav a{
+  display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:var(--r-pill);
+  font-size:13.5px;font-weight:500;color:var(--muted-foreground);white-space:nowrap;
+  transition:background .15s,color .15s;
+}
+.topnav a:hover{background:var(--secondary);color:var(--foreground)}
+.topnav a[aria-current="page"]{background:color-mix(in srgb,var(--primary) 10%,var(--surface));color:var(--primary)}
+.topnav .to-spec{display:inline-flex;align-items:center;gap:6px}
+.topnav .to-spec .ico{width:14px;height:14px;transform:rotate(-45deg)}
+.top-version{font:500 11px/1 var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted-foreground);white-space:nowrap}
+
+/* ============================================================
+   3. Portada
+   ============================================================ */
+.hero{padding-block:clamp(36px,5vw,64px) clamp(32px,4vw,52px)}
+.eyebrow{font:600 11px/1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted-foreground)}
+.hero h1{
+  margin-top:16px;max-width:22ch;
+  font-family:var(--font-display);
+  font-size:clamp(36px,4.4vw,56px);
+  line-height:1.03;letter-spacing:-.03em;font-weight:500;
+}
+.hero h1 span{color:var(--primary)}
+.hero-lead{margin-top:18px;font-size:clamp(16px,1.5vw,18px);line-height:1.6;color:var(--muted-foreground);max-width:62ch}
+.hero-lead strong{color:var(--foreground);font-weight:600}
+.hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.hero-actions a{
+  display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;
+  border:1px solid var(--border-strong);border-radius:var(--r-sm);
+  font-size:13.5px;font-weight:600;letter-spacing:.005em;background:var(--surface);
+  transition:background .15s,border-color .15s,color .15s;
+}
+.hero-actions a:hover{background:var(--secondary);border-color:var(--primary)}
+.hero-actions a.is-primary{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground)}
+.hero-actions a.is-primary:hover{background:var(--primary-deep);border-color:var(--primary-deep)}
+.hero-actions .ico{width:15px;height:15px}
+
+/* ============================================================
+   4. Secciones
+   ============================================================ */
+.section{padding-block:var(--section);border-top:1px solid var(--border);scroll-margin-top:104px}
+.sec-head{margin-bottom:clamp(24px,3vw,36px)}
+.sec-head h2{font-family:var(--font-display);font-size:clamp(28px,3.4vw,40px);letter-spacing:-.025em;max-width:26ch}
+.lead{margin-top:12px;color:var(--muted-foreground);font-size:16.5px;line-height:1.6;max-width:66ch}
+.lead strong{color:var(--foreground);font-weight:600}
+
+/* ============================================================
+   5. Mapa de flujo
+   ============================================================ */
+.map{border:1px solid var(--border);border-radius:var(--r-lg);background:var(--surface);overflow:hidden;box-shadow:var(--shadow-1)}
+.lane{display:grid;grid-template-columns:132px minmax(0,1fr);border-top:1px solid var(--border)}
+.lane:first-child{border-top:0}
+.lane-label{
+  padding:18px 16px;border-right:1px solid var(--border);
+  background:color-mix(in srgb,var(--secondary) 38%,var(--surface));
+  display:flex;flex-direction:column;gap:4px;justify-content:center;
+}
+.lane-label b{font-size:13px;font-weight:600;letter-spacing:-.005em}
+.lane-label span{font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted-foreground)}
+.lane-track{display:flex;align-items:stretch;gap:10px;padding:16px;overflow-x:auto;scrollbar-width:thin}
+.node{
+  flex:1 1 0;min-width:138px;padding:12px 13px;
+  border:1px solid var(--border);border-radius:var(--r-md);background:var(--background);
+  display:flex;flex-direction:column;gap:5px;
+}
+.node .n-k{font:600 9.5px/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted-foreground)}
+.node b{font-size:13px;font-weight:600;line-height:1.25;letter-spacing:-.01em}
+.node small{font-size:11px;line-height:1.4;color:var(--muted-foreground)}
+.node.is-local{border-color:color-mix(in srgb,var(--primary) 32%,var(--border));background:color-mix(in srgb,var(--primary) 6%,var(--surface))}
+.node.is-local b{color:var(--primary)}
+.node.is-cloud{background:var(--primary-deep);border-color:var(--primary-deep);color:var(--primary-foreground)}
+.node.is-cloud .n-k,.node.is-cloud small{color:color-mix(in srgb,var(--primary-foreground) 68%,transparent)}
+.node.is-clay{background:var(--clay-soft);border-color:color-mix(in srgb,var(--clay) 34%,var(--clay-soft))}
+.node.is-clay b{color:var(--clay-ink)}
+.node.is-clay .n-k{color:var(--clay-ink)}
+.arrow{align-self:center;flex:none;color:var(--border-strong);font:500 16px/1 var(--font-mono)}
+.map-note{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:14px;font-size:12px;line-height:1.5;color:var(--muted-foreground)}
+.map-note span{display:flex;align-items:flex-start;gap:7px;max-width:46ch}
+.map-note i{width:7px;height:7px;border-radius:50%;background:var(--primary);flex:none;margin-top:5px}
+.map-note span:nth-child(2) i{background:var(--clay)}
+
+/* ============================================================
+   6. Roles
+   ============================================================ */
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-top:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+caption{text-align:left;font-size:12px;color:var(--muted-foreground);padding-bottom:10px}
+th{
+  font:600 10.5px/1.3 var(--font-body);letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted-foreground);text-align:left;padding:12px 14px 10px 0;border-bottom:1px solid var(--border-strong);white-space:nowrap;
+}
+td{padding:13px 14px 13px 0;border-bottom:1px solid var(--border);vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600;white-space:nowrap}
+.role-code{display:inline-block;font:500 11px/1 var(--font-mono);letter-spacing:.03em;color:var(--muted-foreground);margin-left:6px}
+.yes{color:var(--primary);font-weight:600}
+.no{color:var(--danger);font-weight:600}
+.muted{color:var(--muted-foreground)}
+
+/* ============================================================
+   7. Flujos
+   ============================================================ */
+.filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:8px}
+.filters .flabel{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-foreground);margin-right:4px}
+.filter{
+  display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border:1px solid var(--border);
+  border-radius:var(--r-pill);font-size:13px;font-weight:500;color:var(--muted-foreground);
+  background:var(--surface);transition:background .15s,color .15s,border-color .15s;
+}
+.filter:hover{background:var(--secondary);color:var(--foreground)}
+.filter[aria-pressed="true"]{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground)}
+.filter-count{margin-left:auto;font:500 11px/1 var(--font-mono);color:var(--muted-foreground);letter-spacing:.04em;padding:8px 0}
+.flow{border-top:1px solid var(--border);padding-block:clamp(24px,3vw,34px)}
+.flow:last-of-type{border-bottom:1px solid var(--border)}
+.flow-head{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.flow-index{
+  font:500 12px/1 var(--font-mono);letter-spacing:.05em;color:var(--primary);
+  min-width:34px;padding-top:6px;font-variant-numeric:tabular-nums;
+}
+.flow-title{flex:1 1 320px;min-width:0}
+.flow-title h3{font-size:clamp(19px,2vw,23px);font-weight:600;letter-spacing:-.02em;line-height:1.2}
+.flow-title p{margin-top:5px;font-size:13.5px;line-height:1.5;color:var(--muted-foreground);max-width:64ch}
+.flow-tags{display:flex;flex-wrap:wrap;gap:6px;padding-top:4px}
+.tag{
+  display:inline-flex;align-items:center;min-height:24px;padding:0 9px;border-radius:var(--r-pill);
+  border:1px solid var(--border);background:color-mix(in srgb,var(--secondary) 34%,var(--surface));
+  font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted-foreground);white-space:nowrap;
+}
+.tag.green{border-color:color-mix(in srgb,var(--primary) 28%,var(--border));color:var(--primary);background:color-mix(in srgb,var(--primary) 6%,var(--surface))}
+.tag.clay{border-color:color-mix(in srgb,var(--clay) 30%,var(--border));color:var(--clay-ink);background:var(--clay-soft)}
+.tag.code{font-family:var(--font-mono);letter-spacing:.02em;text-transform:none;font-weight:500;color:var(--foreground)}
+.flow-body{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:clamp(24px,4vw,56px);margin-top:20px}
+.flow-demo{grid-column:1/-1;margin-top:6px;padding-top:14px;border-top:1px solid var(--border)}
+.flow-demo a{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-size:13.5px;font-weight:600;color:var(--primary);text-decoration:none}
+.flow-demo a:hover{text-decoration:underline;color:var(--primary-deep)}
+.flow-demo a span{font-weight:400;color:var(--muted)}
+.flow-demo .ico{width:14px;height:14px}
+.flow-col h4{font:600 10.5px/1 var(--font-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted-foreground);margin-bottom:12px}
+.steps{list-style:none;counter-reset:s}
+.step{position:relative;padding:0 0 16px 38px;counter-increment:s;font-size:14px;line-height:1.5}
+.step:last-child{padding-bottom:0}
+.step::before{
+  content:counter(s);position:absolute;left:0;top:-1px;
+  width:24px;height:24px;border-radius:50%;display:grid;place-items:center;
+  border:1px solid var(--border-strong);background:var(--surface);
+  font:600 10.5px/1 var(--font-mono);color:var(--primary);
+}
+.step::after{content:"";position:absolute;left:11.5px;top:25px;bottom:-1px;width:1px;background:var(--border)}
+.step:last-child::after{display:none}
+.step b{font-weight:600}
+.step small{display:block;margin-top:3px;font-size:12px;line-height:1.45;color:var(--muted-foreground)}
+.step code,.branch code{
+  font:500 11.5px/1 var(--font-mono);letter-spacing:.01em;
+  padding:2px 5px;border-radius:5px;background:var(--secondary);color:var(--foreground);
+}
+.branches{list-style:none;border-left:1px solid var(--border);padding-left:16px}
+.branch{padding:0 0 14px;font-size:13px;line-height:1.5;color:var(--muted-foreground)}
+.branch:last-child{padding-bottom:0}
+.branch b{display:block;font-size:12px;font-weight:600;letter-spacing:.02em;color:var(--foreground);margin-bottom:2px}
+.branch.is-error b{color:var(--danger)}
+.branch.is-clay b{color:var(--clay-ink)}
+
+/* ============================================================
+   8. Estados
+   ============================================================ */
+.state-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 40px;border-top:1px solid var(--border)}
+.state{padding:16px 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;align-items:start}
+.state h3{font-size:14px;font-weight:600;letter-spacing:-.005em}
+.state p{grid-column:1/-1;font-size:12.5px;line-height:1.5;color:var(--muted-foreground)}
+.state .tag{grid-row:1;grid-column:2;align-self:start}
+
+/* ============================================================
+   9. Alcance + fuentes
+   ============================================================ */
+.scope{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(28px,5vw,64px)}
+.scope h3{font-size:15px;font-weight:600;letter-spacing:-.01em;padding-bottom:10px;border-bottom:1px solid var(--border-strong)}
+.scope ul{list-style:none;margin-top:4px}
+.scope li{position:relative;padding:10px 0 10px 18px;border-bottom:1px solid var(--border);font-size:13.5px;line-height:1.5}
+.scope li:last-child{border-bottom:0}
+.scope li::before{content:"";position:absolute;left:0;top:17px;width:6px;height:6px;border-radius:50%;background:var(--primary)}
+.scope .out li::before{background:var(--border-strong)}
+.scope .out li{color:var(--muted-foreground)}
+.scope li b{color:var(--foreground);font-weight:600}
+.scope-note{margin-top:22px;font-size:12.5px;line-height:1.55;color:var(--muted-foreground);max-width:74ch;padding-top:14px;border-top:1px solid var(--border)}
+.scope-note b{color:var(--foreground);font-weight:600}
+
+.tensions{margin-top:clamp(36px,5vw,52px);border-top:1px solid var(--border);padding-top:24px}
+.tensions h3{font-size:15px;font-weight:600;margin-bottom:4px}
+.tensions > p{font-size:13px;color:var(--muted-foreground);max-width:70ch}
+.tension{display:grid;grid-template-columns:150px minmax(0,1fr);gap:16px;padding:14px 0;border-bottom:1px solid var(--border);font-size:13.5px;line-height:1.55}
+.tension:last-child{border-bottom:0;padding-bottom:0}
+.tension dt{font:600 10.5px/1.5 var(--font-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--clay-ink)}
+.tension dd{color:var(--muted-foreground);max-width:70ch}
+.tension dd b{color:var(--foreground);font-weight:600}
+
+.sources{margin-top:clamp(36px,5vw,52px)}
+.sources h3{font-size:15px;font-weight:600;padding-bottom:10px;border-bottom:1px solid var(--border-strong)}
+.sources td:first-child{font:500 12px/1.4 var(--font-mono);white-space:nowrap;color:var(--foreground)}
+.sources td:last-child{color:var(--muted-foreground)}
+
+/* ============================================================
+   10. Footer
+   ============================================================ */
+.footer{background:var(--primary-deep);color:var(--primary-foreground);padding-block:clamp(36px,5vw,56px)}
+.footer-inner{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:24px}
+.footer h2{font-family:var(--font-display);font-size:clamp(24px,3vw,34px);letter-spacing:-.025em;line-height:1.1;max-width:20ch}
+.footer p{margin-top:8px;font-size:12.5px;line-height:1.5;color:color-mix(in srgb,var(--primary-foreground) 70%,transparent);max-width:52ch}
+.footer-links{display:flex;flex-wrap:wrap;gap:8px}
+.footer-links a{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:0 14px;border:1px solid color-mix(in srgb,var(--primary-foreground) 22%,transparent);border-radius:var(--r-pill);font-size:13px;font-weight:500;transition:background .15s}
+.footer-links a:hover{background:color-mix(in srgb,var(--primary-foreground) 10%,transparent)}
+.footer-links .ico{width:14px;height:14px}
+.footer-note{margin-top:28px;padding-top:16px;border-top:1px solid color-mix(in srgb,var(--primary-foreground) 16%,transparent);font-size:11px;letter-spacing:.04em;color:color-mix(in srgb,var(--primary-foreground) 62%,transparent);display:flex;flex-wrap:wrap;gap:6px 20px;justify-content:space-between}
+
+/* ============================================================
+   11. Responsive
+   ============================================================ */
+@media (max-width:920px){
+  .flow-body{grid-template-columns:1fr;gap:24px}
+  .branches{border-left:0;padding-left:0;border-top:1px solid var(--border);padding-top:14px}
+  .scope{grid-template-columns:1fr;gap:36px}
+}
+@media (max-width:768px){
+  .lane{grid-template-columns:1fr}
+  .lane-label{border-right:0;border-bottom:1px solid var(--border);flex-direction:row;align-items:baseline;gap:8px;padding:12px 16px}
+  .state-grid{grid-template-columns:1fr;gap:0}
+  .tension{grid-template-columns:1fr;gap:4px}
+}
+@media (max-width:640px){
+  .topbar-inner{display:grid;grid-template-columns:1fr auto;grid-template-areas:"brand version" "nav nav";min-height:0;padding-block:8px;gap:0 12px}
+  .brand{grid-area:brand}
+  .top-version{grid-area:version;align-self:center}
+  .topnav{grid-area:nav;margin-left:-12px;padding-top:2px}
+  .brand-sep,.brand-label{display:none}
+  .flow-index{padding-top:2px}
+  .filters{gap:6px}
+  .filter{padding:0 12px;font-size:12.5px}
+  .filter-count{display:none}
+  .map-note{display:grid;gap:8px}
+  .footer-inner{align-items:flex-start}
+}
+@media (max-width:430px){
+  .flow-tags{padding-top:0}
+  .scope li{font-size:13px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{scroll-behavior:auto!important;transition:none!important}
+}
+/* Accesos del recorrido 01: los tres pasos del prototipo, no decoración. */
+.flow-demo-steps{display:flex;flex-wrap:wrap;gap:4px 22px;margin-top:0;padding-top:0;border-top:0}
+.flow-demo-steps a{font-size:13px;font-weight:500;color:var(--muted-foreground);min-height:44px}
+.flow-demo-steps a:hover{color:var(--primary)}
+.flow-demo-steps a b{font-weight:600;color:var(--primary)}
+@media print{
+  .topbar,.filters,.footer-links,.skip{display:none!important}
+  body{background:#FFFFFF}
+  .flow{break-inside:avoid}
+  .footer{background:#FFFFFF;color:var(--foreground);border-top:1px solid var(--border)}
+  .footer p,.footer-note{color:var(--muted-foreground)}
+}
+</style>
+</head>
+<body>
+
+<a class="skip" href="#main">Saltar al contenido</a>
+
+<svg xmlns="http://www.w3.org/2000/svg" class="sprite" aria-hidden="true">
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2.5 20h19L12 3Z"/><path d="M12 9v5"/><path d="M12 17.5h.01"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="m6 6 12 12"/><path d="m18 6-12 12"/></symbol>
+</svg>
+
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="#top" aria-label="Rodeo, flujos del producto">
+      <svg class="brand-mark" viewBox="0 0 512 512" aria-hidden="true">
+        <rect width="512" height="512" rx="112" fill="#1F4D3A"/>
+        <g transform="translate(-9 0)" fill="none" stroke="#F7F3E9" stroke-width="46" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M186 138V374"/>
+          <path d="M186 161H258A57 57 0 0 1 258 275H186"/>
+          <path d="M255 281C290 305 320 338 344 372"/>
+        </g>
+      </svg>
+      <span class="brand-name">Rodeo</span>
+      <span class="brand-sep" aria-hidden="true"></span>
+      <span class="brand-label">Flujos del producto</span>
+    </a>
+    <nav class="topnav" aria-label="Secciones de flujos">
+      <a href="#mapa">Mapa</a>
+      <a href="#roles">Roles</a>
+      <a href="#flujos" aria-current="page">Flujos</a>
+      <a href="#estados">Estados</a>
+      <a href="#alcance">Alcance</a>
+      <a class="to-spec" href="index.html">Sistema de diseño <svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+    </nav>
+    <span class="top-version">V1 + cierre V2</span>
+  </div>
+</header>
+
+<main id="main">
+<div id="top"></div>
+
+<!-- ======================= PORTADA ======================= -->
+<section class="hero" aria-labelledby="hero-title">
+  <div class="wrap">
+    <p class="eyebrow">Documentación → flujos</p>
+    <h1 id="hero-title">Del corral al panel. <span>Sin llamadas de por medio.</span></h1>
+    <p class="hero-lead">Los recorridos que la app realmente cubre hoy: <strong>captura offline del capataz, conciliación del dueño y sincronización sin pérdida</strong>. Extraídos de <code>spec.md</code>, <code>spec-v2.md</code>, el README y el checklist E2E; no de la propuesta comercial.</p>
+    <div class="hero-actions">
+      <a class="is-primary" href="#flujos">Ver los siete flujos <svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      <a href="index.html">Sistema de diseño</a>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= MAPA ======================= -->
+<section class="section" id="mapa" aria-labelledby="mapa-title">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="mapa-title">La captura no espera a la nube.</h2>
+      <p class="lead">El capataz escribe primero en el dispositivo; la nube es un destino, no un requisito. El dueño solo lee lo que ya sincronizó.</p>
+    </div>
+
+    <div class="map" role="group" aria-label="Mapa de recorrido por rol">
+      <div class="lane">
+        <div class="lane-label"><span>En campo</span><b>Capataz</b></div>
+        <div class="lane-track">
+          <div class="node"><span class="n-k">PWA</span><b>Instala desde la URL</b><small>Sin ayuda, sin tienda</small></div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="node"><span class="n-k">/login</span><b>Entra con su rol</b><small>Vacas, Ordeño, Despacho</small></div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="node is-local"><span class="n-k">Offline</span><b>Ordeño por vaca</b><small>Turno, fecha y litros</small></div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="node is-local"><span class="n-k">Offline</span><b>Despacho del día</b><small>Total que sale de la finca</small></div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="node is-clay"><span class="n-k">Cola local</span><b>Pendientes</b><small>No se borra nada</small></div>
+        </div>
+      </div>
+      <div class="lane">
+        <div class="lane-label"><span>Sistema</span><b>Sync</b></div>
+        <div class="lane-track">
+          <div class="node"><span class="n-k">Evento online</span><b>Sube sola</b><small>Más polling cada 30 s</small></div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="node is-cloud"><span class="n-k">Supabase</span><b>Postgres + RLS</b><small>Un registro por vaca, fecha y turno</small></div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="node"><span class="n-k">Fallo</span><b>Reintento con espera</b><small>“N fallidos” y botón Reintentar</small></div>
+        </div>
+      </div>
+      <div class="lane">
+        <div class="lane-label"><span>Remoto</span><b>Dueño</b></div>
+        <div class="lane-track">
+          <div class="node"><span class="n-k">/login</span><b>Entra como owner</b><small>o admin</small></div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="node"><span class="n-k">/dashboard</span><b>Lee la conciliación</b><small>Ordeñado − despachado</small></div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="node"><span class="n-k">Decisión</span><b>Confía o reclama</b><small>Sin llamar al capataz</small></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="map-note">
+      <span><i aria-hidden="true"></i>El ordeño y el despacho viven en IndexedDB. Se pueden guardar con el teléfono en modo avión.</span>
+      <span><i aria-hidden="true"></i>El panel nunca escribe producción: solo concilia lo sincronizado. La merma se marca en arcilla cuando hay fuga.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= ROLES ======================= -->
+<section class="section" id="roles" aria-labelledby="roles-title">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="roles-title">Cada rol ve solo su parte.</h2>
+      <p class="lead">Tres roles simples. El menú se arma por rol; la ruta se protege aparte, no basta con ocultar la pestaña.</p>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <caption>Permisos según spec.md, spec-v2.md y README.</caption>
+        <thead>
+          <tr><th scope="col">Rol</th><th scope="col">Vacas</th><th scope="col">Ordeño</th><th scope="col">Despacho</th><th scope="col">Panel</th><th scope="col">Crear usuarios</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Capataz <span class="role-code">capataz</span></td>
+            <td class="yes">Sí</td><td class="yes">Sí</td><td class="yes">Sí</td>
+            <td class="no">No</td><td class="no">No</td>
+          </tr>
+          <tr>
+            <td>Dueño <span class="role-code">owner</span></td>
+            <td class="yes">Sí</td><td class="yes">Sí</td><td class="yes">Sí</td>
+            <td class="yes">Sí</td><td class="no">No</td>
+          </tr>
+          <tr>
+            <td>Administrador <span class="role-code">admin</span></td>
+            <td class="yes">Sí</td><td class="yes">Sí</td><td class="yes">Sí</td>
+            <td class="yes">Sí</td><td class="yes">Sí</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="scope-note">Si un capataz abre <code>/dashboard</code>, se le redirige a <code>/cows</code> con el aviso “El panel es solo para el dueño.” Tampoco puede entrar a <code>/register</code>, aunque escriba la URL.</p>
+  </div>
+</section>
+
+<!-- ======================= FLUJOS ======================= -->
+<section class="section" id="flujos" aria-labelledby="flujos-title">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="flujos-title">Siete recorridos, con sus salidas de emergencia.</h2>
+      <p class="lead">Cada flujo trae el camino feliz y los desvíos que la documentación exige probar. Filtra por rol para leer solo lo que te toca.</p>
+    </div>
+
+    <div class="filters" role="group" aria-label="Filtrar flujos por rol">
+      <span class="flabel">Ver</span>
+      <button type="button" class="filter" data-filter="all" aria-pressed="true">Todos</button>
+      <button type="button" class="filter" data-filter="capataz" aria-pressed="false">Capataz</button>
+      <button type="button" class="filter" data-filter="dueno" aria-pressed="false">Dueño</button>
+      <button type="button" class="filter" data-filter="admin" aria-pressed="false">Admin</button>
+      <button type="button" class="filter" data-filter="sistema" aria-pressed="false">Sistema</button>
+      <span class="filter-count" id="filterCount" aria-live="polite">7 de 7 flujos</span>
+    </div>
+
+    <!-- 01 -->
+    <article class="flow" data-roles="dueno admin capataz">
+      <div class="flow-head">
+        <span class="flow-index">01</span>
+        <div class="flow-title">
+          <h3>Instalación, primer admin y login</h3>
+          <p>Una URL fija por HTTPS reemplaza el túnel temporal. El primer admin se crea desde la app con un token; no se toca la consola de Supabase.</p>
+        </div>
+        <div class="flow-tags"><span class="tag green">Dueño</span><span class="tag">PWA</span><span class="tag code">/setup</span></div>
+      </div>
+      <div class="flow-body">
+        <div class="flow-col">
+          <h4>Camino esperado</h4>
+          <ol class="steps">
+            <li class="step"><b>El dueño abre la URL fija.</b><small>HTTPS, manifest e iconos responden. La app muestra Rodeo, no un scaffold.</small></li>
+            <li class="step"><b>Entra a <code>/setup?token=&lt;SETUP_TOKEN&gt;</code>.</b><small>Solo en una instalación nueva: crea la cuenta del primer administrador.</small></li>
+            <li class="step"><b>El capataz abre la misma URL en su celular.</b><small>Instala la PWA desde el navegador, sin ayuda ni tienda de apps.</small></li>
+            <li class="step"><b>Cada uno inicia sesión con su cuenta.</b><small>El rol viaja con la sesión y define el menú.</small></li>
+            <li class="step"><b>La app instalada abre sin señal.</b><small>Las pantallas ya visitadas cargan; no aparece una pantalla rota de “sin conexión”.</small></li>
+          </ol>
+        </div>
+        <div class="flow-col">
+          <h4>Desvíos</h4>
+          <ul class="branches">
+            <li class="branch is-error"><b>Token inválido</b>“Este link no es válido.” No se crea nada.</li>
+            <li class="branch"><b>Ya existe un admin</b>“Configuración completa”. El link se autodeshabilita.</li>
+            <li class="branch"><b>Celular viejo</b>La app sigue usable: contraste alto y controles ≥44 px.</li>
+            <li class="branch is-clay"><b>Primer deploy</b>La PWA puede pedir una recarga online para tomar el <code>sw.js</code> nuevo.</li>
+          </ul>
+        </div>
+        <p class="flow-demo">
+          <a href="instalacion.html">
+            <span>Prototipo del flujo:</span> Instalación, primer admin y login
+            <svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg>
+          </a>
+        </p>
+        <p class="flow-demo flow-demo-steps">
+          <a href="instalacion.html"><b>01</b> Instalar la PWA</a>
+          <a href="setup.html?token=RODEO-2026"><b>02</b> Crear el primer admin</a>
+          <a href="login.html"><b>03</b> Entrar con tu cuenta</a>
+        </p>
+      </div>
+    </article>
+
+    <!-- 02 -->
+    <article class="flow" data-roles="admin capataz">
+      <div class="flow-head">
+        <span class="flow-index">02</span>
+        <div class="flow-title">
+          <h3>Alta de usuarios y control de acceso</h3>
+          <p>El admin crea al capataz desde la app. El rol se respeta al navegar, al recargar y al volver a entrar.</p>
+        </div>
+        <div class="flow-tags"><span class="tag green">Admin</span><span class="tag">Capataz</span><span class="tag code">/register</span></div>
+      </div>
+      <div class="flow-body">
+        <div class="flow-col">
+          <h4>Camino esperado</h4>
+          <ol class="steps">
+            <li class="step"><b>El admin entra a <code>/register</code>.</b><small>Crea la cuenta del capataz con email y rol.</small></li>
+            <li class="step"><b>El capataz inicia sesión.</b><small>Ve Vacas, Ordeño y Despacho. No ve el Panel.</small></li>
+            <li class="step"><b>Trabaja el turno y cierra sesión.</b><small>Al volver a entrar, su rol sigue siendo capataz.</small></li>
+            <li class="step"><b>El dueño o admin entra al Panel.</b><small>La conciliación queda restringida a quien toma la decisión.</small></li>
+          </ol>
+        </div>
+        <div class="flow-col">
+          <h4>Desvíos</h4>
+          <ul class="branches">
+            <li class="branch is-error"><b>Capataz escribe /dashboard</b>Redirección a <code>/cows</code> con aviso claro: el panel es del dueño.</li>
+            <li class="branch is-error"><b>Capataz escribe /register</b>Sin permiso: no puede crear usuarios.</li>
+            <li class="branch"><b>Sin sesión</b>El middleware manda a <code>/login</code>.</li>
+          </ul>
+        </div>
+        <p class="flow-demo">
+          <a href="usuarios.html">
+            <span>Prototipo del flujo:</span> Alta de usuarios y control de acceso
+            <svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg>
+          </a>
+        </p>
+        <p class="flow-demo flow-demo-steps">
+          <a href="usuarios.html"><b>01</b> Administrar cuentas</a>
+          <a href="permisos.html"><b>02</b> Revisar roles y rutas</a>
+          <a href="usuarios.html?sinpermiso=1"><b>03</b> Ver el bloqueo del capataz</a>
+        </p>
+      </div>
+    </article>
+
+    <!-- 03 -->
+    <article class="flow" data-roles="capataz">
+      <div class="flow-head">
+        <span class="flow-index">03</span>
+        <div class="flow-title">
+          <h3>Vacas: alta, edición y baja lógica</h3>
+          <p>El catálogo alimenta la planilla de ordeño. Desactivar no borra el historial: solo saca a la vaca de la jornada.</p>
+        </div>
+        <div class="flow-tags"><span class="tag green">Capataz</span><span class="tag">Offline</span><span class="tag code">/cows</span></div>
+      </div>
+      <div class="flow-body">
+        <div class="flow-col">
+          <h4>Camino esperado</h4>
+          <ol class="steps">
+            <li class="step"><b>Abre <code>/cows</code>.</b><small>Lista en móvil, tabla desde 768 px. Orden numérico real: 1, 2, …, 10, 11.</small></li>
+            <li class="step"><b>Toca “Nueva vaca”.</b><small>Código único y nombre. El código manda en la planilla.</small></li>
+            <li class="step"><b>Edita una vaca existente.</b><small>El cambio se guarda local y sube al reconectar, sin duplicar.</small></li>
+            <li class="step"><b>Desactiva una vaca que salió de producción.</b><small>Desaparece de <code>/milking</code>; sus registros anteriores quedan.</small></li>
+          </ol>
+        </div>
+        <div class="flow-col">
+          <h4>Desvíos</h4>
+          <ul class="branches">
+            <li class="branch is-error"><b>Código duplicado</b>Rechazo con aviso; no se guarda.</li>
+            <li class="branch is-error"><b>Código o nombre en blanco</b>Solo espacios no cuenta: queda vacío y no guarda.</li>
+            <li class="branch"><b>Sin vacas</b>Estado vacío “Todavía no hay vacas”, no una tabla rota.</li>
+            <li class="branch is-clay"><b>Sin conexión</b>Se crea local con <code>syncedAt = null</code>; la cola lo sube después.</li>
+          </ul>
+        </div>
+        <p class="flow-demo">
+          <a href="vacas.html">
+            <span>Prototipo del flujo:</span> Catálogo de vacas
+            <svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg>
+          </a>
+        </p>
+        <p class="flow-demo flow-demo-steps">
+          <a href="vacas.html"><b>01</b> Gestionar el catálogo</a>
+          <a href="vacas.html?offline=1"><b>02</b> Alta sin señal</a>
+          <a href="vacas.html?vacio=1"><b>03</b> Estado vacío</a>
+        </p>
+      </div>
+    </article>
+
+    <!-- 04 -->
+    <article class="flow" data-roles="capataz">
+      <div class="flow-head">
+        <span class="flow-index">04</span>
+        <div class="flow-title">
+          <h3>Ordeño offline, una mano y 40 vacas</h3>
+          <p>El flujo central. De pie, con sol y sin señal: una columna, input grande, guardado local inmediato. Meta: menos de 2 minutos por planilla.</p>
+        </div>
+        <div class="flow-tags"><span class="tag green">Capataz</span><span class="tag">Offline</span><span class="tag code">/milking</span></div>
+      </div>
+      <div class="flow-body">
+        <div class="flow-col">
+          <h4>Camino esperado</h4>
+          <ol class="steps">
+            <li class="step"><b>Elige turno y fecha.</b><small>Mañana o Tarde; hoy por defecto. La fecha también se puede corregir.</small></li>
+            <li class="step"><b>Ve solo las vacas activas.</b><small>Código y nombre. Si ya hay litros guardados, aparece “Ya: X L”.</small></li>
+            <li class="step"><b>Teclea litros por vaca.</b><small>Decimal con coma (<code>12,5</code>); teclado numérico y campo de 64 px de alto.</small></li>
+            <li class="step"><b>Lee la barra fija.</b><small>Cuenta vacas y litros pendientes antes de guardar.</small></li>
+            <li class="step"><b>Pulsa “Guardar ordeño”.</b><small>Escribe en IndexedDB en menos de 2 s con fecha, turno y usuario. Toast visible.</small></li>
+          </ol>
+        </div>
+        <div class="flow-col">
+          <h4>Desvíos</h4>
+          <ul class="branches">
+            <li class="branch"><b>Vuelve al mismo turno del día</b>Los litros nuevos se suman, no sobrescriben. Un registro por vaca, fecha y turno.</li>
+            <li class="branch is-error"><b>Valor inválido</b>Menor a 0, mayor a 100 L (por vaca o acumulado), texto o vacío: error inline y CTA deshabilitado.</li>
+            <li class="branch"><b>Sin vacas activas</b>“No hay vacas activas”; no se muestra una planilla vacía.</li>
+            <li class="branch is-clay"><b>Se corta la señal al guardar</b>El registro queda local y sube al reconectar.</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <!-- 05 -->
+    <article class="flow" data-roles="capataz dueno">
+      <div class="flow-head">
+        <span class="flow-index">05</span>
+        <div class="flow-title">
+          <h3>Despacho: lo que sale de la finca</h3>
+          <p>Puede cargarlo el capataz o el dueño. Es la otra mitad de la resta: sin despacho no hay merma que calcular.</p>
+        </div>
+        <div class="flow-tags"><span class="tag green">Capataz</span><span class="tag">Dueño</span><span class="tag code">/dispatch</span></div>
+      </div>
+      <div class="flow-body">
+        <div class="flow-col">
+          <h4>Camino esperado</h4>
+          <ol class="steps">
+            <li class="step"><b>Entra a “Registrar despacho”.</b><small>Disponible en cualquier momento del día.</small></li>
+            <li class="step"><b>Completa fecha y litros totales.</b><small>Turno opcional: Mañana, Tarde o “Sin turno”.</small></li>
+            <li class="step"><b>Guarda.</b><small>Online u offline; toast de confirmación y resumen del día.</small></li>
+            <li class="step"><b>Cierra la PWA y la reabre sin señal.</b><small>La pantalla carga y permite guardar otro despacho.</small></li>
+          </ol>
+        </div>
+        <div class="flow-col">
+          <h4>Desvíos</h4>
+          <ul class="branches">
+            <li class="branch is-error"><b>Litros 0, negativos o texto</b>Bloqueado; no hay despacho vacío.</li>
+            <li class="branch"><b>Fecha sin registros</b>Estado vacío “Sin despachos”.</li>
+            <li class="branch is-clay"><b>Despacho sin ordeños ese día</b>Se permite guardar; el panel lo muestra como merma del 100 % en rojo.</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <!-- 06 -->
+    <article class="flow" data-roles="sistema capataz">
+      <div class="flow-head">
+        <span class="flow-index">06</span>
+        <div class="flow-title">
+          <h3>Sincronización: subir sin perder nada</h3>
+          <p>La cola vive en IndexedDB. Un fallo de red no borra el dato: lo deja pendiente, lo reintenta y avisa cuántos quedan.</p>
+        </div>
+        <div class="flow-tags"><span class="tag green">Sistema</span><span class="tag">Offline-first</span><span class="tag code">header</span></div>
+      </div>
+      <div class="flow-body">
+        <div class="flow-col">
+          <h4>Camino esperado</h4>
+          <ol class="steps">
+            <li class="step"><b>Carga ordeños y despachos sin señal.</b><small>El header muestra “N pendientes”; en móvil, un punto arcilla.</small></li>
+            <li class="step"><b>Vuelve la conexión.</b><small>Evento <code>online</code> más polling cada 30 s. Sube en lote, sin intervención.</small></li>
+            <li class="step"><b>La cola queda vacía.</b><small><code>synced_at</code> queda seteado en Supabase.</small></li>
+            <li class="step"><b>Edita una vaca offline.</b><small>Al volver online el cambio llega sin duplicar filas.</small></li>
+          </ol>
+        </div>
+        <div class="flow-col">
+          <h4>Desvíos</h4>
+          <ul class="branches">
+            <li class="branch is-error"><b>Subida fallida</b>Se reintenta con espera; el registro no se borra local; queda “1 pendiente”.</li>
+            <li class="branch is-error"><b>Se agotan los reintentos</b>Header “N fallidos”, botón “Reintentar” y contador rojo. Al liberar la red, sube.</li>
+            <li class="branch"><b>Offline/online a medio cargar</b>La página no se recarga ni pierde lo tipeado: la sync corre en segundo plano.</li>
+            <li class="branch is-clay"><b>Sin señal 4+ días</b>Datos viejos con “Última sync: hace X días”; se actualiza al volver.</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <!-- 07 -->
+    <article class="flow" data-roles="dueno admin">
+      <div class="flow-head">
+        <span class="flow-index">07</span>
+        <div class="flow-title">
+          <h3>Panel del dueño: ordeñado menos despachado</h3>
+          <p>La pantalla que reemplaza la llamada al capataz. Tres cifras del día, treinta días de tendencia y una advertencia cuando la merma se sale de rango.</p>
+        </div>
+        <div class="flow-tags"><span class="tag green">Dueño</span><span class="tag">Solo lectura</span><span class="tag code">/dashboard</span></div>
+      </div>
+      <div class="flow-body">
+        <div class="flow-col">
+          <h4>Camino esperado</h4>
+          <ol class="steps">
+            <li class="step"><b>Abre el Panel.</b><small>Solo <code>owner</code> y <code>admin</code>. Si no hay permiso, no se renderiza.</small></li>
+            <li class="step"><b>Lee las tres tarjetas del día.</b><small>Ordeñado hoy, Despachado hoy y Merma hoy en litros y porcentaje.</small></li>
+            <li class="step"><b>Revisa la tendencia.</b><small>Línea de 30 días con la diferencia y referencia en 0; barras por turno con leyenda.</small></li>
+            <li class="step"><b>Mira el badge “Última sync”.</b><small>“Hace X”; en arcilla si pasó más de 24 h.</small></li>
+            <li class="step"><b>Decide sin llamar a nadie.</b><small>Si la merma es normal, no hay alarma permanente: es un dato.</small></li>
+          </ol>
+        </div>
+        <div class="flow-col">
+          <h4>Desvíos</h4>
+          <ul class="branches">
+            <li class="branch"><b>Ordeñó 100 y despachó 90</b>10 L · 10 % con el caption “Leche sin despachar”.</li>
+            <li class="branch is-clay"><b>Despacho sin ordeño</b>100 % en rojo. Es el caso que más rápido revela una fuga.</li>
+            <li class="branch is-error"><b>Despacho mayor al ordeñado</b>Rojo y “Salida mayor al ordeñe”.</li>
+            <li class="branch"><b>Sin conexión</b>Datos de la última lectura o error controlado, sin romper la navegación.</li>
+            <li class="branch"><b>Pasadas las 21:00</b>El panel debe seguir mostrando el día de hoy, no el siguiente.</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ======================= ESTADOS ======================= -->
+<section class="section" id="estados" aria-labelledby="estados-title">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="estados-title">Los bordes son parte del flujo.</h2>
+      <p class="lead">Diez estados que la app tiene que resolver sin pantallas rotas. El color nunca va solo: siempre lleva texto o signo.</p>
+    </div>
+
+    <div class="state-grid">
+      <article class="state">
+        <h3>Sin conexión</h3><span class="tag">Sistema</span>
+        <p>Banner de una línea, no pantalla de error. Las rutas visitadas ya están cacheadas y la captura sigue disponible.</p>
+      </article>
+      <article class="state">
+        <h3>Pendientes</h3><span class="tag green">Sync</span>
+        <p>“N pendientes” en el header. Al volver la señal sube solo; el número baja hasta cero.</p>
+      </article>
+      <article class="state">
+        <h3>Subida fallida</h3><span class="tag clay">Arcilla</span>
+        <p>Reintento con espera, dato intacto en local. Tras agotar intentos: “N fallidos”, contador rojo y “Reintentar”.</p>
+      </article>
+      <article class="state">
+        <h3>Sin permiso</h3><span class="tag">Rol</span>
+        <p>Redirección con aviso, no un 404. El capataz entiende por qué no ve el Panel.</p>
+      </article>
+      <article class="state">
+        <h3>Sin vacas</h3><span class="tag">Vacío</span>
+        <p>“Todavía no hay vacas” en el catálogo y “No hay vacas activas” en la planilla, con salida para crear o reactivar.</p>
+      </article>
+      <article class="state">
+        <h3>Sin despachos</h3><span class="tag">Vacío</span>
+        <p>La fecha elegida no tiene salidas. No se inventa un cero: se dice “Sin despachos”.</p>
+      </article>
+      <article class="state">
+        <h3>Valor inválido</h3><span class="tag">Error</span>
+        <p>Error inline con <code>aria-invalid</code> y <code>aria-describedby</code>; el CTA de guardar queda deshabilitado.</p>
+      </article>
+      <article class="state">
+        <h3>Merma del 100 %</h3><span class="tag clay">Arcilla</span>
+        <p>Hay despacho y no hay ordeño. Rojo, con signo y texto; nunca solo color.</p>
+      </article>
+      <article class="state">
+        <h3>Sobre-despacho</h3><span class="tag clay">Arcilla</span>
+        <p>Salida mayor al ordeñe. La diferencia aparece negativa y el caption lo explica.</p>
+      </article>
+      <article class="state">
+        <h3>Datos viejos</h3><span class="tag">Sync</span>
+        <p>Más de 24 h sin sincronizar: badge en arcilla. El panel sigue navegable con la última lectura.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= ALCANCE ======================= -->
+<section class="section" id="alcance" aria-labelledby="alcance-title">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="alcance-title">Lo que la app promete hoy.</h2>
+      <p class="lead">La V2 no agrega funciones de negocio: cierra la V1 y la pone en producción. Estos son los límites que los flujos respetan.</p>
+    </div>
+
+    <div class="scope">
+      <div>
+        <h3>Entra en V1 + cierre V2</h3>
+        <ul>
+          <li><b>Planilla de ordeño offline</b> por vaca y turno, con acumulación.</li>
+          <li><b>Despacho</b> de litros totales, con o sin turno.</li>
+          <li><b>Panel de conciliación</b> con merma diaria y tendencia de 30 días.</li>
+          <li><b>CRUD de vacas activas</b> con baja lógica.</li>
+          <li><b>Roles simples</b> y creación del primer admin desde la app.</li>
+          <li><b>Sync con reintentos</b>, cola local y aviso de pendientes.</li>
+          <li><b>PWA instalable</b> que abre sin señal.</li>
+        </ul>
+      </div>
+      <div class="out">
+        <h3>Fuera de alcance (V3)</h3>
+        <ul>
+          <li>Inventario completo, ficha del animal, razas, pesos y genealogía.</li>
+          <li>Sanidad: vacunas, tratamientos, calendario y alertas.</li>
+          <li>Reproducción: montas, partos, gestación, secado y destete.</li>
+          <li>Multi-finca y roles extra (veterinario, solo lectura).</li>
+          <li>Exportación PDF/Excel y notificaciones push o email.</li>
+          <li>App nativa en tiendas e integración con balanzas o medidores de tanque.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="scope-note"><b>Ojo con la propuesta comercial:</b> describe un MVP con ficha animal, plan sanitario, alertas y reportes PDF. Ese documento no coincide con <code>spec.md</code> ni <code>spec-v2.md</code>: esos módulos están explícitamente fuera de alcance. Los flujos de esta página son los del producto construido, no los de la propuesta.</p>
+
+    <div class="tensions">
+      <h3>Tensiones detectadas en la documentación</h3>
+      <p>Tres puntos que conviene cerrar antes de la próxima iteración. No cambian los flujos, pero sí su comportamiento fino.</p>
+      <dl>
+        <div class="tension">
+          <dt>Zona horaria</dt>
+          <dd>El checklist pide que el panel siga mostrando “hoy” después de las <b>21:00 hora Argentina</b>, pero el producto es de Carabobo, Venezuela. Definir una zona única y aplicarla en fechas, turnos y badge de sync.</dd>
+        </div>
+        <div class="tension">
+          <dt>Formato de cifras</dt>
+          <dd>El README declara <b>es-AR</b>; la interfaz ya usa <b>es-VE</b>. Ambos usan coma decimal, pero cambian el separador de miles. Dejar es-VE como fuente de verdad.</dd>
+        </div>
+        <div class="tension">
+          <dt>Roles</dt>
+          <dd><code>spec.md</code> excluye “roles complejos”, mientras la V2 ya tiene <b>admin, owner y capataz</b> con RLS. La exclusión sigue siendo válida: son tres roles fijos, no un motor de permisos.</dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="sources">
+      <h3>Fuentes</h3>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th scope="col">Archivo</th><th scope="col">Qué aportó</th></tr></thead>
+          <tbody>
+            <tr><td>spec.md</td><td>Flujos V1 de ordeño, despacho y panel; validaciones y errores.</td></tr>
+            <tr><td>spec-v2.md</td><td>Instalación, roles, primer admin, sync con reintentos y rediseño.</td></tr>
+            <tr><td>README.md</td><td>Rutas reales, acumulación de litros, stack y funcionamiento de la cola.</td></tr>
+            <tr><td>docs/verificacion-manual-v1.md</td><td>Caminos E2E, estados vacíos, sobre-despacho y criterios de aceptación.</td></tr>
+            <tr><td>DESIGN.md</td><td>Reglas de interfaz: una columna de ordeño, targets, arcilla para merma.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-inner">
+      <div>
+        <h2>Trazabilidad antes que vigilancia.</h2>
+        <p>El capataz registra; el dueño concilia. La app no reemplaza el criterio de nadie, solo evita que el dato se pierda en el camino.</p>
+      </div>
+      <div class="footer-links">
+        <a href="index.html">Sistema de diseño <svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a href="#mapa">Volver al mapa</a>
+      </div>
+    </div>
+    <div class="footer-note">
+      <span>Rodeo · Flujos del producto · Octubre 2026</span>
+      <span>V1 completa · cierre V2 en curso</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var filters = Array.prototype.slice.call(document.querySelectorAll('.filter'));
+  var flows = Array.prototype.slice.call(document.querySelectorAll('.flow'));
+  var count = document.getElementById('filterCount');
+
+  function apply(filter) {
+    var visible = 0;
+    flows.forEach(function (flow) {
+      var roles = (flow.getAttribute('data-roles') || '').split(/\s+/);
+      var show = filter === 'all' || roles.indexOf(filter) !== -1;
+      flow.hidden = !show;
+      if (show) visible++;
+    });
+    filters.forEach(function (btn) {
+      btn.setAttribute('aria-pressed', String(btn.getAttribute('data-filter') === filter));
+    });
+    if (count) count.textContent = visible + ' de ' + flows.length + ' flujos';
+  }
+
+  filters.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      apply(btn.getAttribute('data-filter') || 'all');
+    });
+  });
+
+  apply('all');
+})();
+</script>
+</body>
+</html>
