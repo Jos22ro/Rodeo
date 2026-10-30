@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#FAF7F0" />
+<title>Ordeño · Rodeo</title>
+<meta name="description" content="Planilla de ordeño de Rodeo: una columna, litros por vaca y guardado local sin señal." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root{
+  color-scheme:light;
+  --background:#FAF7F0;
+  --card:#FFFFFF;
+  --secondary:#EFE9DA;
+  --foreground:#23211C;
+  --muted:#6B675C;
+  --border:#E3DCCC;
+  --primary:#1F4D3A;
+  --primary-deep:#17392B;
+  --primary-foreground:#F7F3E9;
+  --clay:#B5622F;
+  --clay-soft:#F3E2D5;
+  --clay-ink:#8F4A20;
+  --danger:#B4341F;
+  --ring:#2E6B4E;
+  --font-display:'Fraunces',Georgia,'Times New Roman',serif;
+  --font-body:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --font-mono:ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;
+  --r-sm:8px;
+  --r-md:12px;
+  --r-lg:16px;
+  --shadow-card:0 1px 2px rgba(35,33,28,.06);
+  --shadow-sheet:0 18px 40px -24px rgba(23,57,43,.35);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;min-height:100dvh;padding-bottom:104px;
+  background:var(--background);color:var(--foreground);
+  font:400 16px/1.55 var(--font-body);
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,p,ul,ol{margin:0}
+ul,ol{padding:0;list-style:none}
+button{font:inherit}
+svg{display:block}
+a{color:var(--primary);text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{color:var(--primary-deep)}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--ring) 60%,transparent);outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+[hidden]{display:none !important}
+.skip{position:absolute;left:12px;top:-52px;z-index:99;display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:8px;background:var(--primary);color:var(--primary-foreground);text-decoration:none;font-size:14px}
+.skip:focus{top:12px}
+
+/* barra de la app */
+.appbar{position:sticky;top:0;z-index:40;background:var(--background);border-bottom:1px solid var(--border)}
+.appbar-inner{max-width:1024px;margin:0 auto;padding:10px 20px 0;display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px}
+.brand{display:flex;align-items:center;gap:9px;min-height:44px;text-decoration:none;color:var(--foreground)}
+.brand .mark{width:30px;height:30px;border-radius:8px;flex:none}
+.brand .word{font:500 19px/1 var(--font-display);letter-spacing:-.015em}
+.brand .kicker{font:600 11px/1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding-left:10px;border-left:1px solid var(--border);white-space:nowrap}
+.brand:hover .word{color:var(--primary-deep)}
+.appnav{display:flex;gap:2px;order:3;width:100%;margin:0 -20px;padding:0 20px;border-top:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.appnav::-webkit-scrollbar{display:none}
+.appnav a{position:relative;display:inline-flex;align-items:center;min-height:44px;padding:0 10px;border-radius:8px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;white-space:nowrap}
+.appnav a:hover{background:var(--secondary);color:var(--foreground)}
+.appnav a[aria-current="page"]{color:var(--primary)}
+.appnav a[aria-current="page"]::after{content:"";position:absolute;left:10px;right:10px;bottom:0;height:2px;background:var(--primary)}
+.appbar-end{display:flex;align-items:center;gap:8px;margin-left:auto}
+@media (min-width:900px){
+  .appbar-inner{padding:0 20px;min-height:64px;flex-wrap:nowrap}
+  .appnav{order:0;width:auto;margin:0;padding:0;border-top:0;margin-left:6px}
+}
+@media (max-width:519px){
+  .brand .kicker{display:none}
+  .appnav a{padding:0 8px}
+}
+
+/* sync */
+.sync{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-width:44px;min-height:44px;padding:0 10px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--muted);font:500 12px/1 var(--font-body);cursor:pointer;white-space:nowrap}
+.sync:hover{background:var(--secondary);color:var(--foreground)}
+.sync i{width:6px;height:6px;border-radius:50%;background:var(--primary);flex:none}
+.sync.has-pending,.sync.is-off{color:var(--clay-ink)}
+.sync.has-pending i,.sync.is-off i{background:var(--clay)}
+
+/* cuenta */
+.account{position:relative}
+.account summary{list-style:none;display:flex;align-items:center;gap:9px;min-width:44px;min-height:44px;padding:0 4px;border-radius:8px;cursor:pointer}
+.account summary::-webkit-details-marker{display:none}
+.account summary:hover{background:var(--secondary)}
+.avatar{width:32px;height:32px;flex:none;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--primary) 10%,var(--card));color:var(--primary);font:600 11px/1 var(--font-body);letter-spacing:.03em}
+.account .who{display:none}
+.account .chev{width:14px;height:14px;color:var(--muted);display:none}
+@media (min-width:640px){
+  .account .who{display:block;font-size:13px;line-height:1.25;font-weight:500}
+  .account .who small{display:block;font-size:11px;font-weight:400;color:var(--muted)}
+  .account .chev{display:block}
+}
+.account-menu{position:absolute;right:0;top:calc(100% + 8px);width:236px;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-sheet);padding:6px;z-index:60}
+.account-menu a{display:flex;align-items:center;gap:9px;min-height:44px;padding:0 10px;border-radius:8px;font-size:14px;color:var(--foreground);text-decoration:none}
+.account-menu a:hover{background:var(--secondary);color:var(--foreground)}
+.account-menu svg{width:16px;height:16px;color:var(--muted)}
+.account-menu .sep{height:1px;background:var(--border);margin:4px 6px}
+
+/* aviso */
+.offline{display:flex;align-items:center;justify-content:center;gap:9px;padding:9px 20px;background:var(--secondary);border-bottom:1px solid var(--border);font-size:14px;line-height:1.4}
+.offline svg{width:16px;height:16px;flex:none;color:var(--clay-ink)}
+.offline b{font-weight:600}
+@media (max-width:519px){.offline{justify-content:flex-start;padding:9px 16px}}
+
+/* página */
+.page{max-width:1024px;margin:0 auto;padding:clamp(22px,4vw,36px) 20px 32px}
+.milk-wrap{max-width:720px;margin:0 auto}
+.page-head{display:flex;flex-direction:column;gap:22px;padding-bottom:22px}
+.eyebrow{display:flex;align-items:center;gap:9px;font:600 11px/1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.eyebrow::before{content:"";width:16px;height:1px;background:var(--border);flex:none}
+h1{margin-top:11px;font:500 clamp(30px,4.4vw,40px)/1.08 var(--font-display);letter-spacing:-.028em}
+.lead{margin-top:10px;max-width:52ch;font-size:15.5px;line-height:1.6;color:var(--muted)}
+.controls{display:flex;flex-direction:column;gap:12px;width:100%}
+@media (min-width:720px){
+  .page-head{flex-direction:row;align-items:flex-end;justify-content:space-between;gap:32px}
+  .controls{width:auto;flex-direction:row;align-items:flex-end;gap:12px}
+}
+.field-min{display:flex;flex-direction:column;gap:6px}
+.field-min label{font:600 11px/1 var(--font-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.segmented{display:flex;gap:2px;padding:2px;background:var(--secondary);border-radius:10px}
+.segmented button{min-height:44px;padding:0 16px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-size:14px;font-weight:500;white-space:nowrap;cursor:pointer;transition:background 120ms ease,color 120ms ease}
+.segmented button:hover{color:var(--foreground)}
+.segmented button[aria-pressed="true"]{background:var(--card);color:var(--foreground);box-shadow:var(--shadow-card)}
+.date-input{height:48px;padding:0 12px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--foreground);font:500 14px/1 var(--font-body);min-width:170px}
+.date-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--ring) 22%,transparent)}
+
+/* franja de turno */
+.strip{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 0;padding:14px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:18px}
+.strip p{display:flex;flex-direction:column;gap:3px;flex:1 1 33%;min-width:110px;padding-right:14px}
+.strip p + p{padding-left:14px;border-left:1px solid var(--border)}
+.strip span{font:600 10.5px/1 var(--font-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.strip b{font:600 17px/1.2 var(--font-body);letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.strip .clay b{color:var(--clay-ink)}
+
+/* planilla */
+.plan{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow-card);overflow:hidden}
+.plan-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 16px;padding:16px 18px;border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--secondary) 34%,var(--card))}
+.plan-head p{display:flex;flex-direction:column;gap:3px;min-width:0}
+.plan-head b{font:600 14px/1.3 var(--font-body);letter-spacing:-.005em}
+.plan-head small{font-size:12px;line-height:1.4;color:var(--muted)}
+.plan-count{font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.plan-count b{font-size:14px;color:var(--foreground)}
+
+.cow-row{display:grid;grid-template-columns:34px minmax(0,1fr) 132px;align-items:center;gap:4px 12px;padding:10px 16px;border-top:1px solid var(--border)}
+.cow-row:first-child{border-top:0}
+.cow-row:focus-within{background:color-mix(in srgb,var(--secondary) 28%,var(--card))}
+.cow-code{font:500 15px/1.2 var(--font-mono);letter-spacing:.03em;color:var(--primary);font-variant-numeric:tabular-nums}
+.cow-main{min-width:0;display:flex;flex-direction:column;gap:2px}
+.cow-main b{font-size:15px;font-weight:500;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cow-already{font-size:12px;line-height:1.3;color:var(--muted);font-variant-numeric:tabular-nums}
+.cow-already.is-saved{color:var(--primary);font-weight:500}
+.liters{position:relative;width:132px}
+.liters input{width:100%;height:64px;padding:0 30px 0 12px;border:1px solid var(--border);border-radius:12px;background:var(--card);color:var(--foreground);font:600 22px/1 var(--font-body);text-align:right;font-variant-numeric:tabular-nums;appearance:none;transition:border-color 120ms ease,box-shadow 120ms ease}
+.liters input::placeholder{font-size:15px;font-weight:400;color:color-mix(in srgb,var(--muted) 80%,transparent)}
+.liters input:hover{border-color:color-mix(in srgb,var(--muted) 38%,var(--border))}
+.liters input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--ring) 22%,transparent)}
+.liters input[aria-invalid="true"]{border-color:var(--danger);background:color-mix(in srgb,var(--danger) 3%,var(--card))}
+.liters .unit{position:absolute;right:11px;top:50%;transform:translateY(-50%);font-size:13px;font-weight:500;color:var(--muted);pointer-events:none}
+.row-err{grid-column:2/-1;display:flex;gap:6px;margin-top:1px;font-size:12px;line-height:1.4;color:var(--danger)}
+.row-err svg{width:13px;height:13px;flex:none;margin-top:1px}
+.cow-row.has-error{padding-bottom:8px}
+@media (max-width:419px){
+  .cow-row{grid-template-columns:28px minmax(0,1fr) 112px;padding:10px 12px;gap:4px 9px}
+  .liters,.liters input{width:112px}
+  .liters input{font-size:20px;padding-right:26px}
+}
+
+/* vacío */
+.empty{padding:52px 24px;text-align:center}
+.empty-icon{width:48px;height:48px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;background:var(--secondary);color:var(--muted)}
+.empty-icon svg{width:21px;height:21px}
+.empty h2{font:500 22px/1.2 var(--font-display);letter-spacing:-.02em}
+.empty p{margin:6px auto 0;max-width:40ch;font-size:14px;line-height:1.55;color:var(--muted)}
+.empty .btn{margin-top:18px}
+
+.note{display:flex;align-items:flex-start;gap:9px;margin-top:14px;font-size:12px;line-height:1.5;color:var(--muted)}
+.note svg{width:15px;height:15px;flex:none;margin-top:1px;color:var(--primary)}
+.note b{color:var(--foreground);font-weight:500}
+
+/* barra de guardado */
+.savebar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--card);border-top:1px solid var(--border);box-shadow:0 -8px 24px -18px rgba(23,57,43,.35);padding:10px 20px calc(10px + env(safe-area-inset-bottom))}
+.savebar-inner{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:14px}
+.save-meta{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1}
+.save-meta b{font:600 18px/1.15 var(--font-body);letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.save-meta span{font-size:12px;line-height:1.3;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.savebar .btn{min-width:190px}
+@media (max-width:479px){
+  .savebar{padding-left:16px;padding-right:16px}
+  .savebar .btn{min-width:0;flex:1}
+  .save-meta b{font-size:16px}
+}
+
+/* botones */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border:1px solid transparent;border-radius:8px;font-size:15px;font-weight:600;letter-spacing:.005em;text-decoration:none;cursor:pointer;transition:background 120ms ease,border-color 120ms ease,color 120ms ease,transform 120ms ease}
+.btn svg{width:17px;height:17px;flex:none}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground)}
+.btn-primary:hover{background:var(--primary-deep);border-color:var(--primary-deep);color:var(--primary-foreground)}
+.btn-primary:active{transform:translateY(1px)}
+.btn-secondary{background:var(--card);border-color:var(--border);color:var(--foreground)}
+.btn-secondary:hover{background:var(--secondary);border-color:color-mix(in srgb,var(--muted) 32%,var(--border));color:var(--foreground)}
+.btn[disabled]{opacity:.5;cursor:not-allowed;transform:none}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translate(-50%,12px);display:flex;align-items:center;gap:9px;max-width:calc(100vw - 32px);padding:11px 14px;border-radius:12px;background:var(--foreground);color:var(--background);font-size:14px;line-height:1.4;box-shadow:var(--shadow-sheet);opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;z-index:100}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.toast svg{width:16px;height:16px;flex:none;color:color-mix(in srgb,var(--primary) 55%,var(--background))}
+
+/* pie */
+.foot{max-width:1024px;margin:0 auto;padding:18px 20px 40px;display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:space-between;font-size:12px;line-height:1.5;color:var(--muted)}
+.foot b{font-weight:500;color:var(--foreground)}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
+}
+</style>
+</head>
+<body>
+
+<a class="skip" href="#ordeno">Saltar a la planilla</a>
+
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <defs>
+    <symbol id="i-mark" viewBox="0 0 512 512">
+      <rect width="512" height="512" rx="112" fill="#1F4D3A"/>
+      <g transform="translate(-9 0)" fill="none" stroke="#F7F3E9" stroke-width="46" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M186 138V374"/><path d="M186 161H258A57 57 0 0 1 258 275H186"/><path d="M255 281C290 305 320 338 344 372"/>
+      </g>
+    </symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5"/><path d="M12 16h.01"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></symbol>
+    <symbol id="i-offline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M6 18 18 6"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 8 6 12l4 4"/><path d="M6 12h9"/></symbol>
+    <symbol id="i-cow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3Z"/><path d="M8 6V4"/><path d="M16 6V4"/><path d="M9 12h.01"/><path d="M15 12h.01"/><path d="M10 15h4"/></symbol>
+    <symbol id="i-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"/><path d="m14 6 6 6-6 6"/></symbol>
+  </defs>
+</svg>
+
+<header class="appbar">
+  <div class="appbar-inner">
+    <a class="brand" href="milking.html" aria-label="Rodeo, planilla de ordeño">
+      <svg class="mark" aria-hidden="true"><use href="#i-mark"/></svg>
+      <span class="word">Rodeo</span>
+      <span class="kicker">Tambo La Palma</span>
+    </a>
+
+    <nav class="appnav" aria-label="Secciones de la app">
+      <a href="vacas.html">Vacas</a>
+      <a href="milking.html" aria-current="page">Ordeño</a>
+      <a href="despacho.html">Despacho</a>
+    </nav>
+
+    <div class="appbar-end">
+      <a class="sync" id="syncBtn" href="sincronizacion.html" aria-label="Estado de sincronización">
+        <i aria-hidden="true"></i>
+        <span class="sync-txt" id="syncText">Al día</span>
+      </a>
+      <details class="account" id="account">
+        <summary aria-label="Cuenta y sesión">
+          <span class="avatar">MR</span>
+          <span class="who">María Rangel<small>Capataz</small></span>
+          <svg class="chev" aria-hidden="true"><use href="#i-chevron"/></svg>
+        </summary>
+        <div class="account-menu">
+          <a href="instalacion.html"><svg aria-hidden="true"><use href="#i-download"/></svg>Instalar en este equipo</a>
+          <div class="sep" role="presentation"></div>
+          <a href="login.html"><svg aria-hidden="true"><use href="#i-logout"/></svg>Cerrar sesión</a>
+        </div>
+      </details>
+    </div>
+  </div>
+</header>
+
+<div class="offline" id="offlineBanner" hidden>
+  <svg aria-hidden="true"><use href="#i-offline"/></svg>
+  <span><b>Sin conexión.</b> Los litros se guardan en este equipo y suben al reconectar.</span>
+</div>
+
+<main class="page" id="ordeno">
+  <div class="milk-wrap">
+    <header class="page-head">
+      <div>
+        <p class="eyebrow" id="shiftEyebrow">Ordeño · Mañana</p>
+        <h1>Planilla de ordeño</h1>
+        <p class="lead">Una columna, una vaca por fila. Teclea los litros con coma decimal; el guardado es local y no espera señal.</p>
+      </div>
+      <div class="controls">
+        <div class="field-min">
+          <span id="shiftLabel">Turno</span>
+          <div class="segmented" role="group" aria-labelledby="shiftLabel">
+            <button type="button" data-shift="manana" aria-pressed="true">Mañana</button>
+            <button type="button" data-shift="tarde" aria-pressed="false">Tarde</button>
+          </div>
+        </div>
+        <div class="field-min">
+          <label for="date">Fecha</label>
+          <input class="date-input" id="date" type="date" />
+        </div>
+      </div>
+    </header>
+
+    <div class="strip" aria-live="polite">
+      <p><span>Vacas activas</span><b id="activeCount">0</b></p>
+      <p><span>Ya en este turno</span><b id="savedTotal">0,0 L</b></p>
+      <p class="clay"><span>Pendiente de guardar</span><b id="draftTotal">0,0 L</b></p>
+    </div>
+
+    <section class="plan" aria-labelledby="planTitle">
+      <div class="plan-head">
+        <p>
+          <b id="planTitle">Mañana · hoy</b>
+          <small id="planSub">Teclea solo las vacas que ordeñaste.</small>
+        </p>
+        <p class="plan-count"><b id="doneCount">0</b> de <span id="cowCount">0</span> con litros</p>
+      </div>
+      <ul id="rows" aria-label="Vacas del turno"></ul>
+      <div class="empty" id="empty" hidden>
+        <div class="empty-icon"><svg aria-hidden="true"><use href="#i-cow"/></svg></div>
+        <h2>No hay vacas activas</h2>
+        <p>La planilla se arma con las vacas activas del catálogo. Activa al menos una para empezar el turno.</p>
+        <a class="btn btn-primary" href="vacas.html">Ir al catálogo</a>
+      </div>
+    </section>
+
+    <p class="note">
+      <svg aria-hidden="true"><use href="#i-info"/></svg>
+      <span><b>Un registro por vaca, fecha y turno.</b> Si vuelves al mismo turno, los litros nuevos se suman. El máximo por vaca es 100 L.</span>
+    </p>
+  </div>
+</main>
+
+<footer class="foot">
+  <span><b>Rodeo</b> · Tambo La Palma</span>
+  <span>Datos guardados en este equipo. Se sincronizan al reconectar.</span>
+</footer>
+
+<div class="savebar">
+  <div class="savebar-inner">
+    <div class="save-meta">
+      <b id="barLiters">0,0 L</b>
+      <span id="barText">Teclea los litros para guardar</span>
+    </div>
+    <button class="btn btn-primary" id="saveBtn" type="button" disabled>
+      <svg aria-hidden="true"><use href="#i-check"/></svg>
+      Guardar ordeño
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <svg aria-hidden="true"><use href="#i-check"/></svg>
+  <span id="toastText"></span>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var params = new URLSearchParams(location.search);
+  var forcedOffline = params.get('offline') === '1';
+  var emptyMode = params.get('vacio') === '1';
+  var KEY = 'rodeo.milking.v1';
+
+  var COWS = [
+    { id:'c1',  code:'1',   name:'Lucero' },
+    { id:'c2',  code:'2',   name:'Canela' },
+    { id:'c3',  code:'3',   name:'Estrella' },
+    { id:'c4',  code:'4',   name:'Mora' },
+    { id:'c5',  code:'5',   name:'Nube' },
+    { id:'c6',  code:'6',   name:'Perla' },
+    { id:'c7',  code:'7',   name:'Luna' },
+    { id:'c8',  code:'8',   name:'Pinta' },
+    { id:'c9',  code:'9',   name:'Violeta' },
+    { id:'c10', code:'10',  name:'Cereza' },
+    { id:'c11', code:'11',  name:'Miel' },
+    { id:'c12', code:'12',  name:'Rubia' },
+    { id:'c15', code:'15',  name:'Negra' },
+    { id:'c21', code:'21',  name:'Zafiro' },
+    { id:'c24', code:'24',  name:'Aurora' },
+    { id:'c27', code:'27',  name:'Dalia' },
+    { id:'c30', code:'30',  name:'Rosa' },
+    { id:'c33', code:'33',  name:'Oliva' },
+    { id:'c36', code:'36',  name:'Camelia' },
+    { id:'c42', code:'42',  name:'Brisa' },
+    { id:'c45', code:'45',  name:'Trufa' },
+    { id:'c63', code:'63',  name:'Alba' },
+    { id:'c77', code:'77',  name:'Nieve' },
+    { id:'c102',code:'102', name:'Tordilla' },
+    { id:'c118',code:'118', name:'Serrana' }
+  ];
+
+  var SEED = { c1:8.4, c2:7.2, c3:9.0, c4:6.8, c5:10.1, c6:7.4, c7:5.2, c8:4.3 };
+
+  var storage = (function () {
+    try {
+      var k = '__rodeoProbe';
+      window.localStorage.setItem(k, '1');
+      window.localStorage.removeItem(k);
+      return window.localStorage;
+    } catch (e) {
+      return { getItem: function () { return null; }, setItem: function () {} };
+    }
+  })();
+
+  function todayISO() {
+    var d = new Date();
+    var m = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+    return d.getFullYear() + '-' + m + '-' + day;
+  }
+
+  var dateInput = document.getElementById('date');
+  var date = params.get('fecha') || todayISO();
+  var shift = params.get('turno') === 'tarde' ? 'tarde' : 'manana';
+  var draft = {};
+  var pendingSync = false;
+  var toastTimer = null;
+
+  function loadAll() {
+    try {
+      var raw = storage.getItem(KEY);
+      if (raw) return JSON.parse(raw) || {};
+    } catch (e) {}
+    return {};
+  }
+
+  function saveAll(all) {
+    try { storage.setItem(KEY, JSON.stringify(all)); } catch (e) {}
+  }
+
+  var all = loadAll();
+  function keyOf() { return date + '|' + shift; }
+
+  function savedFor() {
+    if (emptyMode) return {};
+    if (!all[keyOf()] && date === todayISO() && shift === 'manana') {
+      all[keyOf()] = {};
+      COWS.forEach(function (c) {
+        if (SEED[c.id]) all[keyOf()][c.id] = SEED[c.id];
+      });
+      saveAll(all);
+    }
+    return all[keyOf()] || {};
+  }
+
+  function format(n) {
+    return n.toLocaleString('es-VE', { minimumFractionDigits:1, maximumFractionDigits:1 });
+  }
+
+  function parseLiters(raw) {
+    if (raw == null) return NaN;
+    var t = String(raw).trim().replace(',', '.');
+    if (t === '' || !/^\d{1,3}(\.\d{1,2})?$/.test(t)) return NaN;
+    return Number(t);
+  }
+
+  function renderRows() {
+    var saved = savedFor();
+    var list = document.getElementById('rows');
+    var empty = document.getElementById('empty');
+    var cows = emptyMode ? [] : COWS;
+
+    document.getElementById('activeCount').textContent = String(cows.length);
+    document.getElementById('cowCount').textContent = String(cows.length);
+    document.getElementById('savedTotal').textContent = format(sum(saved)) + ' L';
+
+    if (!cows.length) {
+      list.innerHTML = '';
+      empty.hidden = false;
+      document.querySelector('.plan-head').hidden = true;
+      updateBar();
+      return;
+    }
+    empty.hidden = true;
+    document.querySelector('.plan-head').hidden = false;
+
+    var html = '';
+    cows.forEach(function (c) {
+      var already = saved[c.id] || 0;
+      var id = 'l' + c.id;
+      var errId = 'e' + c.id;
+      html += '<li class="cow-row" data-id="' + c.id + '">'
+        + '<span class="cow-code">' + c.code + '</span>'
+        + '<div class="cow-main"><b>' + c.name + '</b>'
+        + '<span class="cow-already' + (already ? ' is-saved' : '') + '" data-already>' + (already ? 'Ya: ' + format(already) + ' L' : 'Sin litros hoy') + '</span></div>'
+        + '<div class="liters"><label class="sr-only" for="' + id + '">Litros de la vaca ' + c.code + ', ' + c.name + '</label>'
+        + '<input id="' + id + '" data-input="' + c.id + '" type="text" inputmode="decimal" autocomplete="off" placeholder="0,0" aria-describedby="' + errId + '" />'
+        + '<span class="unit" aria-hidden="true">L</span></div>'
+        + '<p class="row-err" id="' + errId + '" hidden><svg aria-hidden="true"><use href="#i-alert"/></svg><span></span></p>'
+        + '</li>';
+    });
+    list.innerHTML = html;
+    draft = {};
+    list.querySelectorAll('input[data-input]').forEach(function (input) {
+      input.addEventListener('input', onInput);
+      input.addEventListener('blur', onInput);
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          var inputs = Array.prototype.slice.call(list.querySelectorAll('input[data-input]'));
+          var i = inputs.indexOf(input);
+          if (i > -1 && inputs[i + 1]) inputs[i + 1].focus();
+        }
+      });
+    });
+    updateBar();
+  }
+
+  function sum(obj) {
+    return Object.keys(obj).reduce(function (acc, k) { return acc + (Number(obj[k]) || 0); }, 0);
+  }
+
+  function onInput(e) {
+    var input = e.target;
+    var id = input.getAttribute('data-input');
+    var row = input.closest('.cow-row');
+    var err = row.querySelector('.row-err');
+    var errSpan = err.querySelector('span');
+    var raw = input.value;
+    var value = parseLiters(raw);
+    var saved = savedFor()[id] || 0;
+    var valid = true;
+    var message = '';
+
+    if (raw.trim() === '') {
+      valid = false;
+      delete draft[id];
+      input.removeAttribute('aria-invalid');
+      err.hidden = true;
+      row.classList.remove('has-error');
+    } else if (isNaN(value)) {
+      valid = false;
+      message = 'Usa solo números. Decimal con coma: 12,5.';
+    } else if (value < 0) {
+      valid = false;
+      message = 'Los litros no pueden ser negativos.';
+    } else if (value > 100) {
+      valid = false;
+      message = 'El máximo por vaca es 100 L.';
+    } else if (saved + value > 100) {
+      valid = false;
+      message = 'Ya hay ' + format(saved) + ' L. El turno pasaría de 100 L.';
+    }
+
+    if (!valid && message) {
+      delete draft[id];
+      input.setAttribute('aria-invalid', 'true');
+      errSpan.textContent = message;
+      err.hidden = false;
+      row.classList.add('has-error');
+    } else if (valid) {
+      draft[id] = value;
+      input.removeAttribute('aria-invalid');
+      err.hidden = true;
+      row.classList.remove('has-error');
+    } else {
+      delete draft[id];
+    }
+    updateBar();
+  }
+
+  function updateBar() {
+    var count = Object.keys(draft).length;
+    var total = sum(draft);
+    document.getElementById('draftTotal').textContent = format(total) + ' L';
+    document.getElementById('barLiters').textContent = format(total) + ' L';
+    document.getElementById('barText').textContent = count
+      ? (count === 1 ? '1 vaca lista para guardar' : count + ' vacas listas para guardar')
+      : 'Teclea los litros para guardar';
+    document.getElementById('saveBtn').disabled = count === 0;
+    document.getElementById('doneCount').textContent = String(Object.keys(savedFor()).length);
+  }
+
+  function updateShiftUI() {
+    var isMorning = shift === 'manana';
+    document.getElementById('shiftEyebrow').textContent = 'Ordeño · ' + (isMorning ? 'Mañana' : 'Tarde');
+    document.querySelectorAll('[data-shift]').forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-shift') === shift));
+    });
+    var d = new Date(date + 'T12:00:00');
+    var label = isNaN(d.getTime())
+      ? 'Fecha sin definir'
+      : d.toLocaleDateString('es-VE', { weekday:'long', day:'numeric', month:'long' });
+    document.getElementById('planTitle').textContent = (isMorning ? 'Mañana' : 'Tarde') + ' · ' + label;
+    document.getElementById('planSub').textContent = isMorning
+      ? 'Teclea solo las vacas que ordeñaste en la mañana.'
+      : 'Teclea solo las vacas que ordeñaste en la tarde.';
+  }
+
+  function setSync() {
+    var btn = document.getElementById('syncBtn');
+    var txt = document.getElementById('syncText');
+    var off = forcedOffline || !navigator.onLine;
+    document.getElementById('offlineBanner').hidden = !off;
+    btn.classList.toggle('is-off', off);
+    btn.classList.toggle('has-pending', !off && pendingSync);
+    txt.textContent = off ? 'Sin señal' : (pendingSync ? '1 pendiente' : 'Al día');
+    btn.setAttribute('aria-label', off
+      ? 'Sin conexión. Ver la cola de sincronización'
+      : (pendingSync ? '1 registro pendiente. Ver la cola de sincronización' : 'Todo sincronizado. Ver la cola'));
+  }
+
+  function toast(msg) {
+    var el = document.getElementById('toast');
+    document.getElementById('toastText').textContent = msg;
+    el.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove('on'); }, 3600);
+  }
+
+  function save() {
+    var count = Object.keys(draft).length;
+    if (!count) return;
+    var target = savedFor();
+    Object.keys(draft).forEach(function (id) {
+      target[id] = (target[id] || 0) + draft[id];
+    });
+    all[keyOf()] = target;
+    saveAll(all);
+
+    var total = sum(draft);
+    var off = forcedOffline || !navigator.onLine;
+    if (off) pendingSync = true;
+    draft = {};
+    renderRows();
+    setSync();
+    toast(off
+      ? 'Guardado en este equipo: ' + count + ' vacas · ' + format(total) + ' L. Sube al reconectar.'
+      : 'Ordeño guardado: ' + count + ' vacas · ' + format(total) + ' L.');
+  }
+
+  document.querySelectorAll('[data-shift]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      shift = b.getAttribute('data-shift');
+      updateShiftUI();
+      renderRows();
+    });
+  });
+
+  dateInput.value = date;
+  dateInput.max = todayISO();
+  dateInput.addEventListener('change', function () {
+    date = dateInput.value || todayISO();
+    updateShiftUI();
+    renderRows();
+  });
+
+  document.getElementById('saveBtn').addEventListener('click', save);
+
+  window.addEventListener('online', function () { setSync(); });
+  window.addEventListener('offline', function () { setSync(); });
+
+  if (params.get('reset') === '1') {
+    all = {};
+    saveAll(all);
+  }
+
+  updateShiftUI();
+  renderRows();
+  setSync();
+})();
+</script>
+</body>
+</html>

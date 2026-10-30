@@ -131,7 +131,7 @@ Reglas duras:
 | Pantalla | Componentes obligatorios | Regla clave |
 |---|---|---|
 | **Ordeño** (capataz) | Header + nav, selector turno, fecha, fila de ordeño, input de litros, badge “Ya: X L”, total pendiente, CTA guardar, toast, indicador sync, banner offline | Una columna; guardado local; error inline bloquea el CTA |
-| **Panel** (dueño) | Header + nav, 3 tarjetas resumen, gráfico de merma, última sync, filtro de fecha, tabla por día, role gate | Solo `owner`; cifras tabulares; merma en arcilla |
+| **Panel** (dueño) | Header + nav, 3 tarjetas resumen, gráfico de merma, merma por turno, última sync, filtro de fecha, tabla por día, hoja del día, role gate | Solo `owner` y `admin`; cifras tabulares; merma en arcilla |
 | **Vacas** | Lista/tabla, buscador, filtro activa/inactiva, CTA alta, diálogo de alta/edición, confirmación de baja, badge de estado y pendiente, vacío | Lista <768, tabla ≥768; código único; alta, edición y baja se guardan local y quedan “Pendiente” sin señal |
 | **Despacho** | Formulario litros, fecha, turno opcional, CTA guardar, toast, banner offline, resumen del día | Permite guardar sin ordeños; avisa merma 100% |
 | **Acceso / instalación** | Login, setup primer admin, aviso de rol, prompt de instalación, error inline | Tarjeta máx. 420 px; split con marca ≥1024 |
@@ -154,7 +154,9 @@ Reglas duras:
 | `Badge` | Datos | neutro, arcilla, éxito | Ordeño, Vacas, Panel | - |
 | `SaveBar` | Captura | inactivo, válido, inválido, guardando | Ordeño | fija al fondo |
 | `SummaryCard` | Datos | normal, sobre-despacho | Panel | 1→3 columnas en 640 |
-| `MermaChart` | Datos | con datos, vacío, cargando | Panel | ancho completo |
+| `MermaChart` | Datos | con datos, vacío, sobre-despacho | Panel | ancho completo, 196 px de alto <540 |
+| `TurnBars` | Datos | con datos, sin ordeño, sobre-despacho | Panel | 2 barras apiladas |
+| `DaySheet` | Datos | con datos, sin dato, sobre-despacho | Panel | hoja <768, desde la lista |
 | `CowTable` / `CowList` | Datos | con datos, vacío, acciones | Vacas | lista <768 |
 | `CowForm` | Captura | vacío, válido, código duplicado, error inline, guardando | Vacas | hoja <640 |
 | `SyncSheet` | Sistema | sin pendientes, con pendientes, reintentando, sin señal | header | hoja <640 |

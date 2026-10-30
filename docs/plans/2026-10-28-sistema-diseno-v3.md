@@ -15,6 +15,11 @@ Antes de cada tarea, abrir el prototipo correspondiente. No inventar layout.
 - `docs/design/referencia/login.html`, `setup.html`, `instalacion.html` — flujo de acceso real e interactivo.
 - `docs/design/referencia/usuarios.html`, `permisos.html` — alta de usuarios y control de acceso (roles, rutas protegidas).
 - `docs/design/referencia/vacas.html` — catálogo de vacas, alta/edición/baja y cola offline.
+- `docs/design/referencia/milking.html` — planilla de ordeño a una columna, guardado local y turno.
+- `docs/design/referencia/despacho.html` — registro de salida de leche y resumen del día.
+- `docs/design/referencia/sincronizacion.html` — cola de subida, fallos y reintento.
+- `docs/design/referencia/panel.html` — conciliación del dueño: cifras, tendencia, turnos y días.
+- `docs/design/FLUJOS.md` — flujo por pantalla, con estados y query de demo.
 
 ## Estado de partida (verificado el 28 oct)
 
@@ -113,7 +118,12 @@ Excepción documentada: `#2C6B4E` (`brand.colors.primaryLight`) es color del SVG
 | `referencia/usuarios.html` | `app/(app)/usuarios/page.tsx` + `components/users/*` |
 | `referencia/permisos.html` | `components/system/RoleGate.tsx` + guardas de ruta por rol |
 | `referencia/vacas.html` | `app/(app)/vacas/page.tsx` + `components/cows/*` |
+| `referencia/milking.html` | `app/(app)/milking/page.tsx` + `components/milking/*` |
+| `referencia/despacho.html` | `app/(app)/dispatch/page.tsx` + `components/dispatch/DispatchForm.tsx` |
+| `referencia/sincronizacion.html` | `components/SyncIndicator.tsx` + `components/SyncProvider.tsx` + `components/system/OfflineBanner.tsx` |
+| `referencia/panel.html` | `app/(app)/dashboard/page.tsx` + `components/dashboard/*` |
 | `design/DESIGN.md` | fuente de tokens, breakpoints y matriz de componentes |
+| `design/FLUJOS.md` | flujo por pantalla: entradas, pasos, estados y destino en el código |
 
 ## Criterios de aceptación
 

@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#FAF7F0" />
+<title>Sincronización · Rodeo</title>
+<meta name="description" content="Cola de sincronización de Rodeo: registros guardados sin señal, reintentos y estado de subida." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root{
+  color-scheme:light;
+  --background:#FAF7F0;
+  --card:#FFFFFF;
+  --secondary:#EFE9DA;
+  --foreground:#23211C;
+  --muted:#6B675C;
+  --border:#E3DCCC;
+  --primary:#1F4D3A;
+  --primary-deep:#17392B;
+  --primary-foreground:#F7F3E9;
+  --clay:#B5622F;
+  --clay-soft:#F3E2D5;
+  --clay-ink:#8F4A20;
+  --danger:#B4341F;
+  --ring:#2E6B4E;
+  --font-display:'Fraunces',Georgia,'Times New Roman',serif;
+  --font-body:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --font-mono:ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;
+  --r-sm:8px;
+  --r-md:12px;
+  --r-lg:16px;
+  --shadow-card:0 1px 2px rgba(35,33,28,.06);
+  --shadow-sheet:0 18px 40px -24px rgba(23,57,43,.35);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;min-height:100dvh;
+  background:var(--background);color:var(--foreground);
+  font:400 16px/1.55 var(--font-body);
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,p,ul,ol,dl,dd{margin:0}
+ul,ol{padding:0;list-style:none}
+button{font:inherit}
+svg{display:block}
+a{color:var(--primary);text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{color:var(--primary-deep)}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--ring) 60%,transparent);outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+[hidden]{display:none !important}
+.skip{position:absolute;left:12px;top:-52px;z-index:99;display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:8px;background:var(--primary);color:var(--primary-foreground);text-decoration:none;font-size:14px}
+.skip:focus{top:12px}
+
+.appbar{position:sticky;top:0;z-index:40;background:var(--background);border-bottom:1px solid var(--border)}
+.appbar-inner{max-width:1024px;margin:0 auto;padding:10px 20px 0;display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px}
+.brand{display:flex;align-items:center;gap:9px;min-height:44px;text-decoration:none;color:var(--foreground)}
+.brand .mark{width:30px;height:30px;border-radius:8px;flex:none}
+.brand .word{font:500 19px/1 var(--font-display);letter-spacing:-.015em}
+.brand .kicker{font:600 11px/1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding-left:10px;border-left:1px solid var(--border);white-space:nowrap}
+.brand:hover .word{color:var(--primary-deep)}
+.appnav{display:flex;gap:2px;order:3;width:100%;margin:0 -20px;padding:0 20px;border-top:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.appnav::-webkit-scrollbar{display:none}
+.appnav a{position:relative;display:inline-flex;align-items:center;min-height:44px;padding:0 10px;border-radius:8px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;white-space:nowrap}
+.appnav a:hover{background:var(--secondary);color:var(--foreground)}
+.appnav a[aria-current="page"]{color:var(--primary)}
+.appnav a[aria-current="page"]::after{content:"";position:absolute;left:10px;right:10px;bottom:0;height:2px;background:var(--primary)}
+.appbar-end{display:flex;align-items:center;gap:8px;margin-left:auto}
+@media (min-width:900px){
+  .appbar-inner{padding:0 20px;min-height:64px;flex-wrap:nowrap}
+  .appnav{order:0;width:auto;margin:0;padding:0;border-top:0;margin-left:6px}
+}
+@media (max-width:519px){
+  .brand .kicker{display:none}
+  .appnav a{padding:0 8px}
+}
+
+.sync{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-width:44px;min-height:44px;padding:0 10px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--muted);font:500 12px/1 var(--font-body);cursor:pointer;white-space:nowrap;text-decoration:none}
+.sync:hover{background:var(--secondary);color:var(--foreground)}
+.sync i{width:6px;height:6px;border-radius:50%;background:var(--primary);flex:none}
+.sync.has-pending,.sync.is-off{color:var(--clay-ink)}
+.sync.has-pending i,.sync.is-off i{background:var(--clay)}
+.account{position:relative}
+.account summary{list-style:none;display:flex;align-items:center;gap:9px;min-width:44px;min-height:44px;padding:0 4px;border-radius:8px;cursor:pointer}
+.account summary::-webkit-details-marker{display:none}
+.account summary:hover{background:var(--secondary)}
+.avatar{width:32px;height:32px;flex:none;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--primary) 10%,var(--card));color:var(--primary);font:600 11px/1 var(--font-body);letter-spacing:.03em}
+.account .who{display:none}
+.account .chev{width:14px;height:14px;color:var(--muted);display:none}
+@media (min-width:640px){
+  .account .who{display:block;font-size:13px;line-height:1.25;font-weight:500}
+  .account .who small{display:block;font-size:11px;font-weight:400;color:var(--muted)}
+  .account .chev{display:block}
+}
+.account-menu{position:absolute;right:0;top:calc(100% + 8px);width:236px;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-sheet);padding:6px;z-index:60}
+.account-menu a{display:flex;align-items:center;gap:9px;min-height:44px;padding:0 10px;border-radius:8px;font-size:14px;color:var(--foreground);text-decoration:none}
+.account-menu a:hover{background:var(--secondary);color:var(--foreground)}
+.account-menu svg{width:16px;height:16px;color:var(--muted)}
+.account-menu .sep{height:1px;background:var(--border);margin:4px 6px}
+
+.offline{display:flex;align-items:center;justify-content:center;gap:9px;padding:9px 20px;background:var(--secondary);border-bottom:1px solid var(--border);font-size:14px;line-height:1.4}
+.offline svg{width:16px;height:16px;flex:none;color:var(--clay-ink)}
+.offline b{font-weight:600}
+@media (max-width:519px){.offline{justify-content:flex-start;padding:9px 16px}}
+
+.page{max-width:1024px;margin:0 auto;padding:clamp(22px,4vw,36px) 20px 40px}
+.narrow{max-width:820px;margin:0 auto}
+.page-head{padding-bottom:26px}
+.eyebrow{display:flex;align-items:center;gap:9px;font:600 11px/1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.eyebrow::before{content:"";width:16px;height:1px;background:var(--border);flex:none}
+h1{margin-top:11px;font:500 clamp(30px,4.4vw,40px)/1.08 var(--font-display);letter-spacing:-.028em}
+.lead{margin-top:10px;max-width:56ch;font-size:15.5px;line-height:1.6;color:var(--muted)}
+
+/* estado */
+.status{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow-card);overflow:hidden}
+.status-top{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:16px;padding:18px 20px}
+.status-title{display:flex;align-items:center;gap:11px;min-width:0}
+.status-dot{width:10px;height:10px;border-radius:50%;background:var(--primary);flex:none}
+.status-dot.is-clay{background:var(--clay)}
+.status-dot.is-danger{background:var(--danger)}
+.status-title b{display:block;font:600 16px/1.3 var(--font-body);letter-spacing:-.005em}
+.status-title small{display:block;margin-top:2px;font-size:12.5px;line-height:1.4;color:var(--muted)}
+.status-actions{display:flex;flex-wrap:wrap;gap:8px}
+.status-stats{display:flex;flex-wrap:wrap;border-top:1px solid var(--border);background:color-mix(in srgb,var(--secondary) 28%,var(--card))}
+.status-stats p{flex:1 1 33%;min-width:120px;padding:13px 20px;display:flex;flex-direction:column;gap:2px}
+.status-stats p + p{border-left:1px solid var(--border)}
+.status-stats span{font:600 10.5px/1 var(--font-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.status-stats b{font:600 21px/1.2 var(--font-body);letter-spacing:-.015em;font-variant-numeric:tabular-nums}
+.status-stats .is-clay b{color:var(--clay-ink)}
+.status-stats .is-danger b{color:var(--danger)}
+@media (max-width:519px){
+  .status-stats p{flex:1 1 100%;padding:11px 16px}
+  .status-stats p + p{border-left:0;border-top:1px solid var(--border)}
+}
+
+/* cola */
+.queue{margin-top:28px}
+.queue-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.queue-head h2{font:500 22px/1.2 var(--font-display);letter-spacing:-.02em}
+.queue-head span{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.q-list > li{border-bottom:1px solid var(--border)}
+.q-item summary{list-style:none;display:grid;grid-template-columns:38px minmax(0,1fr) auto 18px;align-items:center;gap:12px;min-height:64px;padding:12px 2px;cursor:pointer}
+.q-item summary::-webkit-details-marker{display:none}
+.q-item summary:hover .q-main b{color:var(--primary-deep)}
+.q-ico{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:var(--secondary);color:var(--primary);flex:none}
+.q-ico svg{width:18px;height:18px}
+.q-main{min-width:0}
+.q-main b{display:block;font-size:14.5px;font-weight:500;line-height:1.35;transition:color 120ms ease}
+.q-main small{display:block;margin-top:2px;font-size:12.5px;line-height:1.4;color:var(--muted)}
+.q-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;font-size:11.5px;font-weight:500;line-height:1.2;white-space:nowrap}
+.q-badge.pending{background:var(--clay-soft);color:var(--clay-ink)}
+.q-badge.failed{background:color-mix(in srgb,var(--danger) 10%,var(--card));color:var(--danger)}
+.q-badge.uploading{background:var(--secondary);color:var(--foreground)}
+.q-badge.done{background:color-mix(in srgb,var(--primary) 9%,var(--card));color:var(--primary)}
+.q-chev{width:16px;height:16px;color:var(--muted);transition:transform 180ms ease}
+.q-item details[open] .q-chev{transform:rotate(180deg)}
+.q-detail{padding:0 2px 16px 52px}
+.q-detail dl{display:flex;flex-wrap:wrap;gap:8px 28px;padding:12px 0;border-top:1px dashed var(--border)}
+.q-detail dl > div{display:flex;flex-direction:column;gap:2px;min-width:120px}
+.q-detail dt{font:600 10.5px/1 var(--font-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.q-detail dd{font-size:13px;line-height:1.4;font-variant-numeric:tabular-nums}
+.q-detail .btn{margin-top:2px}
+.q-detail .q-note{margin-top:10px;font-size:12.5px;line-height:1.5;color:var(--muted)}
+@media (max-width:519px){
+  .q-item summary{grid-template-columns:34px minmax(0,1fr) auto;gap:10px}
+  .q-chev{display:none}
+  .q-ico{width:34px;height:34px;border-radius:8px}
+  .q-detail{padding-left:44px}
+}
+
+.empty{padding:52px 24px;text-align:center}
+.empty-icon{width:48px;height:48px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--primary) 10%,var(--card));color:var(--primary)}
+.empty-icon svg{width:22px;height:22px}
+.empty h2{font:500 22px/1.2 var(--font-display);letter-spacing:-.02em}
+.empty p{margin:6px auto 0;max-width:42ch;font-size:14px;line-height:1.55;color:var(--muted)}
+
+/* cómo funciona */
+.how{margin-top:34px;padding-top:18px;border-top:1px solid var(--border)}
+.how h2{font:600 12px/1 var(--font-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.how ol{margin-top:6px;display:grid;gap:0}
+@media (min-width:720px){.how ol{grid-template-columns:repeat(3,1fr);gap:0 28px}}
+.how li{padding:14px 0;border-top:1px solid var(--border);font-size:13px;line-height:1.55;color:var(--muted)}
+.how li:first-child{border-top:0}
+@media (min-width:720px){.how li{border-top:0;padding-top:10px}}
+.how b{display:block;margin-bottom:3px;font-size:13.5px;font-weight:600;color:var(--foreground)}
+.how li b span{display:inline-block;min-width:20px;font-family:var(--font-mono);font-size:11px;color:var(--muted);font-weight:500}
+.how .foot-note{grid-column:1/-1;margin-top:6px;padding-top:12px;border-top:1px dashed var(--border);font-size:12px;color:var(--muted)}
+
+/* botones */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border:1px solid transparent;border-radius:8px;font-size:15px;font-weight:600;letter-spacing:.005em;text-decoration:none;cursor:pointer;transition:background 120ms ease,border-color 120ms ease,color 120ms ease,transform 120ms ease}
+.btn svg{width:17px;height:17px;flex:none}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground)}
+.btn-primary:hover{background:var(--primary-deep);border-color:var(--primary-deep);color:var(--primary-foreground)}
+.btn-primary:active{transform:translateY(1px)}
+.btn-secondary{background:var(--card);border-color:var(--border);color:var(--foreground)}
+.btn-secondary:hover{background:var(--secondary);border-color:color-mix(in srgb,var(--muted) 32%,var(--border));color:var(--foreground)}
+.btn-ghost{background:transparent;color:var(--primary);padding:0 12px}
+.btn-ghost:hover{background:var(--secondary);color:var(--primary-deep)}
+.btn[disabled]{opacity:.5;cursor:not-allowed;transform:none}
+.btn.is-loading svg{animation:spin 900ms linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translate(-50%,12px);display:flex;align-items:center;gap:9px;max-width:calc(100vw - 32px);padding:11px 14px;border-radius:12px;background:var(--foreground);color:var(--background);font-size:14px;line-height:1.4;box-shadow:var(--shadow-sheet);opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;z-index:100}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.toast svg{width:16px;height:16px;flex:none;color:color-mix(in srgb,var(--primary) 55%,var(--background))}
+
+.foot{max-width:1024px;margin:0 auto;padding:18px 20px 40px;display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:space-between;font-size:12px;line-height:1.5;color:var(--muted)}
+.foot b{font-weight:500;color:var(--foreground)}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
+}
+</style>
+</head>
+<body>
+
+<a class="skip" href="#cola">Saltar a la cola</a>
+
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <defs>
+    <symbol id="i-mark" viewBox="0 0 512 512">
+      <rect width="512" height="512" rx="112" fill="#1F4D3A"/>
+      <g transform="translate(-9 0)" fill="none" stroke="#F7F3E9" stroke-width="46" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M186 138V374"/><path d="M186 161H258A57 57 0 0 1 258 275H186"/><path d="M255 281C290 305 320 338 344 372"/>
+      </g>
+    </symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5"/><path d="M12 16h.01"/></symbol>
+    <symbol id="i-offline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M6 18 18 6"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 8 6 12l4 4"/><path d="M6 12h9"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></symbol>
+    <symbol id="i-drop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 6.2 6 10.2A6 6 0 0 1 6 13.2C6 9.2 12 3 12 3Z"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h10v9H3z"/><path d="M13 10h4l4 3v3h-8z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 13.4 13 20.8a2 2 0 0 1-2.8 0L3.2 13.8A2 2 0 0 1 2.6 12.4V4.8a2.2 2.2 0 0 1 2.2-2.2h7.6a2 2 0 0 1 1.4.6l6.6 6.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.6" cy="7.6" r="1.5"/></symbol>
+  </defs>
+</svg>
+
+<header class="appbar">
+  <div class="appbar-inner">
+    <a class="brand" href="sincronizacion.html" aria-label="Rodeo, sincronización">
+      <svg class="mark" aria-hidden="true"><use href="#i-mark"/></svg>
+      <span class="word">Rodeo</span>
+      <span class="kicker">Tambo La Palma</span>
+    </a>
+
+    <nav class="appnav" aria-label="Secciones de la app">
+      <a href="vacas.html">Vacas</a>
+      <a href="milking.html">Ordeño</a>
+      <a href="despacho.html">Despacho</a>
+    </nav>
+
+    <div class="appbar-end">
+      <a class="sync" id="syncBtn" href="sincronizacion.html" aria-current="page" aria-label="Estado de sincronización">
+        <i aria-hidden="true"></i>
+        <span class="sync-txt" id="syncText">Sin señal</span>
+      </a>
+      <details class="account" id="account">
+        <summary aria-label="Cuenta y sesión">
+          <span class="avatar">MR</span>
+          <span class="who">María Rangel<small>Capataz</small></span>
+          <svg class="chev" aria-hidden="true"><use href="#i-chevron"/></svg>
+        </summary>
+        <div class="account-menu">
+          <a href="instalacion.html"><svg aria-hidden="true"><use href="#i-download"/></svg>Instalar en este equipo</a>
+          <div class="sep" role="presentation"></div>
+          <a href="login.html"><svg aria-hidden="true"><use href="#i-logout"/></svg>Cerrar sesión</a>
+        </div>
+      </details>
+    </div>
+  </div>
+</header>
+
+<div class="offline" id="offlineBanner" hidden>
+  <svg aria-hidden="true"><use href="#i-offline"/></svg>
+  <span><b>Sin conexión.</b> La cola espera en este equipo; no se pierde nada.</span>
+</div>
+
+<main class="page" id="cola">
+  <div class="narrow">
+    <header class="page-head">
+      <p class="eyebrow">Sistema · Tambo La Palma</p>
+      <h1>Sincronización</h1>
+      <p class="lead">Todo lo que se guardó sin señal, en un solo lugar. La cola vive en el equipo: se reintenta sola y avisa cuánto falta.</p>
+    </header>
+
+    <section class="status" aria-labelledby="statusTitle">
+      <div class="status-top">
+        <div class="status-title">
+          <span class="status-dot" id="statusDot" aria-hidden="true"></span>
+          <div>
+            <b id="statusTitle">3 pendientes y 1 fallido</b>
+            <small id="statusSub">Última sync: 29 oct · 19:02</small>
+          </div>
+        </div>
+        <div class="status-actions">
+          <button class="btn btn-primary" id="syncNow" type="button">
+            <svg aria-hidden="true"><use href="#i-refresh"/></svg>
+            Sincronizar ahora
+          </button>
+          <button class="btn btn-secondary" id="retryFailed" type="button">Reintentar fallidos</button>
+        </div>
+      </div>
+      <div class="status-stats" aria-live="polite">
+        <p><span>Pendientes</span><b id="countPending">3</b></p>
+        <p class="is-danger"><span>Fallidos</span><b id="countFailed">1</b></p>
+        <p><span>En este equipo</span><b id="countLocal">4</b></p>
+      </div>
+    </section>
+
+    <section class="queue" aria-labelledby="queueTitle">
+      <div class="queue-head">
+        <h2 id="queueTitle">Cola de subida</h2>
+        <span id="queueCount">4 registros</span>
+      </div>
+      <ul class="q-list" id="qList"></ul>
+
+      <div class="empty" id="empty" hidden>
+        <div class="empty-icon"><svg aria-hidden="true"><use href="#i-check"/></svg></div>
+        <h2>Todo sincronizado</h2>
+        <p>No queda nada en la cola. Los registros de este equipo ya están en el servidor.</p>
+      </div>
+    </section>
+
+    <section class="how" aria-labelledby="howTitle">
+      <h2 id="howTitle">Cómo se sube</h2>
+      <ol>
+        <li><b><span>01</span> Cola local</b>Ordeños, despachos y cambios de vacas se escriben primero en el equipo, con su fecha y usuario.</li>
+        <li><b><span>02</span> Reintento</b>Al volver la señal se sube en lote. Si falla, espera y reintenta; no borra el registro.</li>
+        <li><b><span>03</span> Sin duplicar</b>Cada registro lleva su identificador. Un reintento actualiza, no crea una fila nueva.</li>
+        <li class="foot-note">Si cierras la app o apagas el teléfono, la cola sigue en el disco. Al abrir de nuevo, retoma donde quedó.</li>
+      </ol>
+    </section>
+  </div>
+</main>
+
+<footer class="foot">
+  <span><b>Rodeo</b> · Tambo La Palma</span>
+  <span>Datos guardados en este equipo. Se sincronizan al reconectar.</span>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <svg aria-hidden="true"><use href="#i-check"/></svg>
+  <span id="toastText"></span>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var params = new URLSearchParams(location.search);
+  var forcedOffline = params.get('offline') === '1';
+  var emptyMode = params.get('vacio') === '1';
+  var failMode = params.get('fallo') === '1';
+
+  var SEED = [
+    { id:'q1', type:'milking', icon:'drop', title:'Ordeño · jueves 29, tarde', meta:'12 vacas · 64,8 L', saved:'29 oct · 18:42', state:'pending', attempts:0, detail:'Fecha 29/10/2026 · Turno tarde · 12 registros de litros.' },
+    { id:'q2', type:'dispatch', icon:'truck', title:'Despacho · jueves 29', meta:'48,0 L · Sin turno', saved:'29 oct · 18:55', state:'pending', attempts:0, detail:'Fecha 29/10/2026 · 48,0 L · Sin turno.' },
+    { id:'q3', type:'cow', icon:'tag', title:'Vaca 118 · alta', meta:'Serrana · activa', saved:'29 oct · 19:02', state:'pending', attempts:0, detail:'Código 118 · Nombre Serrana · Estado activa.' },
+    { id:'q4', type:'milking', icon:'drop', title:'Ordeño · miércoles 28, mañana', meta:'11 vacas · 58,2 L', saved:'28 oct · 06:14', state: failMode ? 'failed' : 'failed', attempts:3, detail:'Fecha 28/10/2026 · Turno mañana · 11 registros de litros.' }
+  ];
+
+  if (failMode) SEED[1].state = 'failed';
+  if (failMode) SEED[1].attempts = 3;
+
+  var items = emptyMode ? [] : SEED.map(function (x) { return Object.assign({}, x); });
+  var lastSync = '29 oct · 19:02';
+  var syncing = false;
+  var toastTimer = null;
+
+  function format(n) {
+    return n.toLocaleString('es-VE', { minimumFractionDigits:1, maximumFractionDigits:1 });
+  }
+
+  function counts() {
+    return {
+      pending: items.filter(function (i) { return i.state === 'pending'; }).length,
+      failed: items.filter(function (i) { return i.state === 'failed'; }).length,
+      done: items.filter(function (i) { return i.state === 'done'; }).length,
+      local: items.length
+    };
+  }
+
+  function badge(state) {
+    if (state === 'failed') return 'Fallido';
+    if (state === 'uploading') return 'Subiendo';
+    if (state === 'done') return 'Subido';
+    return 'Pendiente';
+  }
+
+  function render() {
+    var c = counts();
+    var list = document.getElementById('qList');
+    var empty = document.getElementById('empty');
+
+    document.getElementById('countPending').textContent = String(c.pending);
+    document.getElementById('countFailed').textContent = String(c.failed);
+    document.getElementById('countLocal').textContent = String(c.local);
+    document.getElementById('queueCount').textContent = c.local === 1 ? '1 registro' : c.local + ' registros';
+
+    var dot = document.getElementById('statusDot');
+    dot.classList.toggle('is-danger', c.failed > 0);
+    dot.classList.toggle('is-clay', c.failed === 0 && c.pending > 0);
+    document.getElementById('statusTitle').textContent = !c.local
+      ? 'Todo sincronizado'
+      : (c.pending + ' pendiente' + (c.pending === 1 ? '' : 's') + (c.failed ? ' y ' + c.failed + ' fallido' + (c.failed === 1 ? '' : 's') : ''));
+    document.getElementById('statusSub').textContent = 'Última sync: ' + lastSync;
+
+    var retry = document.getElementById('retryFailed');
+    retry.hidden = c.failed === 0;
+    retry.disabled = syncing;
+    document.getElementById('syncNow').disabled = syncing || !c.local || (c.pending === 0 && c.failed === 0);
+
+    if (!c.local) {
+      list.innerHTML = '';
+      empty.hidden = false;
+      return;
+    }
+    empty.hidden = true;
+    list.innerHTML = items.map(function (it) {
+      var open = it.state === 'failed' ? ' open' : '';
+      var retryBtn = it.state === 'failed' && !syncing
+        ? '<button class="btn btn-secondary" type="button" data-retry="' + it.id + '">Reintentar este registro</button>'
+        : '';
+      var note = it.state === 'done'
+        ? '<p class="q-note">Subido al servidor. El registro local queda marcado como sincronizado.</p>'
+        : (it.state === 'uploading'
+          ? '<p class="q-note">Subiendo ahora. No cierres la app.</p>'
+          : '<p class="q-note">' + (it.attempts ? it.attempts + ' intentos fallidos. Se reintenta al reconectar.' : 'Se sube al volver la señal.') + '</p>');
+      return '<li>'
+        + '<details class="q-item"' + open + '>'
+        + '<summary>'
+        + '<span class="q-ico"><svg aria-hidden="true"><use href="#i-' + it.icon + '"/></svg></span>'
+        + '<span class="q-main"><b>' + it.title + '</b><small>' + it.meta + '</small></span>'
+        + '<span class="q-badge ' + it.state + '">' + badge(it.state) + '</span>'
+        + '<svg class="q-chev" aria-hidden="true"><use href="#i-chevron"/></svg>'
+        + '</summary>'
+        + '<div class="q-detail">'
+        + '<dl><div><dt>Guardado</dt><dd>' + it.saved + '</dd></div><div><dt>Contenido</dt><dd>' + it.detail + '</dd></div></dl>'
+        + retryBtn
+        + note
+        + '</div>'
+        + '</details>'
+        + '</li>';
+    }).join('');
+
+    list.querySelectorAll('[data-retry]').forEach(function (btn) {
+      btn.addEventListener('click', function () { retryOne(btn.getAttribute('data-retry')); });
+    });
+  }
+
+  function toast(msg) {
+    var el = document.getElementById('toast');
+    document.getElementById('toastText').textContent = msg;
+    el.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove('on'); }, 3800);
+  }
+
+  function offline() {
+    return forcedOffline || !navigator.onLine;
+  }
+
+  function setSync() {
+    var btn = document.getElementById('syncBtn');
+    var txt = document.getElementById('syncText');
+    var c = counts();
+    var off = offline();
+    document.getElementById('offlineBanner').hidden = !off;
+    btn.classList.toggle('is-off', off);
+    btn.classList.toggle('has-pending', !off && c.pending + c.failed > 0);
+    txt.textContent = off ? 'Sin señal' : (c.pending + c.failed > 0 ? (c.pending + c.failed) + ' pendientes' : 'Al día');
+  }
+
+  function runSync(ids) {
+    if (syncing) return;
+    if (offline()) {
+      toast('Sin conexión. La cola espera en este equipo.');
+      return;
+    }
+    var targets = items.filter(function (it) {
+      return ids ? ids.indexOf(it.id) > -1 : (it.state === 'pending' || it.state === 'failed');
+    });
+    if (!targets.length) return;
+
+    syncing = true;
+    targets.forEach(function (it) { it.state = 'uploading'; });
+    var btn = document.getElementById('syncNow');
+    btn.classList.add('is-loading');
+    render();
+    setSync();
+
+    setTimeout(function () {
+      targets.forEach(function (it) { it.state = 'done'; });
+      syncing = false;
+      btn.classList.remove('is-loading');
+      lastSync = 'hace un momento';
+      render();
+      setSync();
+      toast(targets.length === 1
+        ? '1 registro sincronizado.'
+        : targets.length + ' registros sincronizados.');
+    }, 1200);
+  }
+
+  function retryOne(id) {
+    runSync([id]);
+  }
+
+  document.getElementById('syncNow').addEventListener('click', function () { runSync(null); });
+  document.getElementById('retryFailed').addEventListener('click', function () {
+    var ids = items.filter(function (i) { return i.state === 'failed'; }).map(function (i) { return i.id; });
+    runSync(ids);
+  });
+
+  window.addEventListener('online', function () {
+    setSync();
+    if (items.some(function (i) { return i.state === 'pending' || i.state === 'failed'; })) runSync(null);
+  });
+  window.addEventListener('offline', setSync);
+
+  render();
+  setSync();
+})();
+</script>
+</body>
+</html>

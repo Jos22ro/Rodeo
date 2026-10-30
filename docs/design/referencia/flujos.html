@@ -669,13 +669,23 @@ td:first-child{font-weight:600;white-space:nowrap}
             <li class="branch"><b>Vuelve al mismo turno del día</b>Los litros nuevos se suman, no sobrescriben. Un registro por vaca, fecha y turno.</li>
             <li class="branch is-error"><b>Valor inválido</b>Menor a 0, mayor a 100 L (por vaca o acumulado), texto o vacío: error inline y CTA deshabilitado.</li>
             <li class="branch"><b>Sin vacas activas</b>“No hay vacas activas”; no se muestra una planilla vacía.</li>
-            <li class="branch is-clay"><b>Se corta la señal al guardar</b>El registro queda local y sube al reconectar.</li>
-          </ul>
-        </div>
-      </div>
-    </article>
-
-    <!-- 05 -->
+<li class="branch is-clay"><b>Se corta la señal al guardar</b>El registro queda local y sube al reconectar.</li>
+</ul>
+</div>
+<p class="flow-demo">
+<a href="milking.html">
+<span>Prototipo del flujo:</span> Planilla de ordeño
+<svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg>
+</a>
+</p>
+<p class="flow-demo flow-demo-steps">
+<a href="milking.html"><b>01</b> Cargar el turno</a>
+<a href="milking.html?offline=1"><b>02</b> Guardar sin señal</a>
+<a href="milking.html?vacio=1"><b>03</b> Sin vacas activas</a>
+</p>
+</div>
+</article>
+<!-- 05 -->
     <article class="flow" data-roles="capataz dueno">
       <div class="flow-head">
         <span class="flow-index">05</span>
@@ -700,13 +710,24 @@ td:first-child{font-weight:600;white-space:nowrap}
           <ul class="branches">
             <li class="branch is-error"><b>Litros 0, negativos o texto</b>Bloqueado; no hay despacho vacío.</li>
             <li class="branch"><b>Fecha sin registros</b>Estado vacío “Sin despachos”.</li>
-            <li class="branch is-clay"><b>Despacho sin ordeños ese día</b>Se permite guardar; el panel lo muestra como merma del 100 % en rojo.</li>
-          </ul>
-        </div>
-      </div>
-    </article>
+<li class="branch is-clay"><b>Despacho sin ordeños ese día</b>Se permite guardar; el panel lo muestra como merma del 100 % en rojo.</li>
+</ul>
+</div>
+<p class="flow-demo">
+<a href="despacho.html">
+<span>Prototipo del flujo:</span> Registro de despacho
+<svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg>
+</a>
+</p>
+<p class="flow-demo flow-demo-steps">
+<a href="despacho.html"><b>01</b> Registrar una salida</a>
+<a href="despacho.html?offline=1"><b>02</b> Despachar sin señal</a>
+<a href="despacho.html?sinorden=1"><b>03</b> Despacho sin ordeño</a>
+</p>
+</div>
+</article>
 
-    <!-- 06 -->
+<!-- 06 -->
     <article class="flow" data-roles="sistema capataz">
       <div class="flow-head">
         <span class="flow-index">06</span>
@@ -732,9 +753,20 @@ td:first-child{font-weight:600;white-space:nowrap}
             <li class="branch is-error"><b>Subida fallida</b>Se reintenta con espera; el registro no se borra local; queda “1 pendiente”.</li>
             <li class="branch is-error"><b>Se agotan los reintentos</b>Header “N fallidos”, botón “Reintentar” y contador rojo. Al liberar la red, sube.</li>
             <li class="branch"><b>Offline/online a medio cargar</b>La página no se recarga ni pierde lo tipeado: la sync corre en segundo plano.</li>
-            <li class="branch is-clay"><b>Sin señal 4+ días</b>Datos viejos con “Última sync: hace X días”; se actualiza al volver.</li>
+          <li class="branch is-clay"><b>Sin señal 4+ días</b>Datos viejos con “Última sync: hace X días”; se actualiza al volver.</li>
           </ul>
         </div>
+        <p class="flow-demo">
+          <a href="sincronizacion.html">
+            <span>Prototipo del flujo:</span> Cola de sincronización
+            <svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg>
+          </a>
+        </p>
+        <p class="flow-demo flow-demo-steps">
+          <a href="sincronizacion.html"><b>01</b> Ver la cola</a>
+          <a href="sincronizacion.html?fallo=1"><b>02</b> Subida fallida</a>
+          <a href="sincronizacion.html?vacio=1"><b>03</b> Cola vacía</a>
+        </p>
       </div>
     </article>
 
@@ -766,12 +798,24 @@ td:first-child{font-weight:600;white-space:nowrap}
             <li class="branch is-clay"><b>Despacho sin ordeño</b>100 % en rojo. Es el caso que más rápido revela una fuga.</li>
             <li class="branch is-error"><b>Despacho mayor al ordeñado</b>Rojo y “Salida mayor al ordeñe”.</li>
             <li class="branch"><b>Sin conexión</b>Datos de la última lectura o error controlado, sin romper la navegación.</li>
-            <li class="branch"><b>Pasadas las 21:00</b>El panel debe seguir mostrando el día de hoy, no el siguiente.</li>
-          </ul>
-        </div>
-      </div>
-    </article>
-  </div>
+<li class="branch"><b>Pasadas las 21:00</b>El panel debe seguir mostrando el día de hoy, no el siguiente.</li>
+</ul>
+</div>
+<p class="flow-demo">
+<a href="panel.html">
+<span>Prototipo del flujo:</span> Panel del dueño
+<svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg>
+</a>
+</p>
+<p class="flow-demo flow-demo-steps">
+<a href="panel.html"><b>01</b> Abrir el panel</a>
+<a href="panel.html?merma=100"><b>02</b> Despacho sin ordeño</a>
+<a href="panel.html?sobregiro=1"><b>03</b> Sobre-despacho</a>
+<a href="panel.html?sinpermiso=1"><b>04</b> Bloqueo del capataz</a>
+</p>
+</div>
+</article>
+</div>
 </section>
 
 <!-- ======================= ESTADOS ======================= -->

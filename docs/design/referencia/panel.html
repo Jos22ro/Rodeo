@@ -1,0 +1,806 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#FAF7F0" />
+<title>Panel · Rodeo</title>
+<meta name="description" content="Panel de conciliación de Rodeo: ordeñado, despachado y merma del día, con tendencia de 30 días." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root{
+  color-scheme:light;
+  --background:#FAF7F0;
+  --card:#FFFFFF;
+  --secondary:#EFE9DA;
+  --foreground:#23211C;
+  --muted:#6B675C;
+  --border:#E3DCCC;
+  --primary:#1F4D3A;
+  --primary-deep:#17392B;
+  --primary-foreground:#F7F3E9;
+  --clay:#B5622F;
+  --clay-soft:#F3E2D5;
+  --clay-ink:#8F4A20;
+  --danger:#B4341F;
+  --ring:#2E6B4E;
+  --font-display:'Fraunces',Georgia,'Times New Roman',serif;
+  --font-body:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --font-mono:ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;
+  --r-sm:8px;
+  --r-md:12px;
+  --r-lg:16px;
+  --shadow-card:0 1px 2px rgba(35,33,28,.06);
+  --shadow-sheet:0 18px 40px -24px rgba(23,57,43,.35);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;min-height:100dvh;
+  background:var(--background);color:var(--foreground);
+  font:400 16px/1.55 var(--font-body);
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,p,ul,ol,dl,dd,figure,figcaption{margin:0}
+ul,ol{padding:0;list-style:none}
+button{font:inherit}
+svg{display:block}
+a{color:var(--primary);text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{color:var(--primary-deep)}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--ring) 60%,transparent);outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+[hidden]{display:none !important}
+.skip{position:absolute;left:12px;top:-52px;z-index:99;display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:8px;background:var(--primary);color:var(--primary-foreground);text-decoration:none;font-size:14px}
+.skip:focus{top:12px}
+
+/* appbar */
+.appbar{position:sticky;top:0;z-index:40;background:var(--background);border-bottom:1px solid var(--border)}
+.appbar-inner{max-width:1024px;margin:0 auto;padding:10px 20px 0;display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px}
+.brand{display:flex;align-items:center;gap:9px;min-height:44px;text-decoration:none;color:var(--foreground)}
+.brand .mark{width:30px;height:30px;border-radius:8px;flex:none}
+.brand .word{font:500 19px/1 var(--font-display);letter-spacing:-.015em}
+.brand .kicker{font:600 11px/1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding-left:10px;border-left:1px solid var(--border);white-space:nowrap}
+.brand:hover .word{color:var(--primary-deep)}
+.appnav{display:flex;gap:2px;order:3;width:100%;margin:0 -20px;padding:0 20px;border-top:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.appnav::-webkit-scrollbar{display:none}
+.appnav a{position:relative;display:inline-flex;align-items:center;min-height:44px;padding:0 10px;border-radius:8px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;white-space:nowrap}
+.appnav a:hover{background:var(--secondary);color:var(--foreground)}
+.appnav a[aria-current="page"]{color:var(--primary)}
+.appnav a[aria-current="page"]::after{content:"";position:absolute;left:10px;right:10px;bottom:0;height:2px;background:var(--primary)}
+.appbar-end{display:flex;align-items:center;gap:8px;margin-left:auto}
+@media (min-width:900px){
+  .appbar-inner{padding:0 20px;min-height:64px;flex-wrap:nowrap}
+  .appnav{order:0;width:auto;margin:0;padding:0;border-top:0;margin-left:6px}
+}
+@media (max-width:519px){
+  .brand .kicker{display:none}
+  .appnav a{padding:0 8px}
+}
+
+/* sync + cuenta */
+.sync{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-width:44px;min-height:44px;padding:0 10px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--muted);font:500 12px/1 var(--font-body);cursor:pointer;white-space:nowrap;text-decoration:none}
+.sync:hover{background:var(--secondary);color:var(--foreground)}
+.sync i{width:6px;height:6px;border-radius:50%;background:var(--primary);flex:none}
+.sync.has-pending,.sync.is-off{color:var(--clay-ink)}
+.sync.has-pending i,.sync.is-off i{background:var(--clay)}
+.account{position:relative}
+.account summary{list-style:none;display:flex;align-items:center;gap:9px;min-width:44px;min-height:44px;padding:0 4px;border-radius:8px;cursor:pointer}
+.account summary::-webkit-details-marker{display:none}
+.account summary:hover{background:var(--secondary)}
+.avatar{width:32px;height:32px;flex:none;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--primary) 10%,var(--card));color:var(--primary);font:600 11px/1 var(--font-body);letter-spacing:.03em}
+.account .who{display:none}
+.account .chev{width:14px;height:14px;color:var(--muted);display:none}
+@media (min-width:640px){
+  .account .who{display:block;font-size:13px;line-height:1.25;font-weight:500}
+  .account .who small{display:block;font-size:11px;font-weight:400;color:var(--muted)}
+  .account .chev{display:block}
+}
+.account-menu{position:absolute;right:0;top:calc(100% + 8px);width:236px;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-sheet);padding:6px;z-index:60}
+.account-menu a{display:flex;align-items:center;gap:9px;min-height:44px;padding:0 10px;border-radius:8px;font-size:14px;color:var(--foreground);text-decoration:none}
+.account-menu a:hover{background:var(--secondary);color:var(--foreground)}
+.account-menu svg{width:16px;height:16px;color:var(--muted)}
+.account-menu .sep{height:1px;background:var(--border);margin:4px 6px}
+
+.offline{display:flex;align-items:center;justify-content:center;gap:9px;padding:9px 20px;background:var(--secondary);border-bottom:1px solid var(--border);font-size:14px;line-height:1.4}
+.offline svg{width:16px;height:16px;flex:none;color:var(--clay-ink)}
+.offline b{font-weight:600}
+@media (max-width:519px){.offline{justify-content:flex-start;padding:9px 16px}}
+
+/* página */
+.page{max-width:1024px;margin:0 auto;padding:clamp(22px,4vw,36px) 20px 40px}
+.page-head{display:flex;flex-direction:column;gap:20px;padding-bottom:24px}
+.eyebrow{display:flex;align-items:center;gap:9px;font:600 11px/1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.eyebrow::before{content:"";width:16px;height:1px;background:var(--border);flex:none}
+h1{margin-top:11px;font:500 clamp(30px,4.4vw,40px)/1.08 var(--font-display);letter-spacing:-.028em}
+.lead{margin-top:10px;max-width:54ch;font-size:15.5px;line-height:1.6;color:var(--muted)}
+.head-side{display:flex;flex-direction:column;gap:10px;width:100%}
+@media (min-width:820px){
+  .page-head{flex-direction:row;align-items:flex-end;justify-content:space-between;gap:32px}
+  .head-side{width:auto;align-items:flex-end}
+}
+.date-field{display:flex;flex-direction:column;gap:6px}
+.date-field label{font:600 11px/1 var(--font-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.date-input{height:48px;padding:0 12px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--foreground);font:500 14px/1 var(--font-body);min-width:180px}
+.date-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--ring) 22%,transparent)}
+.sync-note{display:inline-flex;align-items:center;gap:7px;font-size:12px;line-height:1.4;color:var(--muted)}
+.sync-note i{width:6px;height:6px;border-radius:50%;background:var(--primary);flex:none}
+.sync-note.is-clay{color:var(--clay-ink)}
+.sync-note.is-clay i{background:var(--clay)}
+
+/* tarjetas */
+.cards{display:grid;gap:12px}
+@media (min-width:640px){.cards{grid-template-columns:repeat(3,1fr)}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow-card);padding:16px 18px}
+.card-label{display:flex;align-items:center;gap:7px;font:600 10.5px/1 var(--font-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.card-label i{width:6px;height:6px;border-radius:50%;background:var(--primary);flex:none}
+.card-num{margin-top:10px;font:600 clamp(30px,4vw,36px)/1 var(--font-body);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.card-num small{font-size:15px;font-weight:500;color:var(--muted);letter-spacing:0;margin-left:2px}
+.card-meta{margin-top:7px;font-size:12.5px;line-height:1.45;color:var(--muted);font-variant-numeric:tabular-nums}
+.card.is-clay .card-label i{background:var(--clay)}
+.card.is-clay .card-num{color:var(--clay-ink)}
+.card.is-clay .card-meta{color:var(--clay-ink)}
+.card.is-danger .card-label i{background:var(--danger)}
+.card.is-danger .card-num,.card.is-danger .card-meta{color:var(--danger)}
+
+/* tendencia */
+.trend{margin-top:30px;padding-top:18px;border-top:1px solid var(--border)}
+.trend-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 18px}
+.trend-head h2{font:500 24px/1.2 var(--font-display);letter-spacing:-.02em}
+.trend-head p{margin-top:4px;font-size:12.5px;line-height:1.45;color:var(--muted);max-width:52ch}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:14px;height:3px;border-radius:2px;background:var(--primary);flex:none}
+.legend i.disp{background:color-mix(in srgb,var(--primary) 34%,var(--card))}
+.legend i.zero{background:var(--border)}
+.chart-wrap{margin-top:8px}
+.chart{width:100%;height:auto;overflow:visible}
+.chart .grid{stroke:var(--border);stroke-width:1}
+.chart .zero{stroke:color-mix(in srgb,var(--muted) 45%,var(--border));stroke-width:1.5;stroke-dasharray:4 4}
+.chart .line{fill:none;stroke:var(--primary);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.chart .dot{fill:var(--card);stroke:var(--primary);stroke-width:1.6}
+.chart .dot-today{fill:var(--clay);stroke:var(--clay-soft);stroke-width:3}
+.chart text{font:500 10.5px/1 var(--font-body);fill:var(--muted);font-variant-numeric:tabular-nums}
+.chart .lbl-today{fill:var(--clay-ink);font-weight:600}
+.chart-note{margin-top:6px;font-size:12px;line-height:1.5;color:var(--muted)}
+.chart-empty{padding:26px 0 8px;font-size:13px;line-height:1.5;color:var(--muted)}
+
+/* por turno */
+.shifts{margin-top:30px;padding-top:18px;border-top:1px solid var(--border)}
+.shifts .legend{margin-top:8px}
+.bar-rows{margin-top:14px;display:grid;gap:14px}
+.shift-row{display:grid;grid-template-columns:78px minmax(0,1fr);gap:12px;align-items:start}
+.shift-name{padding-top:1px;font-size:13px;font-weight:500}
+.bars{display:grid;gap:6px}
+.bar-line{display:grid;grid-template-columns:minmax(0,1fr) 64px;align-items:center;gap:10px}
+.bar-track{height:10px;border-radius:999px;background:var(--secondary);overflow:hidden}
+.bar-track span{display:block;height:100%;border-radius:999px;background:var(--primary);transition:width 300ms cubic-bezier(.2,.7,.3,1)}
+.bar-track span.disp{background:color-mix(in srgb,var(--primary) 34%,var(--card))}
+.bar-val{font-size:12px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.bar-val b{color:var(--foreground);font-weight:500}
+
+/* tabla */
+.days{margin-top:30px;padding-top:18px;border-top:1px solid var(--border)}
+.table-wrap{display:none;margin-top:12px;border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;background:var(--card)}
+table{width:100%;border-collapse:collapse}
+caption{text-align:left}
+th{padding:10px 14px;text-align:left;background:color-mix(in srgb,var(--secondary) 55%,var(--card));border-bottom:1px solid var(--border);font:600 10.5px/1 var(--font-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+td{padding:11px 14px;border-top:1px solid var(--border);font-size:13.5px;vertical-align:middle;font-variant-numeric:tabular-nums}
+tbody tr:first-child td{border-top:0}
+tbody tr.is-today{background:color-mix(in srgb,var(--secondary) 26%,var(--card))}
+td.num{text-align:right;font-weight:500}
+td .neg{color:var(--danger)}
+td .clay{color:var(--clay-ink)}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:999px;font-size:11.5px;font-weight:500;line-height:1.2;white-space:nowrap}
+.badge.green{background:color-mix(in srgb,var(--primary) 9%,var(--card));color:var(--primary)}
+.badge.clay{background:var(--clay-soft);color:var(--clay-ink)}
+.badge.danger{background:color-mix(in srgb,var(--danger) 10%,var(--card));color:var(--danger)}
+.badge i{width:5px;height:5px;border-radius:50%;background:currentColor;flex:none}
+
+.day-list{display:grid;margin-top:12px}
+.day-list li{border-top:1px solid var(--border)}
+.day-list li:first-child{border-top:0}
+.d-row{display:grid;grid-template-columns:1fr auto;gap:4px 12px;width:100%;min-height:44px;padding:12px 6px;border:0;border-radius:8px;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.d-row:hover{background:color-mix(in srgb,var(--secondary) 45%,transparent)}
+.d-row .d-date{font-size:14px;font-weight:500}
+.d-row .d-total{font:600 14px/1.2 var(--font-body);text-align:right;font-variant-numeric:tabular-nums;color:var(--clay-ink)}
+.d-row .d-total.neg{color:var(--danger)}
+.d-row .d-meta{grid-column:1/-1;font-size:12px;line-height:1.45;color:var(--muted);font-variant-numeric:tabular-nums}
+.d-row .d-state{grid-column:2;justify-self:end}
+.row-btn{display:inline-flex;align-items:center;min-height:44px;padding:0;border:0;border-radius:6px;background:transparent;color:var(--foreground);font:500 13.5px/1.2 var(--font-body);text-align:left;cursor:pointer}
+.row-btn:hover{color:var(--primary);text-decoration:underline;text-underline-offset:3px}
+.na{font:500 15px/1.2 var(--font-body);color:var(--muted);letter-spacing:0}
+
+/* hoja del día */
+.sheet{border:0;padding:0;background:transparent;width:100%;max-width:min(440px,calc(100vw - 24px));margin:auto auto 0;color:var(--foreground)}
+.sheet::backdrop{background:rgba(35,33,28,.42)}
+.sheet-card{background:var(--card);border:1px solid var(--border);border-radius:16px 16px 0 0;box-shadow:var(--shadow-sheet);padding:20px 20px calc(20px + env(safe-area-inset-bottom))}
+.sheet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.sheet-head h2{font:500 22px/1.2 var(--font-display);letter-spacing:-.02em}
+.sheet-close{display:grid;place-items:center;width:44px;height:44px;flex:none;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--muted);cursor:pointer}
+.sheet-close:hover{background:var(--secondary);color:var(--foreground)}
+.sheet-close svg{width:18px;height:18px}
+.sheet-rows{display:grid;margin:14px 0 0;border-top:1px solid var(--border)}
+.sheet-rows div{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);font-size:14px}
+.sheet-rows dt{color:var(--muted)}
+.sheet-rows dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums}
+.sheet-actions{display:flex;gap:8px;margin-top:18px}
+.sheet-actions .btn{flex:1}
+@media (min-width:760px){
+  .table-wrap{display:block}
+  .day-list{display:none}
+  .sheet{display:none}
+}
+
+/* role gate */
+.gate{padding:clamp(32px,8vw,80px) 20px}
+.gate-card{max-width:460px;margin:0 auto;background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow-card);padding:30px 26px;text-align:center}
+.gate-ico{width:52px;height:52px;margin:0 auto 16px;border-radius:50%;display:grid;place-items:center;background:var(--secondary);color:var(--primary)}
+.gate-ico svg{width:23px;height:23px}
+.gate-card h1{margin-top:0;font-size:28px}
+.gate-card p{margin-top:9px;font-size:14px;line-height:1.6;color:var(--muted)}
+.gate-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:22px}
+.gate-actions .btn{flex:1 1 160px}
+
+/* botones */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border:1px solid transparent;border-radius:8px;font-size:15px;font-weight:600;letter-spacing:.005em;text-decoration:none;cursor:pointer;transition:background 120ms ease,border-color 120ms ease,color 120ms ease,transform 120ms ease}
+.btn svg{width:17px;height:17px;flex:none}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground)}
+.btn-primary:hover{background:var(--primary-deep);border-color:var(--primary-deep);color:var(--primary-foreground)}
+.btn-secondary{background:var(--card);border-color:var(--border);color:var(--foreground)}
+.btn-secondary:hover{background:var(--secondary);border-color:color-mix(in srgb,var(--muted) 32%,var(--border));color:var(--foreground)}
+
+.foot{max-width:1024px;margin:0 auto;padding:18px 20px 40px;display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:space-between;font-size:12px;line-height:1.5;color:var(--muted)}
+.foot b{font-weight:500;color:var(--foreground)}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
+}
+</style>
+</head>
+<body>
+
+<a class="skip" href="#panel">Saltar al panel</a>
+
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <defs>
+    <symbol id="i-mark" viewBox="0 0 512 512">
+      <rect width="512" height="512" rx="112" fill="#1F4D3A"/>
+      <g transform="translate(-9 0)" fill="none" stroke="#F7F3E9" stroke-width="46" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M186 138V374"/><path d="M186 161H258A57 57 0 0 1 258 275H186"/><path d="M255 281C290 305 320 338 344 372"/>
+      </g>
+    </symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5"/><path d="M12 16h.01"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></symbol>
+    <symbol id="i-offline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M6 18 18 6"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 8 6 12l4 4"/><path d="M6 12h9"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"/><path d="m14 6 6 6-6 6"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m6 6 12 12"/><path d="m18 6-12 12"/></symbol>
+  </defs>
+</svg>
+
+<header class="appbar">
+  <div class="appbar-inner">
+    <a class="brand" href="panel.html" aria-label="Rodeo, panel del dueño">
+      <svg class="mark" aria-hidden="true"><use href="#i-mark"/></svg>
+      <span class="word">Rodeo</span>
+      <span class="kicker">Tambo La Palma</span>
+    </a>
+
+    <nav class="appnav" aria-label="Secciones de la app">
+      <a href="vacas.html">Vacas</a>
+      <a href="milking.html">Ordeño</a>
+      <a href="despacho.html">Despacho</a>
+      <a href="panel.html" aria-current="page">Panel</a>
+    </nav>
+
+    <div class="appbar-end">
+      <a class="sync" id="syncBtn" href="sincronizacion.html" aria-label="Estado de sincronización">
+        <i aria-hidden="true"></i>
+        <span class="sync-txt" id="syncText">Al día</span>
+      </a>
+      <details class="account" id="account">
+        <summary aria-label="Cuenta y sesión">
+          <span class="avatar">JR</span>
+          <span class="who">José Rangel<small>Dueño</small></span>
+          <svg class="chev" aria-hidden="true"><use href="#i-chevron"/></svg>
+        </summary>
+        <div class="account-menu">
+          <a href="instalacion.html"><svg aria-hidden="true"><use href="#i-download"/></svg>Instalar en este equipo</a>
+          <div class="sep" role="presentation"></div>
+          <a href="login.html"><svg aria-hidden="true"><use href="#i-logout"/></svg>Cerrar sesión</a>
+        </div>
+      </details>
+    </div>
+  </div>
+</header>
+
+<div class="offline" id="offlineBanner" hidden>
+  <svg aria-hidden="true"><use href="#i-offline"/></svg>
+  <span><b>Sin conexión.</b> Estás viendo la última lectura guardada en este equipo.</span>
+</div>
+
+<main class="page" id="panel">
+  <header class="page-head">
+    <div>
+      <p class="eyebrow">Panel · Dueño</p>
+      <h1>Conciliación del día</h1>
+      <p class="lead">Ordeñado menos despachado, sin llamar a nadie. Si la merma está en rango, es un dato; si se sale, aparece la advertencia.</p>
+    </div>
+    <div class="head-side">
+      <div class="date-field">
+        <label for="date">Fecha</label>
+        <input class="date-input" id="date" type="date" />
+      </div>
+      <p class="sync-note" id="syncNote"><i aria-hidden="true"></i><span>Última sync: hace 12 min</span></p>
+    </div>
+  </header>
+
+  <section class="cards" aria-label="Resumen del día" aria-live="polite">
+    <article class="card" id="cardMilk">
+      <p class="card-label"><i aria-hidden="true"></i>Ordeñado hoy</p>
+      <p class="card-num" id="milkNum">112,0<small>L</small></p>
+      <p class="card-meta" id="milkMeta">Mañana 58,4 L · Tarde 53,6 L</p>
+    </article>
+    <article class="card" id="cardDispatch">
+      <p class="card-label"><i aria-hidden="true"></i>Despachado hoy</p>
+      <p class="card-num" id="dispatchNum">96,5<small>L</small></p>
+      <p class="card-meta" id="dispatchMeta">2 despachos</p>
+    </article>
+    <article class="card is-clay" id="cardMerma">
+      <p class="card-label"><i aria-hidden="true"></i>Merma hoy</p>
+      <p class="card-num" id="mermaNum">15,5<small>L</small></p>
+      <p class="card-meta" id="mermaMeta">13,8 % · Leche sin despachar</p>
+    </article>
+  </section>
+
+  <figure class="trend" aria-labelledby="trendTitle">
+    <div class="trend-head">
+      <figcaption id="trendTitle">
+        <h2>Merma, últimos 30 días</h2>
+        <p>Porcentaje diario sobre lo ordeñado. La referencia punteada es 0 %: por debajo, salió más de lo que entró.</p>
+      </figcaption>
+      <div class="legend">
+        <span><i aria-hidden="true"></i>Merma diaria</span>
+        <span><i class="zero" aria-hidden="true"></i>Referencia 0 %</span>
+      </div>
+    </div>
+    <div class="chart-wrap" id="chartWrap">
+      <svg class="chart" id="chart" viewBox="0 0 720 240" role="img" aria-label="Merma diaria de los últimos 30 días"></svg>
+    </div>
+    <p class="chart-note" id="chartNote">Hoy: 13,8 %. El pico de 15,9 % fue el 27 de octubre.</p>
+    <p class="chart-empty" id="chartEmpty" hidden>Sin datos para graficar. Vuelve cuando haya ordeños y despachos registrados.</p>
+  </figure>
+
+  <section class="shifts" aria-labelledby="shiftsTitle">
+    <div class="trend-head">
+      <div>
+        <h2 id="shiftsTitle">Por turno</h2>
+        <p style="margin-top:4px;font-size:12.5px;line-height:1.45;color:var(--muted)">Cuánto se ordeñó y cuánto salió en cada turno del día.</p>
+      </div>
+      <div class="legend">
+        <span><i aria-hidden="true"></i>Ordeñado</span>
+        <span><i class="disp" aria-hidden="true"></i>Despachado</span>
+      </div>
+    </div>
+    <div class="bar-rows" id="barRows"></div>
+  </section>
+
+  <section class="days" aria-labelledby="daysTitle">
+    <div class="trend-head">
+      <div>
+        <h2 id="daysTitle">Últimos 7 días</h2>
+        <p style="margin-top:4px;font-size:12.5px;line-height:1.45;color:var(--muted)">El mismo cálculo, día por día. Toca una fila para ver ese día arriba.</p>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <caption class="sr-only">Ordeñado, despachado y merma de los últimos siete días</caption>
+        <thead>
+          <tr>
+            <th scope="col">Día</th>
+            <th scope="col" style="text-align:right">Ordeñado</th>
+            <th scope="col" style="text-align:right">Despachado</th>
+            <th scope="col" style="text-align:right">Merma</th>
+            <th scope="col">Estado</th>
+          </tr>
+        </thead>
+        <tbody id="dayRows"></tbody>
+      </table>
+    </div>
+    <ul class="day-list" id="dayList" aria-label="Últimos siete días"></ul>
+  </section>
+</main>
+
+<section class="gate" id="gate" hidden aria-labelledby="gateTitle">
+  <div class="gate-card">
+    <div class="gate-ico"><svg aria-hidden="true"><use href="#i-lock"/></svg></div>
+    <p class="eyebrow" style="justify-content:center">Acceso restringido</p>
+    <h1 id="gateTitle">El panel es del dueño</h1>
+    <p>Tu cuenta es de capataz. Puedes seguir con Vacas, Ordeño y Despacho; la conciliación queda para quien toma la decisión.</p>
+    <div class="gate-actions">
+      <a class="btn btn-primary" href="vacas.html">Ir a Vacas</a>
+      <a class="btn btn-secondary" href="permisos.html?rol=capataz">Ver roles y permisos</a>
+    </div>
+  </div>
+</section>
+
+<dialog class="sheet" id="daySheet" aria-labelledby="daySheetTitle">
+  <div class="sheet-card">
+    <div class="sheet-head">
+      <div>
+        <p class="eyebrow">Detalle del día</p>
+        <h2 id="daySheetTitle">Hoy</h2>
+      </div>
+      <button type="button" class="sheet-close" id="daySheetClose" aria-label="Cerrar detalle">
+        <svg aria-hidden="true"><use href="#i-close"/></svg>
+      </button>
+    </div>
+    <dl class="sheet-rows" id="daySheetRows"></dl>
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-primary" id="daySheetPick">Ver en el resumen</button>
+    </div>
+  </div>
+</dialog>
+
+<footer class="foot">
+  <span><b>Rodeo</b> · Tambo La Palma</span>
+  <span>Datos guardados en este equipo. Se sincronizan al reconectar.</span>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  var params = new URLSearchParams(location.search);
+  var forcedOffline = params.get('offline') === '1';
+  var emptyMode = params.get('vacio') === '1';
+  var gateMode = params.get('sinpermiso') === '1' || params.get('rol') === 'capataz';
+  var stateMode = params.get('estado') || '';
+  if (params.get('merma') === '100') stateMode = 'cien';
+  if (params.get('sobregiro') === '1') stateMode = 'sobre';
+
+  if (gateMode) {
+    document.getElementById('panel').hidden = true;
+    document.getElementById('gate').hidden = false;
+    document.querySelector('.appnav a[href="panel.html"]').removeAttribute('aria-current');
+    return;
+  }
+
+  function todayISO() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  function addDays(iso, n) {
+    var d = new Date(iso + 'T12:00:00');
+    d.setDate(d.getDate() + n);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  var TODAY = todayISO();
+  var DAYS = [
+    { offset:0, milk:112.0, disp:96.5, mShift:58.4, dShift:54.0 },
+    { offset:1, milk:108.4, disp:99.1, mShift:56.4, dShift:55.2 },
+    { offset:2, milk:115.2, disp:104.8, mShift:60.1, dShift:58.4 },
+    { offset:3, milk:109.7, disp:92.3, mShift:57.0, dShift:50.8 },
+    { offset:4, milk:113.5, disp:111.0, mShift:59.1, dShift:61.3 },
+    { offset:5, milk:107.8, disp:98.2, mShift:56.0, dShift:52.7 },
+    { offset:6, milk:110.3, disp:100.9, mShift:57.4, dShift:54.1 }
+  ];
+
+  if (stateMode === 'sobre') {
+    DAYS[0].milk = 90.0; DAYS[0].disp = 96.5; DAYS[0].mShift = 46.8; DAYS[0].dShift = 54.0;
+  } else if (stateMode === 'cien') {
+    DAYS[0].milk = 0; DAYS[0].disp = 42.0; DAYS[0].mShift = 0; DAYS[0].dShift = 24.0;
+  }
+
+  if (emptyMode) DAYS = [];
+
+  DAYS.forEach(function (d) {
+    d.date = addDays(TODAY, -d.offset);
+    d.diff = d.milk - d.disp;
+    d.pct = d.milk ? (d.diff / d.milk) * 100 : (d.disp ? 100 : 0);
+    d.mAfter = Math.max(0, Math.round((d.milk - d.mShift) * 10) / 10);
+    d.dAfter = Math.max(0, Math.round((d.disp - d.dShift) * 10) / 10);
+  });
+
+  var TREND = [9.4,8.1,10.2,7.8,11.3,9.9,6.4,8.8,12.1,10.5,9.2,7.1,8.6,11.8,13.2,10.1,8.4,7.6,9.8,12.6,14.1,11.2,9.0,8.5,8.9,2.2,15.9,9.0,8.6,13.8];
+  if (stateMode === 'sobre') TREND[29] = -7.2;
+  if (stateMode === 'cien') TREND[29] = 20;
+  if (emptyMode) TREND = [];
+
+  var dateInput = document.getElementById('date');
+  var selected = params.get('fecha') || TODAY;
+
+  function format(n) {
+    return n.toLocaleString('es-VE', { minimumFractionDigits:1, maximumFractionDigits:1 });
+  }
+
+  function dayLabel(iso, short) {
+    var d = new Date(iso + 'T12:00:00');
+    if (isNaN(d.getTime())) return 'Sin fecha';
+    if (iso === TODAY) return 'Hoy';
+    if (iso === addDays(TODAY, -1)) return 'Ayer';
+    return d.toLocaleDateString('es-VE', short
+      ? { day:'numeric', month:'short' }
+      : { weekday:'short', day:'numeric', month:'short' });
+  }
+
+  function findDay(iso) {
+    return DAYS.find(function (d) { return d.date === iso; }) || null;
+  }
+
+  function statusFor(d) {
+    if (!d.milk && d.disp) return { label:'Sin ordeño', cls:'danger' };
+    if (d.diff < 0) return { label:'Salida mayor', cls:'danger' };
+    if (Math.abs(d.pct) > 15) return { label:'Revisar', cls:'clay' };
+    return { label:'En rango', cls:'green' };
+  }
+
+  function renderSummary() {
+    var d = findDay(selected);
+    var cardMerma = document.getElementById('cardMerma');
+
+    cardMerma.classList.remove('is-clay', 'is-danger');
+
+    if (!d) {
+      document.getElementById('milkNum').innerHTML = '<span class="na">Sin dato</span>';
+      document.getElementById('milkMeta').textContent = 'Sin registros para esta fecha.';
+      document.getElementById('dispatchNum').innerHTML = '<span class="na">Sin dato</span>';
+      document.getElementById('dispatchMeta').textContent = 'Sin registros para esta fecha.';
+      document.getElementById('mermaNum').innerHTML = '<span class="na">Sin dato</span>';
+      document.getElementById('mermaMeta').textContent = 'No hay ordeño ni despacho.';
+      cardMerma.classList.add('is-clay');
+      return;
+    }
+
+    document.getElementById('milkNum').innerHTML = (d.milk ? format(d.milk) : '0,0') + '<small>L</small>';
+    document.getElementById('milkMeta').textContent = d.milk
+      ? 'Mañana ' + format(d.mShift) + ' L · Tarde ' + format(d.mAfter) + ' L'
+      : 'Sin ordeños ese día.';
+
+    document.getElementById('dispatchNum').innerHTML = (d.disp ? format(d.disp) : '0,0') + '<small>L</small>';
+    document.getElementById('dispatchMeta').textContent = d.disp
+      ? (d.dShift && d.dAfter ? 'Mañana ' + format(d.dShift) + ' L · Tarde ' + format(d.dAfter) + ' L' : '1 despacho')
+      : 'Sin despachos.';
+
+    var num = document.getElementById('mermaNum');
+    var meta = document.getElementById('mermaMeta');
+
+    if (!d.milk && d.disp) {
+      num.innerHTML = format(d.disp) + '<small>L</small>';
+      meta.textContent = '100 % · Despacho sin ordeño';
+      cardMerma.classList.add('is-danger');
+    } else if (d.diff < 0) {
+      num.innerHTML = '−' + format(Math.abs(d.diff)) + '<small>L</small>';
+      meta.textContent = format(Math.abs(d.pct)) + ' % · Salida mayor al ordeñe';
+      cardMerma.classList.add('is-danger');
+    } else {
+      num.innerHTML = format(d.diff) + '<small>L</small>';
+      meta.textContent = format(d.pct) + ' % · ' + (Math.abs(d.pct) > 15 ? 'Por encima del rango' : 'Leche sin despachar');
+      cardMerma.classList.add('is-clay');
+    }
+  }
+
+  function renderChart() {
+    var svg = document.getElementById('chart');
+    var empty = document.getElementById('chartEmpty');
+    var wrap = document.getElementById('chartWrap');
+    var note = document.getElementById('chartNote');
+
+    if (!TREND.length) {
+      wrap.hidden = true;
+      empty.hidden = false;
+      note.hidden = true;
+      return;
+    }
+    wrap.hidden = false;
+    empty.hidden = true;
+    note.hidden = false;
+
+    var W = Math.max(280, Math.round(wrap.clientWidth || 720));
+    var H = W < 520 ? 196 : 240;
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    var padL = 36, padR = 14, padT = 14, padB = 30;
+    var n = TREND.length;
+    var min = -10, max = 20;
+    function x(i) { return padL + (i * (W - padL - padR)) / (n - 1); }
+    function y(v) { return padT + (1 - (v - min) / (max - min)) * (H - padT - padB); }
+
+    var out = '';
+    [20, 10, 0, -10].forEach(function (v) {
+      var yy = y(v);
+      out += '<line class="' + (v === 0 ? 'zero' : 'grid') + '" x1="' + padL + '" y1="' + yy + '" x2="' + (W - padR) + '" y2="' + yy + '"/>';
+      out += '<text x="' + (padL - 8) + '" y="' + (yy + 3.5) + '" text-anchor="end">' + v + ' %</text>';
+    });
+
+    var dpath = '';
+    TREND.forEach(function (v, i) {
+      dpath += (i === 0 ? 'M' : 'L') + x(i).toFixed(1) + ' ' + y(v).toFixed(1);
+    });
+    out += '<path class="line" d="' + dpath + '"/>';
+
+    TREND.forEach(function (v, i) {
+      if (i === n - 1) {
+        out += '<circle class="dot-today" cx="' + x(i).toFixed(1) + '" cy="' + y(v).toFixed(1) + '" r="5"/>';
+      } else if (i % 3 === 0) {
+        out += '<circle class="dot" cx="' + x(i).toFixed(1) + '" cy="' + y(v).toFixed(1) + '" r="2.6"/>';
+      }
+    });
+
+    out += '<text x="' + padL + '" y="' + (H - 8) + '">30 días</text>';
+    out += '<text x="' + (W / 2) + '" y="' + (H - 8) + '" text-anchor="middle">15 días</text>';
+    out += '<text x="' + (W - padR) + '" y="' + (H - 8) + '" text-anchor="end">Hoy</text>';
+    var last = TREND[n - 1];
+    out += '<text class="lbl-today" x="' + (x(n - 1) - 8) + '" y="' + (y(last) - 12) + '" text-anchor="end">' + format(last) + ' %</text>';
+
+    svg.innerHTML = out;
+
+    if (stateMode === 'sobre') {
+      note.textContent = 'Hoy: −7,2 %. La salida supera el ordeñe; la referencia 0 % marca el cambio de signo.';
+    } else if (stateMode === 'cien') {
+      note.textContent = 'Hoy: 100 %. El despacho sin ordeño queda fuera de la escala; el punto se ancla al tope.';
+    } else {
+      note.textContent = 'Hoy: ' + format(last) + ' %. El pico de 15,9 % fue el 27 de octubre.';
+    }
+  }
+
+  function renderBars() {
+    var host = document.getElementById('barRows');
+    var d = findDay(selected);
+    if (!d || (!d.milk && !d.disp)) {
+      host.innerHTML = '<p class="chart-empty">Sin turnos para esta fecha.</p>';
+      return;
+    }
+    var max = Math.max(d.mShift, d.mAfter, d.dShift, d.dAfter, 1);
+    function row(name, milk, disp) {
+      var wm = Math.max(0, Math.min(100, (milk / max) * 100));
+      var wd = Math.max(0, Math.min(100, (disp / max) * 100));
+      return '<div class="shift-row">'
+        + '<p class="shift-name">' + name + '</p>'
+        + '<div class="bars">'
+        + '<div class="bar-line"><div class="bar-track"><span style="width:' + wm.toFixed(1) + '%"></span></div><p class="bar-val"><b>' + format(milk) + '</b> L</p></div>'
+        + '<div class="bar-line"><div class="bar-track"><span class="disp" style="width:' + wd.toFixed(1) + '%"></span></div><p class="bar-val"><b>' + format(disp) + '</b> L</p></div>'
+        + '</div></div>';
+    }
+    host.innerHTML = row('Mañana', d.mShift, d.dShift) + row('Tarde', d.mAfter, d.dAfter);
+  }
+
+  var sheet = document.getElementById('daySheet');
+  var sheetRows = document.getElementById('daySheetRows');
+  var sheetTitle = document.getElementById('daySheetTitle');
+  var sheetPick = document.getElementById('daySheetPick');
+  var sheetDate = null;
+
+  function openSheet(d) {
+    sheetDate = d.date;
+    sheetTitle.textContent = dayLabel(d.date, false);
+    var st = statusFor(d);
+    var mermaTxt = (!d.milk && d.disp)
+      ? format(d.disp) + ' L'
+      : (d.diff < 0 ? '−' + format(Math.abs(d.diff)) + ' L' : format(d.diff) + ' L');
+    var pctTxt = (!d.milk && d.disp) ? '100 %' : format(Math.abs(d.pct)) + ' %';
+    sheetRows.innerHTML =
+      '<div><dt>Ordeñado</dt><dd>' + (d.milk ? format(d.milk) + ' L' : 'Sin dato') + '</dd></div>'
+      + '<div><dt>Despachado</dt><dd>' + (d.disp ? format(d.disp) + ' L' : 'Sin dato') + '</dd></div>'
+      + '<div><dt>Merma</dt><dd>' + mermaTxt + ' · ' + pctTxt + '</dd></div>'
+      + '<div><dt>Estado</dt><dd>' + st.label + '</dd></div>';
+    if (typeof sheet.showModal === 'function') sheet.showModal();
+    else sheet.setAttribute('open', '');
+  }
+
+  function renderDays() {
+    var tbody = document.getElementById('dayRows');
+    var list = document.getElementById('dayList');
+
+    if (!DAYS.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="padding:24px 14px;color:var(--muted)">Sin registros en los últimos siete días.</td></tr>';
+      list.innerHTML = '<li><p class="d-meta" style="padding:12px 6px">Sin registros en los últimos siete días.</p></li>';
+      return;
+    }
+
+    var rows = '';
+    var lis = '';
+    DAYS.forEach(function (d) {
+      var st = statusFor(d);
+      var isToday = d.date === TODAY;
+      var mermaCls = d.diff < 0 || (!d.milk && d.disp) ? 'neg' : (Math.abs(d.pct) > 15 ? 'clay' : '');
+      var mermaTxt = (!d.milk && d.disp)
+        ? format(d.disp) + ' L'
+        : (d.diff < 0 ? '−' + format(Math.abs(d.diff)) + ' L' : format(d.diff) + ' L');
+      var pctTxt = (!d.milk && d.disp) ? '100 %' : format(Math.abs(d.pct)) + ' %';
+      var dateTxt = dayLabel(d.date, false);
+
+      rows += '<tr' + (isToday ? ' class="is-today"' : '') + ' data-date="' + d.date + '">'
+        + '<td><button type="button" class="row-btn" data-pick="' + d.date + '">' + dateTxt + '</button></td>'
+        + '<td class="num">' + (d.milk ? format(d.milk) + ' L' : 'Sin dato') + '</td>'
+        + '<td class="num">' + (d.disp ? format(d.disp) + ' L' : 'Sin dato') + '</td>'
+        + '<td class="num ' + mermaCls + '">' + mermaTxt + '<br><span style="font-size:11px;color:var(--muted)">' + pctTxt + '</span></td>'
+        + '<td><span class="badge ' + st.cls + '"><i aria-hidden="true"></i>' + st.label + '</span></td>'
+        + '</tr>';
+
+      lis += '<li class="' + (isToday ? 'is-today' : 'day-row') + '">'
+        + '<button type="button" class="d-row" data-day="' + d.date + '">'
+        + '<span class="d-date">' + dateTxt + '</span>'
+        + '<span class="d-total ' + mermaCls + '">' + mermaTxt + ' <span style="font-size:11px;color:var(--muted);font-weight:400">' + pctTxt + '</span></span>'
+        + '<span class="d-meta">Ordeñado ' + (d.milk ? format(d.milk) + ' L' : 'Sin dato') + ' · Despachado ' + (d.disp ? format(d.disp) + ' L' : 'Sin dato') + '</span>'
+        + '<span class="d-state badge ' + st.cls + '"><i aria-hidden="true"></i>' + st.label + '</span>'
+        + '</button></li>';
+    });
+    tbody.innerHTML = rows;
+    list.innerHTML = lis;
+
+    tbody.querySelectorAll('[data-pick]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        selected = b.getAttribute('data-pick');
+        dateInput.value = selected;
+        renderSummary();
+        renderBars();
+      });
+    });
+    list.querySelectorAll('[data-day]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var d = findDay(b.getAttribute('data-day'));
+        if (d) openSheet(d);
+      });
+    });
+  }
+
+  function renderSync() {
+    var off = forcedOffline || !navigator.onLine;
+    document.getElementById('offlineBanner').hidden = !off;
+    var btn = document.getElementById('syncBtn');
+    var txt = document.getElementById('syncText');
+    var note = document.getElementById('syncNote');
+    btn.classList.toggle('is-off', off);
+    txt.textContent = off ? 'Sin señal' : 'Al día';
+    note.classList.toggle('is-clay', off);
+    note.querySelector('span').textContent = 'Última sync: ' + (off ? 'hace 26 h' : 'hace 12 min');
+  }
+
+  dateInput.value = selected;
+  dateInput.max = TODAY;
+  dateInput.addEventListener('change', function () {
+    selected = dateInput.value || TODAY;
+    renderSummary();
+    renderBars();
+  });
+
+  document.getElementById('daySheetClose').addEventListener('click', function () { sheet.close(); });
+  sheetPick.addEventListener('click', function () {
+    if (!sheetDate) return;
+    selected = sheetDate;
+    dateInput.value = selected;
+    renderSummary();
+    renderBars();
+    sheet.close();
+  });
+  sheet.addEventListener('click', function (e) {
+    if (e.target === sheet) sheet.close();
+  });
+
+  window.addEventListener('online', renderSync);
+  window.addEventListener('offline', renderSync);
+
+  var chartTimer = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(chartTimer);
+    chartTimer = setTimeout(renderChart, 120);
+  });
+
+  renderSummary();
+  renderChart();
+  renderBars();
+  renderDays();
+  renderSync();
+})();
+</script>
+</body>
+</html>
